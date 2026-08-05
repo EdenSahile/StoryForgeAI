@@ -1,5 +1,20 @@
 # StoryPilot AI — Contexte actif
-*Mis à jour le 2026-07-13*
+*Mis à jour le 2026-08-05*
+
+---
+
+## Session GIT-WORKFLOW (2026-08-05) — Nettoyage doc CI, règles de collaboration git
+
+**Contexte :** courte session de suite après la clôture de la session CI/PR-REVIEW (voir plus bas). Deux points traités :
+
+1. **Confirmation que le crédit Anthropic a bien été rechargé** par l'utilisateur (voir "Point d'attention" de la session précédente) — testé en direct avec un appel `curl` sur `api.anthropic.com/v1/messages`, réponse HTTP 200. La démo publique est donc de nouveau fonctionnelle. Point de confusion clarifié avec l'utilisateur au passage : le "Monthly spend limit" (plafond, ex. 5$) sur console.anthropic.com est indépendant du "Credit balance" (solde prépayé réel) — le premier ne finance rien, seul le second alimente les appels API. Auto-reload recommandé mais pas activé par l'utilisateur.
+2. **Doc de reproductibilité créée** : `docs/ci-claude-pr-review-workflow.md` — guide complet pour reproduire le setup CI Claude (review + approbation + auto-merge) sur un autre projet, avec les 5 pièges rencontrés lors du debug de la session précédente (anti-triche workflow, self-approval GitHub, syntaxe `allowedTools`, budget API prod partagé, confusion spend limit/credit balance) et une checklist de diagnostic. **Volontairement non commité** (demande explicite de l'utilisateur) — ajouté à `.gitignore` à la place. PR #34 (`chore/gitignore-ci-doc` → `main`) ouverte pour ce seul changement de `.gitignore`.
+3. **Nouvelles règles de collaboration git établies avec l'utilisateur** (à respecter dans toutes les sessions futures sur ce repo) :
+   - Ne jamais push sur `main` sans passer par une PR, même pour un changement mineur (doc/config) — un push admin direct a été fait par erreur en fin de session précédente (`context.md` seul), signalé et corrigé.
+   - Ne jamais créer de PR de ma propre initiative sans autorisation explicite préalable.
+   - Raccourcis utilisateur : **"c"** = committer les changements en cours sans demander ; **"p"** = pousser la branche **et créer la PR dans la foulée**, en un seul geste (pas de confirmation séparée pour la PR une fois le push autorisé).
+   - Après tout merge sur `main`, refaire `git checkout main && git pull origin main` avant de repartir sur une nouvelle branche.
+   - Détail complet dans la mémoire persistante : `feedback_git_workflow.md`.
 
 ---
 

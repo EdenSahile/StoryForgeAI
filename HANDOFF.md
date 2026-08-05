@@ -1,95 +1,51 @@
-# Handoff — StoryForge AI v3 (RAG)
+# Handoff — StoryPilot AI
 
-**Branche active :** `feat/rag-upload`
-**Date :** Session du 16 juin 2026
+**Dernière mise à jour :** 2026-08-05
+**Branche par défaut :** `main`
 
----
-
-## ✅ Ce qui a été fait et fonctionne
-
-### Infrastructure RAG
-- Compte OpenAI créé, clé API active, budget projet fixé à $5/mois
-- Index Pinecone `storyforge` créé : dimension 512, metric cosine, embedding model `text-embedding-3-small`, serverless AWS Virginia
-- Variables d'environnement ajoutées dans Vercel (Production + Preview) : `OPENAI_API_KEY`, `PINECONE_API_KEY`, `PINECONE_INDEX_URL`
-
-### Pipeline d'upload et indexation
-- `api/upload-doc.js` : reçoit un fichier en base64, extrait le texte (PDF via `unpdf`, DOCX via `mammoth`, TXT natif), chunk le texte (~500 tokens/chunk), génère les embeddings via OpenAI, upsert dans Pinecone
-- `src/components/services/ragService.js` : client front avec `uploadDocument()`, `retrieveContext()` et `deleteDocument()`
-- Upload réel testé et validé avec un PDF de 2808 caractères → 2 chunks créés, indexés avec succès dans Pinecone (scores de similarité visibles : 0.9997 et 0.7751 sur requête de test)
-
-### Retrieval et génération contextualisée
-- `api/retrieve-context.js` : embed le brief utilisateur, query Pinecone (topK=5, seuil de pertinence >30%), retourne les chunks avec score
-- `api/generate-stories.js` modifié pour injecter les chunks RAG dans le prompt système avant l'appel Claude
-- Le panel RAG dans `Forge.jsx` affiche bien les chunks récupérés avec score de match en temps réel pendant la génération
-
-### Suppression de documents
-- `api/delete-doc.js` créé : supprime tous les chunks d'un document via filtre metadata `filename`
-- Bouton supprimer ajouté dans les DocCards de la Knowledge Base (`Forge.jsx`), avec confirmation avant suppression
-- Fonction `deleteDocument()` ajoutée à `ragService.js`
-
-### Documents de test
-- PDF fictif `cahier_des_charges_bookflow.pdf` généré pour les démos publiques (contenu 100% inventé, vocabulaire métier riche : EDI ORDERS, comptes institutionnels, facturation INVOIC EDIFACT D96A, ISBN/ONIX)
-
-### Bugs résolus pendant la session
-1. `pdf-parse` incompatible avec le runtime serverless Vercel (`ERR_MODULE_NOT_FOUND`) → remplacé par `unpdf`
-2. Conflit de nom : la fonction locale `extractText` collisionnait avec l'import `extractText` de `unpdf` → renommé en `extractPdfText`
-3. `PineconeArgumentError: Must pass in at least 1 record to upsert` malgré des vecteurs valides → le SDK Pinecone v7 attend `{ records: batch }` et non `batch` directement en argument de `.upsert()`
+Ce fichier donne un état des lieux du projet à un instant T pour reprendre le travail rapidement. Pour l'historique détaillé session par session (bugs résolus, décisions, pièges rencontrés), voir `context.md` — non chargé automatiquement, à mentionner explicitement si une tâche en dépend.
 
 ---
 
-## ❌ Ce qui ne fonctionne pas encore / problèmes ouverts
+## État général
 
-### 1. Pas de listing des documents au chargement de la page
-Le state `documents` dans `Forge.jsx` est local et se réinitialise à chaque rechargement de page ou navigation. Les fichiers existent bien côté Pinecone (persistés), mais le front ne les recharge jamais au montage du composant. **Conséquence : la Knowledge Base apparaît toujours vide après un refresh, même si des documents sont indexés en base.**
+- Application déployée et fonctionnelle : [storypilot-ai.vercel.app](https://storypilot-ai.vercel.app)
+- Repo GitHub : `EdenSahile/StoryPilot-ai`
+- Stack, architecture et conventions de code : voir `CLAUDE.md` (chargé automatiquement) et `README.md`.
 
-**Ce qu'il manque :** une fonction `api/list-docs.js` qui interroge Pinecone pour reconstruire la liste des documents déjà indexés, appelée dans un `useEffect` au montage de `Forge.jsx`.
+## CI/CD
 
-### 2. Scores de pertinence RAG relativement bas
-Sur le brief de test "Je veux gérer les accès des vendeurs dans mon compte librairie", les scores obtenus étaient 65%, 53%, 47%, 39% — corrects mais pas excellents. Cause probable : le PDF BookFlow n'a été découpé qu'en quelques chunks larges, ce qui dilue la pertinence sémantique de chaque chunk.
+Le workflow `.github/workflows/claude-pr-review.yml` est pleinement opérationnel depuis le 2026-07-13 : chaque PR déclenche un job de tests (`vitest`) puis une review Claude automatique qui approuve ou demande des changements selon `CLAUDE.md`. L'auto-merge natif GitHub prend le relais une fois les checks requis au vert (à activer PR par PR, pas automatique par défaut).
 
-**Piste d'amélioration :** chunker en respectant les sections du document (découpage sur les titres/headers plutôt que sur un nombre de tokens fixe).
+Branch protection sur `main` : 1 review approuvante requise + check "Tests" requis. Les admins peuvent bypasser (`gh pr merge --admin`) — nécessaire pour toute PR qui modifie le workflow CI lui-même (protection anti-triche de `claude-code-action`, voir `context.md` session CI/PR-REVIEW pour le détail).
 
-### 3. Pollution croisée entre documents de test
-Pendant les tests, un PDF sans rapport avec BookFlow uploadé en tout début de session est resté indexé dans Pinecone et polluait les résultats. **Il faut vérifier/nettoyer l'index Pinecone avant toute démo publique.**
+**Règles de collaboration git en vigueur** (voir mémoire `feedback_git_workflow.md`) : jamais de push direct sur `main` sans PR, jamais de PR créée sans autorisation explicite préalable.
 
-### 4. Aucune isolation des données entre utilisateurs ⚠️
-L'index Pinecone `storyforge` est unique et partagé par tous les visiteurs du lien public. Sans authentification ni namespace par session :
-- N'importe quel visiteur peut uploader dans la même base
-- N'importe quel visiteur peut **supprimer les documents des autres** via le bouton supprimer
-- Le contenu des chunks est visible dans le panel RAG, donc potentiellement exposé publiquement
-
-**Ne pas publier le lien démo publiquement avec de vrais documents tant que ce point n'est pas traité.** Pour les démos LinkedIn, utiliser uniquement le PDF fictif BookFlow, ou privilégier des captures d'écran/vidéo.
-
----
-
-## 🔜 Prochaine session — priorités
-
-1. **Créer `api/list-docs.js`** + brancher le chargement au montage de `Forge.jsx` (`useEffect`)
-2. **Nettoyer l'index Pinecone** — supprimer tous les documents de test avant toute démo publique
-3. **Décider d'une stratégie d'isolation** : namespace Pinecone par session (propre) ou démo interne uniquement avec le PDF fictif (simple)
-4. **Améliorer le chunking** si le temps le permet — découpage par section plutôt que par tokens fixes
-5. Une fois 1 à 3 réglés : merger `feat/rag-upload` → `main`, mettre à jour le README, publier la démo RAG sur LinkedIn
-
----
-
-## Fichiers créés ou modifiés dans cette session
+## Secrets / variables d'environnement
 
 ```
-api/upload-doc.js                            (nouveau)
-api/retrieve-context.js                      (nouveau)
-api/delete-doc.js                            (nouveau)
-api/generate-stories.js                      (modifié — injection contexte RAG)
-src/components/services/ragService.js        (nouveau)
-src/components/services/claudeService.js     (modifié — accepte contextChunks)
-src/screens/Forge.jsx                        (modifié — state réel, upload/delete handlers, RAG chunks)
-package.json                                 (+ openai, @pinecone-database/pinecone, unpdf, mammoth)
+ANTHROPIC_API_KEY       # app en prod uniquement (api/generate-stories.js) — clé pay-per-use, solde prépayé à surveiller sur console.anthropic.com
+CLAUDE_CODE_OAUTH_TOKEN # CI uniquement (review de PR) — lié à l'abonnement Claude.ai, découplé du budget prod
+OPENAI_API_KEY          # embeddings RAG (text-embedding-3-small, 512 dims)
+PINECONE_API_KEY
+PINECONE_INDEX_URL      # index storyforge (nom technique historique, pas renommé lors du rebrand StoryPilot)
+ALLOWED_ORIGINS         # CORS, jamais hardcodé dans le code
+DEMO_MODE               # true en prod publique — désactive upload/suppression de documents
 ```
 
-## Variables d'environnement requises (Vercel + .env)
+⚠️ Ne jamais réutiliser `ANTHROPIC_API_KEY` pour un usage CI/tooling — les deux budgets se cumuleraient silencieusement (déjà arrivé une fois, voir `context.md`).
 
-```
-ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...
-PINECONE_API_KEY=...
-PINECONE_INDEX_URL=https://storyforge-xxxxx.svc.aped.pinecone.io
-```
+## RAG
+
+Index Pinecone `storyforge`, partagé entre tous les visiteurs de la démo publique (pas d'isolation multi-tenant) — ne pas y indexer de documents sensibles. Chunking via `RecursiveCharacterTextSplitter` (`@langchain/textsplitters`). Voir `README.md` section "Pipeline RAG" pour le détail technique à jour.
+
+## Points d'attention connus
+
+- Rate limiting (`api/generate-stories.js`) : Map en mémoire, non persistant entre cold starts Vercel — à migrer vers Vercel KV / Upstash Redis si le trafic le justifie un jour (rappelé dans `CLAUDE.md`).
+- `404` en local sur les routes `/api/*` : attendu, `vite dev` ne sert pas les fonctions serverless. Utiliser `vercel dev` pour tester l'API en local.
+
+## Pour aller plus loin
+
+- Historique complet des sessions, bugs résolus et décisions de design : `context.md`.
+- Reproduire le setup CI Claude sur un autre projet : `docs/ci-claude-pr-review-workflow.md` (gardé en local, non commité — voir `.gitignore`).
+- Specs et plans issus de sessions de brainstorming : `docs/superpowers/specs/` et `docs/superpowers/plans/`.
