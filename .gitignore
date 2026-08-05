@@ -29,3 +29,6 @@ dist-ssr
 .env.local
 .env.*.local
 .vercel
+
+# Doc personnelle, non partagée sur le repo
+docs/ci-claude-pr-review-workflow.md
