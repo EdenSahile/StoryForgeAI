@@ -39,6 +39,18 @@ export default async function handler(req, res) {
       });
     }
 
+    if (
+      req.body.topK !== undefined &&
+      (typeof req.body.topK !== "number" ||
+        !Number.isInteger(req.body.topK) ||
+        req.body.topK < 1 ||
+        req.body.topK > 20)
+    ) {
+      return res.status(400).json({
+        error: "topK doit être un entier entre 1 et 20.",
+      });
+    }
+
     // 1. Embed the brief
     const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 

@@ -232,7 +232,7 @@ describe('api/retrieve-context — validation du brief (règle CLAUDE.md : valid
   });
 });
 
-describe('api/retrieve-context — topK (comportement actuel, non couvert par une règle explicite de CLAUDE.md)', () => {
+describe('api/retrieve-context — topK (règle CLAUDE.md : entier entre 1 et 20, validé côté serveur)', () => {
   it('utilise topK = 5 par défaut quand il est omis', async () => {
     const handler = await freshHandler();
     const req = createMockReq({ body: { brief: BRIEF_VALIDE } });
@@ -243,7 +243,7 @@ describe('api/retrieve-context — topK (comportement actuel, non couvert par un
     expect(mockQuery).toHaveBeenCalledWith(expect.objectContaining({ topK: 5 }));
   });
 
-  it('transmet topK tel quel à Pinecone quand il est fourni', async () => {
+  it('transmet topK tel quel à Pinecone quand il est valide', async () => {
     const handler = await freshHandler();
     const req = createMockReq({ body: { brief: BRIEF_VALIDE, topK: 12 } });
     const res = createMockRes();
@@ -253,18 +253,109 @@ describe('api/retrieve-context — topK (comportement actuel, non couvert par un
     expect(mockQuery).toHaveBeenCalledWith(expect.objectContaining({ topK: 12 }));
   });
 
-  // Documente le comportement actuel : aucune validation de topK côté serveur (pas de
-  // borne, pas de contrôle de type). Ce test constate l'existant, il n'affirme pas que
-  // c'est correct. Si Pinecone rejette une valeur absurde, l'erreur remonte par le même
-  // catch générique que les tests ROUGE ci-dessous (fuite de error.message).
-  it('transmet un topK invalide (négatif) tel quel à Pinecone, sans validation serveur', async () => {
+  it('accepte topK = 1 (limite basse incluse)', async () => {
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { brief: BRIEF_VALIDE, topK: 1 } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).not.toHaveBeenCalledWith(400);
+    expect(mockQuery).toHaveBeenCalledWith(expect.objectContaining({ topK: 1 }));
+  });
+
+  it('accepte topK = 20 (limite haute incluse)', async () => {
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { brief: BRIEF_VALIDE, topK: 20 } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).not.toHaveBeenCalledWith(400);
+    expect(mockQuery).toHaveBeenCalledWith(expect.objectContaining({ topK: 20 }));
+  });
+
+  it('rejette topK = 0 (400, sous la borne basse)', async () => {
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { brief: BRIEF_VALIDE, topK: 0 } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.body).toEqual({ error: 'topK doit être un entier entre 1 et 20.' });
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('rejette topK = 21 (400, au-dessus de la borne haute)', async () => {
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { brief: BRIEF_VALIDE, topK: 21 } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.body).toEqual({ error: 'topK doit être un entier entre 1 et 20.' });
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('rejette un topK négatif (400)', async () => {
     const handler = await freshHandler();
     const req = createMockReq({ body: { brief: BRIEF_VALIDE, topK: -1 } });
     const res = createMockRes();
 
     await handler(req, res);
 
-    expect(mockQuery).toHaveBeenCalledWith(expect.objectContaining({ topK: -1 }));
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.body).toEqual({ error: 'topK doit être un entier entre 1 et 20.' });
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('rejette un topK décimal (400, non entier)', async () => {
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { brief: BRIEF_VALIDE, topK: 3.5 } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.body).toEqual({ error: 'topK doit être un entier entre 1 et 20.' });
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('rejette une chaîne numérique ("5") : pas de coercition silencieuse (400)', async () => {
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { brief: BRIEF_VALIDE, topK: '5' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.body).toEqual({ error: 'topK doit être un entier entre 1 et 20.' });
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('rejette un topK non numérique (400)', async () => {
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { brief: BRIEF_VALIDE, topK: 'beaucoup' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.body).toEqual({ error: 'topK doit être un entier entre 1 et 20.' });
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('valide topK avant tout appel OpenAI/Pinecone (pas d\'appel embedding payant sur une requête rejetée)', async () => {
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { brief: BRIEF_VALIDE, topK: -5 } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(mockEmbeddingsCreate).not.toHaveBeenCalled();
+    expect(mockQuery).not.toHaveBeenCalled();
   });
 });
 
