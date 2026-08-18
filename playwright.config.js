@@ -7,7 +7,7 @@ export default defineConfig({
   testDir: 'e2e',
   workers: headed ? 1 : undefined,
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5174',
     headless: !headed,
     launchOptions: {
       slowMo: headed ? Number(process.env.SLOWMO ?? 800) : 0,
@@ -21,7 +21,7 @@ export default defineConfig({
   // /api/* via page.route() — sinon un test peut consommer du vrai budget.
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:5173',
+    url: 'http://localhost:5174',
     reuseExistingServer: true,
   },
 });
