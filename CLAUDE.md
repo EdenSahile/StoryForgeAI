@@ -29,6 +29,7 @@ src/App.jsx                                # état global, orchestration
 - `max_tokens` de la réponse Claude plafonné à 1000 côté serveur — ne pas augmenter sans raison documentée.
 - Le rate limiting actuel (Map en mémoire dans `api/generate-stories.js`) n'est pas persistant entre cold starts Vercel. Le signaler dans tout commentaire ou PR touchant cette logique tant que la migration vers Vercel KV / Upstash Redis n'est pas faite.
 - Les origins CORS autorisées viennent de `process.env.ALLOWED_ORIGINS`, jamais hardcodées dans le code.
+- `topK` (`api/retrieve-context.js`) doit être un entier compris entre 1 et 20 inclus, validé côté serveur avant tout appel à Pinecone. Absent du body → valeur par défaut 5 (comportement inchangé). Présent mais invalide (non numérique, non entier, < 1, > 20, y compris une chaîne numérique comme `"5"`) → rejet 400 explicite, pas de coercition silencieuse.
 
 ## Conventions de code
 
