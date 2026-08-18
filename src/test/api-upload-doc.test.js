@@ -254,20 +254,11 @@ describe('api/upload-doc — validation des entrées (règle CLAUDE.md : validé
     });
   });
 
-  // Écart signalé et validé : une extension non supportée déclenche une exception dans
-  // extractText(), qui remonte jusqu'au catch générique et ressort en 500 (au lieu d'un
-  // 400 de validation). Le fix "error.message brut" appliqué au catch générique a bien
-  // supprimé la fuite du message ("Format non supporté" n'apparaît plus), mais le statut
-  // reste 500 au lieu de 400 — ce point précis est hors du scope du fix demandé (statut
-  // vs message).
-  // Passé en it.skip le 2026-08-18 pour laisser passer le verrou de qualité bloquant du
-  // skill open-pr (build + tests, sans exception même pour un rouge documenté). L'assertion
-  // reste en place telle quelle (comportement attendu une fois corrigé), pas de .todo — elle
-  // documente la cible, pas juste une intention. Décision produit (garder 500 générique ou
-  // distinguer une vraie erreur de validation 400) trackée dans la section "Reste à faire"
-  // de context.md et dans "Points d'attention connus" de HANDOFF.md — réactiver ce test
-  // (retirer .skip) une fois le choix tranché et le fix appliqué.
-  it.skip('[ROUGE — écart CLAUDE.md] rejette une extension non supportée avec un message générique (pas error.message brut)', async () => {
+  // Ancien écart résolu le 2026-08-18 : l'extension est maintenant validée explicitement
+  // dans le handler, juste après filename/content, avant tout appel à extractText() — donc
+  // 400 (erreur de validation classique), pas 500 via une exception. Voir CLAUDE.md
+  // "Règles non négociables" et le commentaire au-dessus du throw dans extractText().
+  it('rejette une extension non supportée avec 400 et le message dédié, sans passer par une exception', async () => {
     const handler = await freshHandler();
     const req = createMockReq({ body: { filename: 'doc.exe', content: b64(TEXTE_VALIDE) } });
     const res = createMockRes();
@@ -275,7 +266,16 @@ describe('api/upload-doc — validation des entrées (règle CLAUDE.md : validé
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(JSON.stringify(res.body)).not.toContain('Format non supporté');
+    expect(res.body).toEqual({
+      error: 'Format non supporté : .exe. Utilisez PDF, DOCX ou TXT.',
+    });
+    // Si extractText() avait malgré tout été atteinte et avait levé (chemin exception),
+    // la requête serait retombée dans le catch générique et aurait renvoyé 500, pas 400 —
+    // le 400 ci-dessus prouve donc, en creux, qu'on ne passe plus par cette exception.
+    // Vérification directe côté aval : ni l'embedding OpenAI ni l'upsert Pinecone n'ont
+    // été atteints, donc rien après le nouveau check d'extension n'a été exécuté.
+    expect(mockEmbeddingsCreate).not.toHaveBeenCalled();
+    expect(mockUpsert).not.toHaveBeenCalled();
   });
 
   it('rejette un texte extrait vide ou trop court (< 50 caractères) (400)', async () => {
