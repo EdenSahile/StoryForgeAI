@@ -222,6 +222,18 @@ Le rate limiting (`api/generate-stories.js`) utilise une `Map` en mémoire, qui 
 
 ---
 
+## Méthode de développement
+
+Ce projet est développé avec Claude Code, encadré par des règles écrites plutôt que laissé en génération libre.
+
+- **`CLAUDE.md`** fixe les règles non négociables du repo (validation serveur, pas de fuite de détail d'erreur au client, CORS restreint par allowlist, timeouts, plafond de tokens) — la référence unique, aussi bien pour moi que pour Claude.
+- **Tests systématiques** (Vitest) : logique métier, composants, et les 5 routes serverless (`api/*.js`) testées individuellement contre les règles de `CLAUDE.md` (ex. vérifier qu'une exception ne renvoie jamais son message brut au client).
+- **Revue automatisée par CI** : chaque Pull Request est relue par Claude (`claude-pr-review.yml`) selon `CLAUDE.md` avant de pouvoir être mergée, en plus des tests automatiques.
+
+Cette discipline a permis de détecter et corriger, en cours de développement, une politique CORS trop permissive et une fuite de détails d'erreur serveur sur plusieurs routes — la mécanique de revue fait partie du produit, pas un détail d'implémentation caché.
+
+---
+
 ## Pourquoi ce projet
 
 StoryPilot n'est pas un wrapper ChatGPT. C'est un outil de Product Owner conçu par une PO.

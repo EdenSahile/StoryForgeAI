@@ -4,7 +4,11 @@
 import { Pinecone } from "@pinecone-database/pinecone";
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173', 'https://storypilot-ai.vercel.app'];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -67,7 +71,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("[delete] Error:", error);
     return res.status(500).json({
-      error: error.message || "Erreur lors de la suppression.",
+      error: "Erreur lors de la suppression.",
     });
   }
 }
