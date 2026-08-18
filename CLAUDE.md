@@ -32,6 +32,10 @@ src/App.jsx                                # état global, orchestration
 - L'extension du fichier envoyé à `api/upload-doc.js` doit être `.txt`, `.pdf` ou `.docx`, validée côté serveur avant tout appel à `extractText()`. Extension absente ou non supportée → rejet 400 explicite (`Format non supporté : .xyz. Utilisez PDF, DOCX ou TXT.`), jamais via une exception.
 - `topK` (`api/retrieve-context.js`) doit être un entier compris entre 1 et 20 inclus, validé côté serveur avant tout appel à Pinecone. Absent du body → valeur par défaut 5 (comportement inchangé). Présent mais invalide (non numérique, non entier, < 1, > 20, y compris une chaîne numérique comme `"5"`) → rejet 400 explicite, pas de coercition silencieuse.
 
+## Discipline de branche
+
+- **Avant de commencer tout travail (nouveau fichier, correction, feature), vérifier la branche courante (`git branch --show-current`).** Si elle est `main`, prévenir explicitement l'utilisateur avant de continuer ("Tu es sur `main`, tu veux que je crée une branche d'abord ?") plutôt que de commencer à modifier des fichiers dessus. Ne jamais créer une branche à sa place sans le dire.
+
 ## Conventions de code
 
 - Composants fonctionnels avec hooks, pas de classes.
