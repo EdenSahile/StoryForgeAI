@@ -1,5 +1,33 @@
 # StoryPilot AI — Contexte actif
-*Mis à jour le 2026-08-05*
+*Mis à jour le 2026-08-18*
+
+---
+
+## Reste à faire (prioritaire, à ne pas perdre)
+
+Deux sujets identifiés lors de la session TESTS-API-SECU (2026-08-18), volontairement reportés à une session dédiée — voir le détail dans cette session ci-dessous :
+
+- [ ] **`topK` non validé côté serveur** dans `api/retrieve-context.js` (ligne 30) — aucune borne min/max, aucun contrôle de type, transmis tel quel à `index.query()`. Définir une vraie borne et l'ajouter à `CLAUDE.md` avant de coder le fix.
+- [ ] **Statut 500 au lieu de 400** dans `api/upload-doc.js` pour une extension de fichier non supportée — l'exception levée par `extractText()` passe par le catch générique (qui renvoie désormais un message générique, mais toujours avec un code 500). Décider si ce cas doit devenir une vraie erreur de validation 400.
+
+---
+
+## Session TESTS-API-SECU (2026-08-18) — Tests des 5 routes serverless, fix CORS et fuite error.message
+
+**Objectif :** Ajouter une couverture de tests sur les 4 routes serverless qui n'en avaient pas (`api/upload-doc.js`, `api/delete-doc.js`, `api/retrieve-context.js`, `api/list-docs.js`), au même niveau de rigueur que le patron de référence `src/test/api-generate-stories.test.js` (handler appelé directement avec req/res fabriqués à la main, mocks `vi.fn()` sur les appels externes, pas de librairie type `node-mocks-http`/`supertest`), puis corriger les écarts CLAUDE.md que ces tests ont mis en évidence.
+
+### Réalisé
+
+- [x] **4 nouveaux fichiers de test** : `src/test/api-upload-doc.test.js`, `src/test/api-delete-doc.test.js`, `src/test/api-retrieve-context.test.js`, `src/test/api-list-docs.test.js`. Même méthode que le patron : mocks `vi.fn()` sur `OpenAI`/`Pinecone`/`unpdf`/`mammoth`, jamais de vrai appel réseau. Aucun état module-level de type rate-limiting sur ces 4 routes (contrairement à `generate-stories.js`) — noté explicitement en commentaire dans chaque fichier plutôt que supposé.
+- [x] **79 tests au total** sur les 5 routes serverless (`generate-stories` inclus), **78 verts / 1 rouge intentionnel et documenté** (voir "Reste à faire" ci-dessus, le cas 400 vs 500 sur `upload-doc.js`).
+- [x] **Écarts CLAUDE.md découverts par des tests rouges, validés avec l'utilisateur, puis corrigés dans le code source** :
+  - **CORS ouvert à `"*"` en dur** → remplacé par la dérivation `process.env.ALLOWED_ORIGINS` (même pattern que `generate-stories.js` : `.split(',')` avec fallback `['http://localhost:5173', 'https://storypilot-ai.vercel.app']`) sur `upload-doc.js`, `delete-doc.js`, `retrieve-context.js`, `list-docs.js`, et `generate-stories.js` (voir bug de preflight ci-dessous).
+  - **`error.message` brut renvoyé au client** sur exception inattendue → remplacé par un message générique fixe (le détail reste loggé côté serveur via `console.error`) dans `upload-doc.js`, `delete-doc.js`, `retrieve-context.js`. `list-docs.js` et `generate-stories.js` étaient **déjà conformes** sur ce point, vérifié par test avant toute modification plutôt que supposé.
+- [x] **Bug de preflight CORS découvert sur `generate-stories.js` lui-même** en lançant son propre test de référence : le check `if (req.method !== 'POST') return 405` était placé **avant** le bloc CORS/OPTIONS, donc toute requête `OPTIONS` (préflight) recevait un 405 au lieu du 200 attendu — le test `répond 200 et coupe court sur une requête OPTIONS` du patron de référence échouait en réalité déjà, avant toute intervention de cette session. Réordonné pour que le bloc CORS + `if (method === 'OPTIONS') return 200` passe **avant** le check `method !== 'POST'`, comme c'était déjà le cas sur les 4 autres routes — sans toucher au rate limiting, à la validation ou au streaming.
+- [x] **Vérification dédiée du rate limiting après ce réordonnancement** (demandée explicitement par l'utilisateur avant de considérer le fix terminé) : nouveau test dans `api-generate-stories.test.js` confirmant qu'une requête `OPTIONS` ne consomme jamais de crédit de rate limit (sort via le `return 200` avant d'atteindre `checkRateLimit`), même répétée 15 fois, et qu'une requête `POST` valide déclenche toujours le blocage au même seuil qu'avant (10 passent, la 11ᵉ renvoie 429).
+- [x] `topK` non validé dans `retrieve-context.js` : traité comme un constat de comportement actuel (test qui documente, sans jugement), pas une violation CLAUDE.md explicite — reporté, voir "Reste à faire".
+
+Détail complet des cas limites couverts par fichier, disponible dans l'historique de conversation de cette session (non dupliqué ici pour éviter la dérive avec le code).
 
 ---
 

@@ -1,6 +1,6 @@
 # Handoff — StoryPilot AI
 
-**Dernière mise à jour :** 2026-08-05
+**Dernière mise à jour :** 2026-08-18
 **Branche par défaut :** `main`
 
 Ce fichier donne un état des lieux du projet à un instant T pour reprendre le travail rapidement. Pour l'historique détaillé session par session (bugs résolus, décisions, pièges rencontrés), voir `context.md` — non chargé automatiquement, à mentionner explicitement si une tâche en dépend.
@@ -43,6 +43,8 @@ Index Pinecone `storyforge`, partagé entre tous les visiteurs de la démo publi
 
 - Rate limiting (`api/generate-stories.js`) : Map en mémoire, non persistant entre cold starts Vercel — à migrer vers Vercel KV / Upstash Redis si le trafic le justifie un jour (rappelé dans `CLAUDE.md`).
 - `404` en local sur les routes `/api/*` : attendu, `vite dev` ne sert pas les fonctions serverless. Utiliser `vercel dev` pour tester l'API en local.
+- **`topK` non validé côté serveur** dans `api/retrieve-context.js` — aucune borne min/max ni contrôle de type, transmis tel quel à `index.query()` (Pinecone). Identifié lors de la session TESTS-API-SECU (2026-08-18), reporté volontairement : définir une borne et l'ajouter à `CLAUDE.md` avant de coder le fix.
+- **Statut 500 au lieu de 400** dans `api/upload-doc.js` pour une extension de fichier non supportée — l'exception de `extractText()` passe par le catch générique (message déjà générique depuis le 2026-08-18, mais code toujours 500). Reporté, décision produit à prendre (garder 500 générique ou distinguer une vraie erreur de validation 400).
 
 ## Pour aller plus loin
 

@@ -15,13 +15,6 @@ function checkRateLimit(ip) {
 export const config = { maxDuration: 60 }; // Streaming 3-5 stories peut dépasser le défaut sans config explicite
 
 export default async function handler(req, res) {
-  // Seulement POST
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-
-
   // ✅ CORS
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173', 'https://storypilot-ai.vercel.app'];
 const origin = req.headers.origin;
@@ -31,6 +24,11 @@ if (allowedOrigins.includes(origin)) {
 res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
 res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // Seulement POST
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
 // ✅ Rate limiting
 const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
