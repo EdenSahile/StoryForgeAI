@@ -47,6 +47,10 @@ async function extractText(content, filename) {
     return result.value;
   }
 
+  // Filet de sécurité : en usage normal, ce cas est déjà rejeté en 400 par le handler
+  // avant même d'appeler extractText() (cf. check d'extension juste après la validation
+  // filename/content). Gardé ici pour protéger la fonction elle-même si elle est un jour
+  // appelée ailleurs que depuis ce handler.
   throw new Error(`Format non supporté : .${ext}. Utilisez PDF, DOCX ou TXT.`);
 }
 
@@ -88,6 +92,13 @@ export default async function handler(req, res) {
     if (!filename || !content) {
       return res.status(400).json({
         error: "Fichier manquant. Envoyez { filename, content (base64) }.",
+      });
+    }
+
+    const ext = filename.toLowerCase().split(".").pop();
+    if (!["txt", "pdf", "docx"].includes(ext)) {
+      return res.status(400).json({
+        error: `Format non supporté : .${ext}. Utilisez PDF, DOCX ou TXT.`,
       });
     }
 
