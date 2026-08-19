@@ -1045,6 +1045,8 @@ export default function Forge({
   setTruncated,
   keepBrief = false,
   onClearKeepBrief,
+  themeMode,
+  onThemeChange,
 }) {
   const [status, setStatus] = useState("idle"); // 'idle' | 'loading' | 'success' | 'error'
   const [error, setError] = useState(null);
@@ -1118,8 +1120,16 @@ export default function Forge({
               <span className="badge-text">Génération en cours...</span>
             </GeneratingBadge>
           )}
-          <IconBtn>
-            <span className="icon">dark_mode</span>
+          <IconBtn
+            onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
+            title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+          >
+            <span
+              className="icon"
+              style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
+            >
+              {themeMode === "dark" ? "light_mode" : "dark_mode"}
+            </span>
           </IconBtn>
           <IconBtn>
             <span className="icon">notifications</span>

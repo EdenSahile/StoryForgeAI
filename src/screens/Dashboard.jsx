@@ -443,7 +443,7 @@ const GenerateBtn = styled.button`
 `;
 
 // ─── Component ────────────────────────────────────────────
-export default function Dashboard({ onNavigate }) {
+export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
   const [generations, setGenerations] = useState([]);
 
   useEffect(() => {
@@ -491,8 +491,16 @@ export default function Dashboard({ onNavigate }) {
       <TopBar>
         <TopBarTitle>StoryPilot AI</TopBarTitle>
         <TopBarActions>
-          <IconBtn>
-            <span className="icon">dark_mode</span>
+          <IconBtn
+            onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
+            title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+          >
+            <span
+              className="icon"
+              style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
+            >
+              {themeMode === "dark" ? "light_mode" : "dark_mode"}
+            </span>
           </IconBtn>
           <Avatar>
             <div

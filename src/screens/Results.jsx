@@ -671,7 +671,7 @@ const SourceItem = styled.div`
 `;
 
 // ─── Component ────────────────────────────────────────────
-export default function Results({ brief = "", stories, ragChunks = [], onNewGeneration, onRegenerate, onNavigate, truncated = false, autoSaved = false }) {
+export default function Results({ brief = "", stories, ragChunks = [], onNewGeneration, onRegenerate, onNavigate, truncated = false, autoSaved = false, themeMode, onThemeChange }) {
   const [copied, setCopied] = useState(false);
   const [copiedStoryId, setCopiedStoryId] = useState(null);
   const [showTrelloMsg, setShowTrelloMsg] = useState(false);
@@ -717,7 +717,17 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
           <span className="sub">Résultats</span>
         </TopBarLeft>
         <TopBarRight>
-          <IconBtn><span className="icon">dark_mode</span></IconBtn>
+          <IconBtn
+            onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
+            title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+          >
+            <span
+              className="icon"
+              style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
+            >
+              {themeMode === "dark" ? "light_mode" : "dark_mode"}
+            </span>
+          </IconBtn>
           <IconBtn><span className="icon">notifications</span></IconBtn>
         </TopBarRight>
       </TopBar>

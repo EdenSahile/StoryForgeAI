@@ -219,9 +219,9 @@ function App() {
   const renderScreen = () => {
     switch (currentScreen) {
       case "dashboard":
-        return <Dashboard onNavigate={handleNavigate} />;
+        return <Dashboard onNavigate={handleNavigate} themeMode={themeMode} onThemeChange={setThemeMode} />;
       case "forge":
-        return <Forge onNavigate={setCurrentScreen} brief={brief} setBrief={setBrief} stories={stories} setStories={setStories} ragChunks={ragChunks} setRagChunks={setRagChunks} documents={documents} setDocuments={setDocuments} setTruncated={setTruncated} keepBrief={keepBrief} onClearKeepBrief={() => setKeepBrief(false)} />;
+        return <Forge onNavigate={setCurrentScreen} brief={brief} setBrief={setBrief} stories={stories} setStories={setStories} ragChunks={ragChunks} setRagChunks={setRagChunks} documents={documents} setDocuments={setDocuments} setTruncated={setTruncated} keepBrief={keepBrief} onClearKeepBrief={() => setKeepBrief(false)} themeMode={themeMode} onThemeChange={setThemeMode} />;
       case "results":
         return (
           <Results
@@ -233,14 +233,16 @@ function App() {
             onNewGeneration={() => { setBrief(""); setStories(""); setRagChunks([]); setTruncated(false); setAutoSaved(false); setKeepBrief(false); savedFingerprintRef.current = null; setCurrentScreen("forge"); }}
             onRegenerate={() => { setStories(""); setRagChunks([]); setTruncated(false); setAutoSaved(false); setKeepBrief(true); savedFingerprintRef.current = null; setCurrentScreen("forge"); }}
             onNavigate={setCurrentScreen}
+            themeMode={themeMode}
+            onThemeChange={setThemeMode}
           />
         );
       case "library":
-        return <Library onNavigate={handleNavigate} />;
+        return <Library onNavigate={handleNavigate} themeMode={themeMode} onThemeChange={setThemeMode} />;
       case "settings":
         return <Settings themeMode={themeMode} onThemeChange={setThemeMode} />;
       default:
-        return <Dashboard onNavigate={setCurrentScreen} />;
+        return <Dashboard onNavigate={setCurrentScreen} themeMode={themeMode} onThemeChange={setThemeMode} />;
     }
   };
 

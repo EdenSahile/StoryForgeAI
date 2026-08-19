@@ -28,6 +28,7 @@ const TopBar = styled.header`
   z-index: 30;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   height: 64px;
   padding: 0 ${theme.spacing.lg};
   background: color-mix(in srgb, ${theme.colors.surface} 85%, transparent);
@@ -40,6 +41,29 @@ const TopBarTitle = styled.h1`
   font-size: ${theme.fontSizes.xl};
   font-weight: 800;
   color: ${theme.colors.onSurface};
+`;
+
+const IconBtn = styled.button`
+  background: none;
+  border: none;
+  color: ${theme.colors.onSurfaceVariant};
+  cursor: pointer;
+  padding: 6px;
+  border-radius: ${theme.radii.sm};
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  .icon {
+    font-family: "Material Symbols Outlined";
+    font-size: 22px;
+  }
+
+  &:hover {
+    color: ${theme.colors.primary};
+    background: ${theme.colors.surfaceContainerHighest};
+  }
 `;
 
 const Content = styled.main`
@@ -314,6 +338,17 @@ export default function Settings({ themeMode, onThemeChange }) {
     <PageWrapper>
       <TopBar>
         <TopBarTitle>Réglages</TopBarTitle>
+        <IconBtn
+          onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
+          title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+        >
+          <span
+            className="icon"
+            style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
+          >
+            {themeMode === "dark" ? "light_mode" : "dark_mode"}
+          </span>
+        </IconBtn>
       </TopBar>
 
       <Content>
