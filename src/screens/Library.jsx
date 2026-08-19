@@ -165,7 +165,7 @@ const EntryCard = styled.div`
 
   &:hover {
     background: ${theme.colors.surfaceContainer};
-    border-color: rgba(209, 169, 84, 0.25);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 25%, transparent);
     &::before { width: 3px; }
   }
 
@@ -217,8 +217,8 @@ const Pill = styled.a`
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(209, 169, 84, 0.08);
-  border: 1px solid rgba(209, 169, 84, 0.18);
+  background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
+  border: 1px solid color-mix(in srgb, ${theme.colors.primary} 18%, transparent);
   color: ${theme.colors.onSurfaceVariant};
   max-width: 160px;
   white-space: nowrap;
@@ -229,8 +229,8 @@ const Pill = styled.a`
   transition: background 0.15s, border-color 0.15s;
 
   &:hover {
-    background: rgba(209, 169, 84, 0.08);
-    border-color: rgba(209, 169, 84, 0.35);
+    background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 35%, transparent);
     color: ${theme.colors.primary};
   }
 `;
@@ -250,7 +250,7 @@ const DeleteBtn = styled.button`
 
   &:hover {
     color: ${theme.colors.error};
-    background: rgba(255, 180, 171, 0.1);
+    background: ${theme.colors.bgError};
   }
 `;
 
@@ -266,8 +266,8 @@ const DocChip = styled.a`
   gap: 6px;
   padding: 8px 14px;
   border-radius: ${theme.radii.md};
-  background: rgba(209, 169, 84, 0.08);
-  border: 1px solid rgba(209, 169, 84, 0.22);
+  background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
+  border: 1px solid color-mix(in srgb, ${theme.colors.primary} 22%, transparent);
   color: ${theme.colors.primary};
   font-size: ${theme.fontSizes.sm};
   font-weight: 600;
@@ -283,8 +283,8 @@ const DocChip = styled.a`
   }
 
   &:hover {
-    background: rgba(209, 169, 84, 0.08);
-    border-color: rgba(209, 169, 84, 0.45);
+    background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 45%, transparent);
   }
 
   &:active {
@@ -304,7 +304,7 @@ const DetailDeleteBtn = styled.button`
   gap: 6px;
   padding: 8px 16px;
   border-radius: ${theme.radii.md};
-  border: 1px solid rgba(255, 180, 171, 0.3);
+  border: 1px solid color-mix(in srgb, ${theme.colors.error} 30%, transparent);
   background: transparent;
   color: ${theme.colors.error};
   font-size: ${theme.fontSizes.sm};
@@ -319,7 +319,7 @@ const DetailDeleteBtn = styled.button`
   }
 
   &:hover {
-    background: rgba(255, 180, 171, 0.1);
+    background: ${theme.colors.bgError};
     border-color: ${theme.colors.error};
   }
 `;
@@ -425,7 +425,7 @@ const CopyBtn = styled.button`
   padding: 8px 16px;
   border-radius: ${theme.radii.md};
   border: 1px solid ${({ $copied }) => $copied ? theme.colors.primary : theme.colors.outlineVariant};
-  background: ${({ $copied }) => $copied ? "rgba(209, 169, 84,0.08)" : "transparent"};
+  background: ${({ $copied }) => $copied ? `color-mix(in srgb, ${theme.colors.primary} 8%, transparent)` : "transparent"};
   color: ${({ $copied }) => $copied ? theme.colors.primary : theme.colors.onSurfaceVariant};
   font-size: ${theme.fontSizes.sm};
   font-weight: 600;

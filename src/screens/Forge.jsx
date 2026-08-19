@@ -27,8 +27,8 @@ const pulse = keyframes`
 `;
 
 const glow = keyframes`
-  0%, 100% { box-shadow: 0 0 20px rgba(209, 169, 84, 0.15); }
-  50% { box-shadow: 0 0 30px rgba(209, 169, 84, 0.35); }
+  0%, 100% { box-shadow: 0 0 20px ${theme.colors.primaryGlow}; }
+  50% { box-shadow: 0 0 30px ${theme.colors.primaryGlow}; }
 `;
 
 // ─── Layout ───────────────────────────────────────────────
@@ -274,7 +274,7 @@ const TextareaFooter = styled.div`
 const KbdHint = styled.span`
   font-size: ${theme.fontSizes.xs};
   color: ${theme.colors.onSurfaceVariant};
-  background: rgba(29, 43, 40, 0.8);
+  background: ${theme.colors.surfaceContainerHigh};
   padding: 3px 8px;
   border-radius: 6px;
   border: 1px solid ${theme.colors.outlineVariant};
@@ -284,7 +284,7 @@ const CharCount = styled.span`
   font-size: ${theme.fontSizes.xs};
   color: ${({ $over }) =>
     $over ? theme.colors.error : theme.colors.onSurfaceVariant};
-  background: rgba(29, 43, 40, 0.8);
+  background: ${theme.colors.surfaceContainerHigh};
   padding: 3px 8px;
   border-radius: 6px;
 `;
@@ -295,8 +295,8 @@ const RestoreHint = styled.div`
   gap: 6px;
   padding: 8px 12px;
   margin-bottom: ${theme.spacing.sm};
-  background: rgba(209, 169, 84, 0.08);
-  border: 1px solid rgba(209, 169, 84, 0.2);
+  background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
+  border: 1px solid color-mix(in srgb, ${theme.colors.primary} 20%, transparent);
   border-radius: ${theme.radii.sm};
   color: ${theme.colors.primary};
   font-size: ${theme.fontSizes.xs};
@@ -383,7 +383,6 @@ const GenerateBtn = styled.button`
   &:hover:not(:disabled) {
     opacity: 0.9;
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(209, 169, 84, 0.35);
   }
 
   &:active:not(:disabled) {
@@ -476,8 +475,8 @@ const SourcePill = styled.div`
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: rgba(209, 169, 84, 0.08);
-  border: 1px solid rgba(209, 169, 84, 0.18);
+  background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
+  border: 1px solid color-mix(in srgb, ${theme.colors.primary} 18%, transparent);
   border-radius: 999px;
   font-size: 11px;
   color: ${theme.colors.onSurface};
@@ -510,18 +509,6 @@ const StreamingCard = styled.div`
   animation: ${glow} 2s ease-in-out infinite;
   position: relative;
   overflow: hidden;
-
-  &::after {
-    content: "";
-    position: absolute;
-    right: -60px;
-    bottom: -60px;
-    width: 180px;
-    height: 180px;
-    background: rgba(209, 169, 84, 0.05);
-    border-radius: 50%;
-    filter: blur(30px);
-  }
 `;
 
 const StreamingBadge = styled.span`
@@ -533,10 +520,10 @@ const StreamingBadge = styled.span`
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: ${theme.colors.primary};
-  background: rgba(209, 169, 84, 0.08);
+  background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
   padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(209, 169, 84, 0.2);
+  border: 1px solid color-mix(in srgb, ${theme.colors.primary} 20%, transparent);
 
   .spin-icon {
     font-family: "Material Symbols Outlined";
@@ -666,8 +653,8 @@ const KBHeader = styled.div`
     font-size: ${theme.fontSizes.xs};
     font-weight: 700;
     color: ${theme.colors.textSuccess};
-    background: rgba(74, 222, 128, 0.1);
-    border: 1px solid rgba(74, 222, 128, 0.2);
+    background: ${theme.colors.bgSuccess};
+    border: 1px solid color-mix(in srgb, ${theme.colors.success} 35%, transparent);
     padding: 4px 10px;
     border-radius: ${theme.radii.sm};
 
@@ -715,7 +702,7 @@ const DocCard = styled.div`
   transition: border-color 0.2s;
 
   &:hover {
-    border-color: rgba(209, 169, 84, 0.3);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 30%, transparent);
   }
 
   .doc-icon {
@@ -771,8 +758,8 @@ const DocCard = styled.div`
     font-size: 10px;
     font-weight: 700;
     color: ${theme.colors.textSuccess};
-    background: rgba(74, 222, 128, 0.1);
-    border: 1px solid rgba(74, 222, 128, 0.2);
+    background: ${theme.colors.bgSuccess};
+    border: 1px solid color-mix(in srgb, ${theme.colors.success} 35%, transparent);
     padding: 3px 8px;
     border-radius: 6px;
     white-space: nowrap;
@@ -816,7 +803,7 @@ const UploadZone = styled.div`
   cursor: pointer;
   transition: all 0.2s;
   background: ${({ $dragOver }) =>
-    $dragOver ? "rgba(209, 169, 84, 0.05)" : "transparent"};
+    $dragOver ? `color-mix(in srgb, ${theme.colors.primary} 5%, transparent)` : "transparent"};
   border-color: ${({ $dragOver }) =>
     $dragOver ? theme.colors.primary : theme.colors.outlineVariant};
 
@@ -829,8 +816,8 @@ const UploadZone = styled.div`
   `}
 
   &:hover {
-    border-color: rgba(209, 169, 84, 0.4);
-    background: rgba(209, 169, 84, 0.03);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 40%, transparent);
+    background: color-mix(in srgb, ${theme.colors.primary} 3%, transparent);
   }
 
   .upload-icon {
@@ -889,7 +876,7 @@ const DeleteDocBtn = styled.button`
 
   &:hover {
     color: ${theme.colors.error};
-    background: rgba(255, 180, 171, 0.1);
+    background: ${theme.colors.bgError};
   }
 `;
 
@@ -908,7 +895,7 @@ const IndexBtn = styled.button`
   &:hover {
     background: ${theme.colors.surfaceContainerHighest};
     color: ${theme.colors.onSurface};
-    border-color: rgba(209, 169, 84, 0.3);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 30%, transparent);
   }
 `;
 
@@ -930,8 +917,8 @@ const ModeHint = styled.p`
   line-height: 1.6;
   margin: 0;
   padding: ${theme.spacing.sm} ${theme.spacing.md};
-  background: rgba(209, 169, 84, 0.06);
-  border-left: 2px solid rgba(209, 169, 84, 0.3);
+  background: color-mix(in srgb, ${theme.colors.primary} 6%, transparent);
+  border-left: 2px solid color-mix(in srgb, ${theme.colors.primary} 30%, transparent);
   border-radius: 0 ${theme.radii.sm} ${theme.radii.sm} 0;
 
   strong {
@@ -962,7 +949,7 @@ const Chip = styled.button`
   &:hover {
     border-color: ${theme.colors.primary};
     color: ${theme.colors.primary};
-    background: rgba(209, 169, 84, 0.06);
+    background: color-mix(in srgb, ${theme.colors.primary} 6%, transparent);
   }
 
   &:active {
@@ -972,11 +959,11 @@ const Chip = styled.button`
 
 // ─── Error / Copy ─────────────────────────────────────────
 const ErrorMsg = styled.div`
-  background: rgba(255, 180, 171, 0.1);
-  border: 1px solid rgba(255, 180, 171, 0.3);
+  background: ${theme.colors.bgError};
+  border: 1px solid color-mix(in srgb, ${theme.colors.error} 30%, transparent);
   border-radius: ${theme.radii.lg};
   padding: ${theme.spacing.md};
-  color: ${theme.colors.error};
+  color: ${theme.colors.textError};
   font-size: ${theme.fontSizes.sm};
   display: flex;
   justify-content: space-between;
@@ -985,7 +972,7 @@ const ErrorMsg = styled.div`
   button {
     background: none;
     border: none;
-    color: ${theme.colors.error};
+    color: ${theme.colors.textError};
     cursor: pointer;
     font-size: 18px;
   }

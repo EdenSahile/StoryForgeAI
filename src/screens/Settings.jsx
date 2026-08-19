@@ -133,7 +133,7 @@ const ThemeChip = styled.button`
   cursor: pointer;
   background: ${({ $active }) =>
     $active
-      ? "rgba(209, 169, 84, 0.12)"
+      ? `color-mix(in srgb, ${theme.colors.primary} 12%, transparent)`
       : "transparent"};
   border-color: ${({ $active }) =>
     $active ? theme.colors.primary : theme.colors.outlineVariant};
@@ -170,7 +170,7 @@ const DangerBtn = styled.button`
   transition: background 0.15s;
 
   &:hover:not(:disabled) {
-    background: rgba(255, 180, 171, 0.1);
+    background: ${theme.colors.bgError};
   }
 
   &:disabled {

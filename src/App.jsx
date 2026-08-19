@@ -61,6 +61,11 @@ const GlobalStyle = createGlobalStyle`
     --color-textWarning: #f3c568;
     --color-bgError: #3a0f0f;
     --color-textError: #f5a3a3;
+
+    /* Halos d'état actif/en cours (rare, réservé aux indicateurs légitimes :
+       génération en cours, source RAG active) — jamais une teinte figée. */
+    --color-primary-glow: rgba(79, 191, 139, 0.35);
+    --color-success-glow: rgba(127, 219, 166, 0.6);
   }
 
   [data-theme="light"] {
@@ -103,6 +108,9 @@ const GlobalStyle = createGlobalStyle`
     --color-textWarning: #92610a;
     --color-bgError: #fbe9e9;
     --color-textError: #b42323;
+
+    --color-primary-glow: rgba(31, 122, 82, 0.35);
+    --color-success-glow: rgba(22, 101, 52, 0.5);
   }
 
   *, *::before, *::after {

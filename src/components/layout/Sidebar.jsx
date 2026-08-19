@@ -106,7 +106,6 @@ const NewStoryBtn = styled.button`
   justify-content: center;
   gap: ${theme.spacing.sm};
   transition: all 0.2s;
-  box-shadow: 0 4px 16px rgba(209, 169, 84, 0.3);
 
   &:hover {
     opacity: 0.9;

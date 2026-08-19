@@ -163,7 +163,7 @@ const StatCard = styled.div`
   }
 
   &:hover {
-    border-color: rgba(209, 169, 84, 0.3);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 30%, transparent);
   }
 
   .label {
@@ -278,7 +278,7 @@ const GenerationCard = styled.div`
 
   &:hover {
     background: ${theme.colors.surfaceContainer};
-    border-color: rgba(209, 169, 84, 0.2);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 20%, transparent);
 
     &::before {
       width: 3px;
@@ -350,7 +350,7 @@ const DashDeleteBtn = styled.button`
 const CTACard = styled.div`
   height: 100%;
   min-height: 280px;
-  background: rgba(29, 43, 40, 0.3);
+  background: ${theme.colors.surfaceContainer};
   border: 2px dashed ${theme.colors.outlineVariant};
   border-radius: 24px;
   display: flex;
@@ -364,7 +364,7 @@ const CTACard = styled.div`
   cursor: pointer;
 
   &:hover {
-    border-color: rgba(209, 169, 84, 0.4);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 40%, transparent);
 
     .cta-icon {
       transform: scale(1.1);
@@ -375,13 +375,12 @@ const CTACard = styled.div`
     width: 64px;
     height: 64px;
     border-radius: 16px;
-    background: rgba(209, 169, 84, 0.1);
+    background: color-mix(in srgb, ${theme.colors.primary} 10%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
     color: ${theme.colors.primary};
     transition: transform 0.2s;
-    box-shadow: 0 0 20px rgba(209, 169, 84, 0.2);
 
     .icon {
       font-family: "Material Symbols Outlined";
@@ -428,7 +427,6 @@ const GenerateBtn = styled.button`
   align-items: center;
   gap: ${theme.spacing.sm};
   transition: all 0.2s;
-  box-shadow: 0 4px 20px rgba(209, 169, 84, 0.3);
 
   .icon {
     font-family: "Material Symbols Outlined";
@@ -436,7 +434,6 @@ const GenerateBtn = styled.button`
   }
 
   &:hover {
-    box-shadow: 0 8px 28px rgba(209, 169, 84, 0.45);
     transform: translateY(-1px);
   }
 

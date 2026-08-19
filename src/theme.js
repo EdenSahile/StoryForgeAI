@@ -53,6 +53,10 @@ export const theme = {
     textWarning: "var(--color-textWarning)",
     bgError: "var(--color-bgError)",
     textError: "var(--color-textError)",
+
+    // Halos d'état actif/en cours (génération en cours, source RAG active)
+    primaryGlow: "var(--color-primary-glow)",
+    successGlow: "var(--color-success-glow)",
   },
 
   // Zéro dégradé : fond plein, cohérent avec la palette Graphite & Émeraude.
