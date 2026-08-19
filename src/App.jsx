@@ -20,6 +20,90 @@ const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
+  :root {
+    --color-background: #0c0a09;
+    --color-surface: #0c0a09;
+    --color-surfaceContainerLowest: #0c0a09;
+    --color-surfaceContainerLow: #171412;
+    --color-surfaceContainer: #221f1d;
+    --color-surfaceContainerHigh: #2c2825;
+    --color-surfaceContainerHighest: #363130;
+    --color-surfaceBright: #423c39;
+
+    --color-primary: #2563eb;
+    --color-primaryContainer: #2563eb;
+    --color-onPrimary: #ffffff;
+    --color-onPrimaryContainer: #ffffff;
+    --color-inversePrimary: #2563eb;
+
+    --color-secondary: #78716c;
+    --color-secondaryContainer: #78716c;
+    --color-onSecondary: #ffffff;
+    --color-onSecondaryContainer: #ffffff;
+
+    --color-tertiary: #78716c;
+
+    --color-onSurface: #f5f4f2;
+    --color-onSurfaceVariant: #a8a29e;
+    --color-onBackground: #f5f4f2;
+
+    --color-outline: #57534e;
+    --color-outlineVariant: #292524;
+
+    --color-error: #f87171;
+    --color-success: #4ade80;
+    --color-amber: #fbbf24;
+
+    --color-bgSuccess: #052e16;
+    --color-textSuccess: #4ade80;
+    --color-bgWarning: #451a03;
+    --color-textWarning: #fbbf24;
+    --color-bgError: #450a0a;
+    --color-textError: #f87171;
+  }
+
+  [data-theme="light"] {
+    --color-background: #f5f4f2;
+    --color-surface: #f5f4f2;
+    --color-surfaceContainerLowest: #f5f4f2;
+    --color-surfaceContainerLow: #efeeeb;
+    --color-surfaceContainer: #ffffff;
+    --color-surfaceContainerHigh: #fbfaf9;
+    --color-surfaceContainerHighest: #f5f4f2;
+    --color-surfaceBright: #ffffff;
+
+    --color-primary: #2563eb;
+    --color-primaryContainer: #2563eb;
+    --color-onPrimary: #ffffff;
+    --color-onPrimaryContainer: #ffffff;
+    --color-inversePrimary: #2563eb;
+
+    --color-secondary: #78716c;
+    --color-secondaryContainer: #78716c;
+    --color-onSecondary: #ffffff;
+    --color-onSecondaryContainer: #ffffff;
+
+    --color-tertiary: #78716c;
+
+    --color-onSurface: #1c1917;
+    --color-onSurfaceVariant: #78716c;
+    --color-onBackground: #1c1917;
+
+    --color-outline: #d6d3d1;
+    --color-outlineVariant: #e7e5e4;
+
+    --color-error: #dc2626;
+    --color-success: #16a34a;
+    --color-amber: #b45309;
+
+    --color-bgSuccess: #f0fdf4;
+    --color-textSuccess: #15803d;
+    --color-bgWarning: #fffbeb;
+    --color-textWarning: #b45309;
+    --color-bgError: #fef2f2;
+    --color-textError: #b91c1c;
+  }
+
   *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -63,6 +147,8 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 
+const THEME_STORAGE_KEY = "storypilot-theme";
+
 function App() {
   const [currentScreen, setCurrentScreen] = useState("dashboard");
   const [brief, setBrief] = useState("");
@@ -72,7 +158,15 @@ function App() {
   const [truncated, setTruncated] = useState(false);
   const [autoSaved, setAutoSaved] = useState(false);
   const [keepBrief, setKeepBrief] = useState(false);
+  const [themeMode, setThemeMode] = useState(
+    () => localStorage.getItem(THEME_STORAGE_KEY) || "dark"
+  );
   const savedFingerprintRef = useRef(null);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", themeMode);
+    localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+  }, [themeMode]);
 
   useEffect(() => {
     if (currentScreen === "results" && stories && !truncated) {
@@ -135,7 +229,7 @@ function App() {
       case "library":
         return <Library onNavigate={handleNavigate} />;
       case "settings":
-        return <Settings />;
+        return <Settings themeMode={themeMode} onThemeChange={setThemeMode} />;
       default:
         return <Dashboard onNavigate={setCurrentScreen} />;
     }

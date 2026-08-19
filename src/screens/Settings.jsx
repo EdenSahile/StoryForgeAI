@@ -119,7 +119,7 @@ const RowLabel = styled.div`
 
 // ── Apparence ──────────────────────────────────────────────
 
-const ThemeChip = styled.div`
+const ThemeChip = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
@@ -129,7 +129,8 @@ const ThemeChip = styled.div`
   font-weight: 700;
   letter-spacing: 0.04em;
   border: 1px solid;
-  cursor: ${({ $active }) => ($active ? "default" : "not-allowed")};
+  font-family: inherit;
+  cursor: pointer;
   background: ${({ $active }) =>
     $active
       ? "rgba(209, 169, 84, 0.12)"
@@ -138,7 +139,13 @@ const ThemeChip = styled.div`
     $active ? theme.colors.primary : theme.colors.outlineVariant};
   color: ${({ $active }) =>
     $active ? theme.colors.primary : theme.colors.outline};
-  opacity: ${({ $active }) => ($active ? 1 : 0.45)};
+  opacity: ${({ $active }) => ($active ? 1 : 0.7)};
+  transition: all 0.15s;
+
+  &:hover {
+    opacity: 1;
+    border-color: ${theme.colors.primary};
+  }
 
   .dot {
     width: 8px;
@@ -198,7 +205,7 @@ const ConfirmRow = styled.div`
 
   .btn-confirm {
     background: ${theme.colors.error};
-    color: #1a0500;
+    color: ${theme.colors.onPrimary};
   }
 
   .btn-cancel {
@@ -245,7 +252,7 @@ const AppIdentity = styled.div`
     justify-content: center;
     font-family: "Material Symbols Outlined";
     font-size: 22px;
-    color: #0d1917;
+    color: ${theme.colors.onPrimary};
   }
 
   .meta {
@@ -287,7 +294,7 @@ const Tag = styled.span`
 
 // ─── Component ─────────────────────────────────────────────
 
-export default function Settings() {
+export default function Settings({ themeMode, onThemeChange }) {
   const [genCount, setGenCount] = useState(0);
   const [resetConfirm, setResetConfirm] = useState(false);
   const [resetDone, setResetDone] = useState(false);
@@ -319,14 +326,22 @@ export default function Settings() {
           <Row>
             <RowLabel>
               <span className="label">Thème</span>
-              <span className="sublabel">Thème clair disponible dans une prochaine version.</span>
+              <span className="sublabel">Basculez entre le thème sombre et le thème clair.</span>
             </RowLabel>
             <div style={{ display: "flex", gap: "8px" }}>
-              <ThemeChip $active>
+              <ThemeChip
+                type="button"
+                $active={themeMode === "dark"}
+                onClick={() => onThemeChange?.("dark")}
+              >
                 <span className="dot" />
                 Sombre
               </ThemeChip>
-              <ThemeChip>
+              <ThemeChip
+                type="button"
+                $active={themeMode === "light"}
+                onClick={() => onThemeChange?.("light")}
+              >
                 <span className="dot" />
                 Clair
               </ThemeChip>

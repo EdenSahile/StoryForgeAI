@@ -357,7 +357,7 @@ const RagToggleRow = styled.label`
 
   input:checked + .track::after {
     left: 17px;
-    background: #0d1917;
+    background: ${theme.colors.onPrimary};
   }
 `;
 
@@ -372,9 +372,9 @@ const GenerateBtn = styled.button`
   background: ${({ $disabled }) =>
     $disabled
       ? theme.colors.surfaceContainerHighest
-      : "linear-gradient(135deg, #d1a954, #7fae9d)"};
+      : `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`};
   color: ${({ $disabled }) =>
-    $disabled ? theme.colors.onSurfaceVariant : "#0d1917"};
+    $disabled ? theme.colors.onSurfaceVariant : theme.colors.onPrimary};
   font-weight: 700;
   font-size: ${theme.fontSizes.md};
   cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
@@ -489,7 +489,7 @@ const SourcePill = styled.div`
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #4ade80;
+    background: ${theme.colors.success};
     flex-shrink: 0;
   }
 
@@ -667,7 +667,7 @@ const KBHeader = styled.div`
     gap: 4px;
     font-size: ${theme.fontSizes.xs};
     font-weight: 700;
-    color: #4ade80;
+    color: ${theme.colors.textSuccess};
     background: rgba(74, 222, 128, 0.1);
     border: 1px solid rgba(74, 222, 128, 0.2);
     padding: 4px 10px;
@@ -762,7 +762,7 @@ const DocCard = styled.div`
       margin-top: 4px;
       color: ${({ $status }) =>
         $status === "indexed"
-          ? "#4ade80"
+          ? theme.colors.textSuccess
           : $status === "loading"
             ? theme.colors.primary
             : theme.colors.error};
@@ -772,7 +772,7 @@ const DocCard = styled.div`
   .chunks-badge {
     font-size: 10px;
     font-weight: 700;
-    color: #4ade80;
+    color: ${theme.colors.textSuccess};
     background: rgba(74, 222, 128, 0.1);
     border: 1px solid rgba(74, 222, 128, 0.2);
     padding: 3px 8px;
@@ -798,7 +798,7 @@ const ProgressBar = styled.div`
 
   .fill {
     height: 100%;
-    background: linear-gradient(90deg, #d1a954, #7fae9d);
+    background: linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.secondary});
     border-radius: 999px;
     width: ${({ $pct }) => $pct}%;
     transition: width 0.5s ease;
@@ -1007,10 +1007,10 @@ const CopyBtn = styled.button`
   border-radius: ${theme.radii.md};
   border: 1px solid ${theme.colors.outlineVariant};
   background: white;
-  color: ${({ $copied }) => ($copied ? "#0284c7" : theme.colors.primary)};
-  background: ${({ $copied }) => ($copied ? "#dbeafe" : "white")};
+  color: ${theme.colors.primary};
+  background: ${({ $copied }) => ($copied ? `color-mix(in srgb, ${theme.colors.primary} 15%, white)` : "white")};
   border-color: ${({ $copied }) =>
-    $copied ? "#0284c7" : theme.colors.outlineVariant};
+    $copied ? theme.colors.primary : theme.colors.outlineVariant};
   font-size: ${theme.fontSizes.sm};
   font-weight: 600;
   cursor: pointer;

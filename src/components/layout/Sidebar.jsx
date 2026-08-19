@@ -96,8 +96,8 @@ const NewStoryBtn = styled.button`
   padding: ${theme.spacing.sm} ${theme.spacing.md};
   border-radius: ${theme.radii.lg};
   border: none;
-  background: linear-gradient(135deg, #d1a954, #7fae9d);
-  color: #0d1917;
+  background: linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary});
+  color: ${theme.colors.onPrimary};
   font-weight: 700;
   font-size: ${theme.fontSizes.sm};
   cursor: pointer;

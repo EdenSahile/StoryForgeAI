@@ -3,54 +3,56 @@
 
 export const theme = {
   colors: {
-    // Backgrounds — "Pétrole & or" (échelle dérivée par interpolation HSL entre
-    // les 2 ancrages validés : fond page #0d1917 et fond carte #16211f)
-    background: "#0d1917",
-    surface: "#0d1917",
-    surfaceContainerLowest: "#0d1917",
-    surfaceContainerLow: "#0f1b19",
-    surfaceContainer: "#16211f",
-    surfaceContainerHigh: "#1a2624",
-    surfaceContainerHighest: "#1d2b28",
-    surfaceBright: "#1e302d",
+    // Toutes les valeurs sont des custom properties CSS définies dans le
+    // GlobalStyle (src/App.jsx) — :root pour le thème sombre par défaut,
+    // [data-theme="light"] pour la surcharge claire. Voir la bascule de
+    // thème dans App.jsx (state "storypilot-theme", data-theme sur <html>).
+    background: "var(--color-background)",
+    surface: "var(--color-surface)",
+    surfaceContainerLowest: "var(--color-surfaceContainerLowest)",
+    surfaceContainerLow: "var(--color-surfaceContainerLow)",
+    surfaceContainer: "var(--color-surfaceContainer)",
+    surfaceContainerHigh: "var(--color-surfaceContainerHigh)",
+    surfaceContainerHighest: "var(--color-surfaceContainerHighest)",
+    surfaceBright: "var(--color-surfaceBright)",
 
-    // Primary (accent or)
-    primary: "#d1a954",
-    primaryContainer: "#d1a954",
-    onPrimary: "#0d1917",
-    onPrimaryContainer: "#0d1917",
-    inversePrimary: "#d1a954",
+    // Primary
+    primary: "var(--color-primary)",
+    primaryContainer: "var(--color-primaryContainer)",
+    onPrimary: "var(--color-onPrimary)",
+    onPrimaryContainer: "var(--color-onPrimaryContainer)",
+    inversePrimary: "var(--color-inversePrimary)",
 
-    // Secondary (vert d'eau)
-    secondary: "#7fae9d",
-    secondaryContainer: "#7fae9d",
-    onSecondary: "#0d1917",
-    onSecondaryContainer: "#0d1917",
+    // Secondary
+    secondary: "var(--color-secondary)",
+    secondaryContainer: "var(--color-secondaryContainer)",
+    onSecondary: "var(--color-onSecondary)",
+    onSecondaryContainer: "var(--color-onSecondaryContainer)",
 
-    // Tertiary (violet-mauve — non spécifié par la palette validée, dérivé pour le
-    // 3e surlignage Gherkin "Et" ; à confirmer)
-    tertiary: "#a881bb",
+    // Tertiary
+    tertiary: "var(--color-tertiary)",
 
     // Surface text
-    onSurface: "#eef2f0",
-    // Gris-teal neutre et désaturé (H169° S8% L68%), distinct de l'accent
-    // secondaire #7fae9d. onSurfaceVariant est utilisé ~150 fois dans le code
-    // pour du texte muté générique (nav, hints, sous-titres, placeholders) —
-    // réutiliser l'accent vert d'eau ici rendait quasiment tout le texte
-    // secondaire de l'app vert sur un fond déjà pétrole/vert foncé ("vert sur
-    // vert", signalé par l'utilisateur). #7fae9d reste réservé aux accents
-    // volontaires (mots-clés Gherkin, badges RAG).
-    onSurfaceVariant: "#a7b4b2",
-    onBackground: "#eef2f0",
+    onSurface: "var(--color-onSurface)",
+    onSurfaceVariant: "var(--color-onSurfaceVariant)",
+    onBackground: "var(--color-onBackground)",
 
-    // Borders (dérivés, non spécifiés par la palette validée ; à confirmer)
-    outline: "#6e8782",
-    outlineVariant: "#1c2926",
+    // Borders
+    outline: "var(--color-outline)",
+    outlineVariant: "var(--color-outlineVariant)",
 
-    // Semantic (inchangés — conventions universelles, indépendantes de l'accent de marque)
-    error: "#ffb4ab",
-    success: "#4ade80",
-    amber: "#fbbf24",
+    // Semantic
+    error: "var(--color-error)",
+    success: "var(--color-success)",
+    amber: "var(--color-amber)",
+
+    // Paires badge (fond teinté + texte), pour succès/avertissement/erreur
+    bgSuccess: "var(--color-bgSuccess)",
+    textSuccess: "var(--color-textSuccess)",
+    bgWarning: "var(--color-bgWarning)",
+    textWarning: "var(--color-textWarning)",
+    bgError: "var(--color-bgError)",
+    textError: "var(--color-textError)",
   },
 
   gradients: {

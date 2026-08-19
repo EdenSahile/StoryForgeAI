@@ -182,7 +182,7 @@ const StatusBadge = styled.div`
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #4ade80;
+    background: ${theme.colors.success};
     box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
   }
 `;
@@ -193,13 +193,13 @@ const RagBadge = styled.div`
   gap: ${theme.spacing.sm};
   font-size: ${theme.fontSizes.sm};
   font-weight: 700;
-  color: ${({ $active }) => ($active ? "#4ade80" : theme.colors.onSurfaceVariant)};
+  color: ${({ $active }) => ($active ? theme.colors.success : theme.colors.onSurfaceVariant)};
 
   .dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: ${({ $active }) => ($active ? "#4ade80" : theme.colors.onSurfaceVariant)};
+    background: ${({ $active }) => ($active ? theme.colors.success : theme.colors.onSurfaceVariant)};
     box-shadow: ${({ $active }) => ($active ? "0 0 8px rgba(74, 222, 128, 0.6)" : "none")};
   }
 `;
@@ -227,9 +227,9 @@ const OutlineBtn = styled.button`
   border-radius: ${theme.radii.md};
   border: 1px solid ${theme.colors.outlineVariant};
   background: transparent;
-  color: ${({ $copied }) => ($copied ? "#0284c7" : theme.colors.onSurface)};
-  background: ${({ $copied }) => ($copied ? "#dbeafe22" : "transparent")};
-  border-color: ${({ $copied }) => ($copied ? "#0284c7" : theme.colors.outlineVariant)};
+  color: ${({ $copied }) => ($copied ? theme.colors.primary : theme.colors.onSurface)};
+  background: ${({ $copied }) => ($copied ? `color-mix(in srgb, ${theme.colors.primary} 13%, transparent)` : "transparent")};
+  border-color: ${({ $copied }) => ($copied ? theme.colors.primary : theme.colors.outlineVariant)};
   font-size: ${theme.fontSizes.sm};
   font-weight: 600;
   cursor: pointer;
@@ -254,7 +254,7 @@ const ExportBtn = styled.button`
   border-radius: ${theme.radii.md};
   border: none;
   background: ${theme.colors.inversePrimary};
-  color: #0d1917;
+  color: ${theme.colors.onPrimary};
   font-size: ${theme.fontSizes.sm};
   font-weight: 700;
   cursor: pointer;
@@ -335,7 +335,7 @@ const ComplexityBadge = styled.span`
       ? "rgba(251, 191, 36, 0.1)"
       : "rgba(239, 68, 68, 0.1)"};
   color: ${({ $level }) =>
-    $level === "S" ? "#4ade80" : $level === "M" ? "#fbbf24" : "#ef4444"};
+    $level === "S" ? theme.colors.textSuccess : $level === "M" ? theme.colors.textWarning : theme.colors.textError};
   border: 1px solid ${({ $level }) =>
     $level === "S"
       ? "rgba(74, 222, 128, 0.2)"
@@ -345,8 +345,8 @@ const ComplexityBadge = styled.span`
 `;
 
 const StoryCopyBtn = styled(IconBtn)`
-  color: ${({ $copied }) => ($copied ? "#0284c7" : theme.colors.onSurfaceVariant)};
-  background: ${({ $copied }) => ($copied ? "#dbeafe22" : "transparent")};
+  color: ${({ $copied }) => ($copied ? theme.colors.primary : theme.colors.onSurfaceVariant)};
+  background: ${({ $copied }) => ($copied ? `color-mix(in srgb, ${theme.colors.primary} 13%, transparent)` : "transparent")};
 
   .icon {
     font-size: 18px;
@@ -359,7 +359,7 @@ const IncompleteTag = styled.span`
   padding: 4px 10px;
   border-radius: ${theme.radii.full};
   background: rgba(234, 179, 8, 0.1);
-  color: #ca8a04;
+  color: ${theme.colors.textWarning};
   border: 1px solid rgba(234, 179, 8, 0.3);
 `;
 
@@ -423,7 +423,7 @@ const CriteriaItem = styled.li`
   .check {
     font-family: "Material Symbols Outlined";
     font-size: 16px;
-    color: #4ade80;
+    color: ${theme.colors.success};
     flex-shrink: 0;
     margin-top: 1px;
     font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
@@ -458,7 +458,7 @@ const GherkinBlock = styled.div`
 
   .keyword-given { color: ${theme.colors.secondary}; font-weight: 700; }
   .keyword-when { color: ${theme.colors.primary}; font-weight: 700; }
-  .keyword-then { color: #4ade80; font-weight: 700; }
+  .keyword-then { color: ${theme.colors.success}; font-weight: 700; }
   .keyword-and { color: ${theme.colors.tertiary}; font-weight: 700; }
 `;
 
@@ -514,7 +514,7 @@ const QuickActionBtn = styled.button`
       ? theme.colors.inversePrimary
       : "transparent"};
   color: ${({ $variant }) =>
-    $variant === "primary" ? "#0d1917" : theme.colors.onSurfaceVariant};
+    $variant === "primary" ? theme.colors.onPrimary : theme.colors.onSurfaceVariant};
   border: ${({ $variant }) =>
     $variant === "primary"
       ? "none"
@@ -526,7 +526,7 @@ const QuickActionBtn = styled.button`
     opacity: 0.9;
     transform: translateY(-1px);
     color: ${({ $variant }) =>
-      $variant === "primary" ? "#0d1917" : theme.colors.onSurface};
+      $variant === "primary" ? theme.colors.onPrimary : theme.colors.onSurface};
     border-color: ${({ $variant }) =>
       $variant === "primary" ? "none" : "rgba(209, 169, 84, 0.3)"};
   }
@@ -617,7 +617,7 @@ const TruncationWarning = styled.div`
   background: rgba(234, 179, 8, 0.1);
   border: 1px solid rgba(234, 179, 8, 0.3);
   border-radius: ${theme.radii.sm};
-  color: #ca8a04;
+  color: ${theme.colors.textWarning};
   font-size: ${theme.fontSizes.sm};
   font-weight: 500;
 `;
@@ -626,7 +626,7 @@ const RegenerateBtn = styled.button`
   background: rgba(234, 179, 8, 0.15);
   border: 1px solid rgba(234, 179, 8, 0.4);
   border-radius: ${theme.radii.sm};
-  color: #ca8a04;
+  color: ${theme.colors.textWarning};
   font-size: ${theme.fontSizes.sm};
   font-weight: 600;
   padding: 4px 10px;
@@ -655,7 +655,7 @@ const SourceItem = styled.div`
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #4ade80;
+    background: ${theme.colors.success};
     flex-shrink: 0;
   }
 
@@ -671,7 +671,7 @@ const SourceItem = styled.div`
   .score {
     font-size: ${theme.fontSizes.xs};
     font-weight: 700;
-    color: #4ade80;
+    color: ${theme.colors.success};
     flex-shrink: 0;
   }
 `;

@@ -419,8 +419,8 @@ const GenerateBtn = styled.button`
   padding: ${theme.spacing.sm} ${theme.spacing.xl};
   border-radius: ${theme.radii.full};
   border: none;
-  background: linear-gradient(135deg, #d1a954, #7fae9d);
-  color: #0d1917;
+  background: linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary});
+  color: ${theme.colors.onPrimary};
   font-weight: 700;
   font-size: ${theme.fontSizes.md};
   cursor: pointer;
@@ -482,7 +482,7 @@ export default function Dashboard({ onNavigate }) {
       label: "Dernière génération",
       value: lastGen ? formatRelativeDate(lastGen.createdAt) : "—",
       sub: lastGen ? lastGen.title : null,
-      color: "#4ade80",
+      color: theme.colors.success,
       icon: "schedule",
     },
   ];
@@ -502,11 +502,11 @@ export default function Dashboard({ onNavigate }) {
               style={{
                 width: "100%",
                 height: "100%",
-                background: "linear-gradient(135deg, #d1a954, #7fae9d)",
+                background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#0d1917",
+                color: theme.colors.onPrimary,
                 fontWeight: 700,
                 fontSize: "14px",
               }}
