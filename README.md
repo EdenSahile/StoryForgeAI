@@ -59,6 +59,7 @@ Trois sections : Apparence (thème sombre actif, thème clair prévu), Données 
 | `@langchain/textsplitters` | Chunking des documents (`RecursiveCharacterTextSplitter`) |
 | Vercel | Déploiement + serverless functions |
 | Vitest + Testing Library | Tests unitaires/composants |
+| Playwright | Tests end-to-end |
 
 ---
 
@@ -75,8 +76,6 @@ src/
 │   ├── services/
 │   │   ├── claudeService.js          # Client API Claude (streaming SSE)
 │   │   └── ragService.js             # Client upload/retrieval/suppression documents
-│   ├── BriefInput.jsx                # Composant textarea (legacy v1)
-│   ├── StoriesOutput.jsx             # Rendu markdown (legacy v1)
 │   ├── ErrorBoundary.jsx             # Catch erreurs React
 │   └── Footer.jsx
 ├── screens/
@@ -168,6 +167,7 @@ npm run dev
 
 ```bash
 npx vitest run
+npx playwright test
 ```
 
 ### Déploiement
@@ -224,13 +224,17 @@ Le rate limiting (`api/generate-stories.js`) utilise une `Map` en mémoire, qui 
 
 ## Méthode de développement
 
-Ce projet est développé avec Claude Code, encadré par des règles écrites plutôt que laissé en génération libre.
+Ce projet est développé avec Claude Code, piloté et relu à chaque étape plutôt que laissé en génération libre. Mon rôle n'est pas d'écrire le code ligne à ligne, mais de cadrer le travail, vérifier chaque résultat contre le code réel, et corriger quand l'agent se trompe.
 
-- **`CLAUDE.md`** fixe les règles non négociables du repo (validation serveur, pas de fuite de détail d'erreur au client, CORS restreint par allowlist, timeouts, plafond de tokens) — la référence unique, aussi bien pour moi que pour Claude.
-- **Tests systématiques** (Vitest) : logique métier, composants, et les 5 routes serverless (`api/*.js`) testées individuellement contre les règles de `CLAUDE.md` (ex. vérifier qu'une exception ne renvoie jamais son message brut au client).
-- **Revue automatisée par CI** : chaque Pull Request est relue par Claude (`claude-pr-review.yml`) selon `CLAUDE.md` avant de pouvoir être mergée, en plus des tests automatiques.
+**Les règles avant le code.** `CLAUDE.md` fixe les règles non négociables du repo (validation serveur, pas de fuite de détail d'erreur au client, CORS restreint par allowlist, timeouts, plafond de tokens) et une discipline de branche stricte (jamais d'édition directe sur `main`). C'est la référence unique, aussi bien pour moi que pour l'agent.
 
-Cette discipline a permis de détecter et corriger, en cours de développement, une politique CORS trop permissive et une fuite de détails d'erreur serveur sur plusieurs routes — la mécanique de revue fait partie du produit, pas un détail d'implémentation caché.
+**Une couverture de tests vérifiée, pas déclarée.** 232 tests unitaires/composants (Vitest + Testing Library) sur les 5 routes serverless, la logique métier et les 5 écrans, plus 4 parcours end-to-end (Playwright) sur le chemin critique. Ces chiffres sont confirmés par exécution réelle (`npm run test:run`, `npx playwright test`) avant d'être inscrits dans `testing/inventaire-tests.md`, pas recopiés depuis le résumé de l'agent.
+
+**Une revue à deux niveaux.** Chaque Pull Request est relue automatiquement par Claude (`claude-pr-review.yml`) selon les règles de `CLAUDE.md`, en plus de ma propre revue avant merge. Cette double revue a permis de détecter et corriger, en cours de développement, une politique CORS trop permissive et une fuite de détails d'erreur serveur sur plusieurs routes.
+
+**Diagnostiquer, pas seulement accepter.** Le pipeline CI a connu trois pannes silencieuses distinctes (la revue automatique restait bloquée malgré des checks verts) : une protection anti-triche du workflow déclenchée sans le savoir, puis deux permissions manquantes sur les commandes `gh` utilisées par l'agent pour s'auto-vérifier. Chacune a été diagnostiquée en isolant les logs d'exécution réels, pas le résumé affiché par défaut, puis corrigée à la source dans le prompt de review plutôt que contournée.
+
+**Vérifier plutôt que valider par défaut.** Les changements structurels proposés par l'agent (extraction de logique métier, suppression de code mort, déplacement de fichiers de test) sont relus avant merge : un chiffre de test périmé dans un résumé, une convention de test incohérente avec le reste du repo, un fichier légitimement disparu mais resté référencé dans la documentation ont été corrigés en cours de route plutôt qu'acceptés tels quels.
 
 ---
 
