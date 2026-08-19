@@ -103,4 +103,38 @@ test.describe('Parcours critique — génération de user stories', () => {
     await expect(page.getByText('User Story 1')).toBeVisible();
     await expect(page.getByText(/suivre ma commande en temps réel/)).toBeVisible();
   });
+
+  test('la génération réussie est sauvegardée automatiquement et retrouvable dans l\'Historique', async ({ page }) => {
+    await page.goto('/');
+
+    await page.locator('aside nav a', { hasText: 'Forge' }).click();
+
+    const textarea = page.getByPlaceholder(/Décris ton besoin métier ici/);
+    await textarea.fill(BRIEF);
+
+    await page.getByRole('button', { name: /Générer les user stories/ }).click();
+
+    // Le câblage réel (src/App.jsx) ne sauvegarde en historique que si le stream n'a pas été
+    // tronqué et une fois arrivé sur l'écran "results" avec du contenu — attendre ce contenu
+    // avant de naviguer laisse le temps à l'effet de sauvegarde automatique de s'exécuter.
+    await expect(page.getByRole('heading', { name: 'Backlog de Génération' })).toBeVisible();
+    await expect(page.getByText(/suivre ma commande en temps réel/)).toBeVisible();
+
+    // Même piège de sélecteur que pour "Forge" : cibler aside nav a, jamais le texte seul
+    // (le libellé "Historique" existe aussi dans le BottomNav mobile, présent dans le DOM).
+    await page.locator('aside nav a', { hasText: 'Historique' }).click();
+
+    // Titre de l'entrée = début du brief tronqué à 60 caractères (src/utils/libraryStorage.js) :
+    // le début de la constante BRIEF suffit à l'identifier sans deviner la troncature exacte.
+    const entryTitle = page.getByText(/^Permettre à un client de suivre sa commande/);
+    await expect(entryTitle).toBeVisible();
+    // storiesCount affiché tel quel par Library.jsx (`{gen.storiesCount} stories`, sans accord
+    // singulier/pluriel) : FAKE_STORY ne contient qu'une seule "**User Story N**".
+    await expect(page.getByText('1 stories')).toBeVisible();
+
+    await entryTitle.click();
+
+    // Vue détail : le contenu de la story sauvegardée est bien celui généré (FAKE_STORY).
+    await expect(page.getByText(/suivre ma commande en temps réel/)).toBeVisible();
+  });
 });
