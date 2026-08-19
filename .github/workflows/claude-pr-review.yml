@@ -42,6 +42,11 @@ jobs:
           claude_args: |
             --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review:*)"
           prompt: |
+            You are reviewing PR #${{ github.event.pull_request.number }}
+            specifically. Use `gh pr view ${{ github.event.pull_request.number }}`
+            and `gh pr diff ${{ github.event.pull_request.number }}` directly —
+            do not run `gh pr list` to discover it.
+
             Review this pull request against the conventions in CLAUDE.md
             (never expose the Anthropic API key client-side, never return raw
             error.message to the client per SEC-001, brief validated server-side
