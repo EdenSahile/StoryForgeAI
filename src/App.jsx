@@ -4,6 +4,7 @@
 import { useState, useEffect, useRef } from "react";
 import { saveGeneration } from "./utils/libraryStorage";
 import { listDocuments } from "./components/services/ragService";
+import { getStoredTheme, saveTheme } from "./logic/themeStorage";
 import styled, { createGlobalStyle } from "styled-components";
 import { theme } from "./theme";
 import Sidebar from "./components/layout/Sidebar";
@@ -156,8 +157,6 @@ const GlobalStyle = createGlobalStyle`
 `;
 
 
-const THEME_STORAGE_KEY = "storypilot-theme";
-
 function App() {
   const [currentScreen, setCurrentScreen] = useState("dashboard");
   const [brief, setBrief] = useState("");
@@ -167,14 +166,12 @@ function App() {
   const [truncated, setTruncated] = useState(false);
   const [autoSaved, setAutoSaved] = useState(false);
   const [keepBrief, setKeepBrief] = useState(false);
-  const [themeMode, setThemeMode] = useState(
-    () => localStorage.getItem(THEME_STORAGE_KEY) || "dark"
-  );
+  const [themeMode, setThemeMode] = useState(getStoredTheme);
   const savedFingerprintRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", themeMode);
-    localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+    saveTheme(themeMode);
   }, [themeMode]);
 
   useEffect(() => {

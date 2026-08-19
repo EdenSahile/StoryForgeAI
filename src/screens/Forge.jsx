@@ -991,9 +991,9 @@ const CopyBtn = styled.button`
   padding: 8px 16px;
   border-radius: ${theme.radii.md};
   border: 1px solid ${theme.colors.outlineVariant};
-  background: white;
   color: ${theme.colors.primary};
-  background: ${({ $copied }) => ($copied ? `color-mix(in srgb, ${theme.colors.primary} 15%, white)` : "white")};
+  background: ${({ $copied }) =>
+    $copied ? `color-mix(in srgb, ${theme.colors.primary} 15%, transparent)` : "transparent"};
   border-color: ${({ $copied }) =>
     $copied ? theme.colors.primary : theme.colors.outlineVariant};
   font-size: ${theme.fontSizes.sm};

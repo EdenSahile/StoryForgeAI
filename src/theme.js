@@ -110,18 +110,3 @@ export const theme = {
     xs: "480px",
   },
 };
-
-// Helpers CSS réutilisables (non utilisés actuellement dans le code)
-export const glassCard = `
-  background: rgba(22, 33, 31, 0.4);
-  backdrop-filter: blur(12px);
-  border: 1px solid #1c2926;
-`;
-
-export const indigoGradient = `
-  background: linear-gradient(135deg, #d1a954, #7fae9d);
-`;
-
-export const primaryGradient = `
-  background: linear-gradient(135deg, #d1a954, #7fae9d);
-`;
