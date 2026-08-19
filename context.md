@@ -5,10 +5,11 @@
 
 ## Reste à faire (prioritaire, à ne pas perdre)
 
-Deux sujets identifiés lors de la session TESTS-API-SECU (2026-08-18), volontairement reportés à une session dédiée — voir le détail dans cette session ci-dessous :
+Trois sujets de petite dette technique, volontairement reportés à une session dédiée :
 
-- [ ] **`topK` non validé côté serveur** dans `api/retrieve-context.js` (ligne 30) — aucune borne min/max, aucun contrôle de type, transmis tel quel à `index.query()`. Définir une vraie borne et l'ajouter à `CLAUDE.md` avant de coder le fix.
-- [ ] **Statut 500 au lieu de 400** dans `api/upload-doc.js` pour une extension de fichier non supportée — l'exception levée par `extractText()` passe par le catch générique (qui renvoie désormais un message générique, mais toujours avec un code 500). Décider si ce cas doit devenir une vraie erreur de validation 400.
+- [ ] **`topK` non validé côté serveur** dans `api/retrieve-context.js` (ligne 30) — aucune borne min/max, aucun contrôle de type, transmis tel quel à `index.query()`. Définir une vraie borne et l'ajouter à `CLAUDE.md` avant de coder le fix. *(Identifié lors de la session TESTS-API-SECU, 2026-08-18.)*
+- [ ] **Statut 500 au lieu de 400** dans `api/upload-doc.js` pour une extension de fichier non supportée — l'exception levée par `extractText()` passe par le catch générique (qui renvoie désormais un message générique, mais toujours avec un code 500). Décider si ce cas doit devenir une vraie erreur de validation 400. *(Identifié lors de la session TESTS-API-SECU, 2026-08-18.)*
+- [ ] **`onTruncated` appelé deux fois** dans `claudeService.js` (`generateStories`) quand le serveur envoie explicitement `{ truncated: true }` — le flag ne met pas `receivedStop` à `true` (seul `parsed.stop` le fait), donc la vérification de fin de boucle (`charCount > 0 && !receivedStop`) se redéclenche juste après l'appel déjà fait pour le flag explicite. Comportement testé tel quel (`toHaveBeenCalledTimes(2)`) dans `src/test/claudeService.test.js`, pas corrigé. Décider si un seul appel suffit et, si oui, comment le garantir (ex. `receivedStop` aussi mis à `true` sur `truncated`, ou compteur/flag dédié). *(Identifié lors de la session TEST-CLAUDE-SERVICE, 2026-08-19.)*
 
 ---
 
