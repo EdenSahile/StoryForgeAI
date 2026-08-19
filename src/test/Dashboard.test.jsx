@@ -1,0 +1,165 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, within } from '@testing-library/react';
+import Dashboard from '../screens/Dashboard';
+import { saveGeneration } from '../utils/libraryStorage';
+
+function renderDashboard(onNavigate = vi.fn()) {
+  return { onNavigate, ...render(<Dashboard onNavigate={onNavigate} />) };
+}
+
+// Le label texte d'une carte stats est le seul enfant direct non-div de
+// StatCard — .closest('div') depuis ce span remonte donc directement au
+// conteneur de la carte (navigation structurelle par balise, pas par classe).
+function getStatCard(label) {
+  return screen.getByText(label).closest('div');
+}
+
+// Le titre de la génération la plus récente apparaît deux fois dans le DOM
+// (sub de la carte "Dernière génération" + titre dans "Générations
+// récentes") : on scope les requêtes sur cette liste à la section pour
+// lever l'ambiguïté, plutôt que de se fier à getByText seul.
+function getRecentSection() {
+  return screen.getByText('Générations récentes').closest('section');
+}
+
+beforeEach(() => {
+  localStorage.clear();
+});
+
+describe('Dashboard — état vide', () => {
+  it('affiche "—" comme valeur sur les 3 cartes stats', () => {
+    renderDashboard();
+
+    expect(screen.getAllByText('—')).toHaveLength(3);
+    expect(screen.getByText('via 0 génération(s)')).toBeInTheDocument();
+    expect(screen.getByText('Sauvegardées en local')).toBeInTheDocument();
+    // La 3e carte ("Dernière génération") n'a pas de sub : lastGen est
+    // undefined donc stat.sub vaut null — rien à chercher par construction,
+    // il n'existe aucun titre de génération pouvant y apparaître.
+  });
+
+  it('affiche le message "Aucune génération sauvegardée pour l\'instant." dans Générations récentes', () => {
+    renderDashboard();
+
+    expect(screen.getByText("Aucune génération sauvegardée pour l'instant.")).toBeInTheDocument();
+  });
+});
+
+describe('Dashboard — avec des générations', () => {
+  function seedFour() {
+    // Ordre d'appel = ordre chronologique de sauvegarde (la plus ancienne
+    // en premier). getGenerations() les retourne triées du plus récent au
+    // plus ancien, donc l'ordre affiché sera D, C, B, A.
+    saveGeneration({ brief: 'Ancienne génération avant les trois autres', stories: 's', storiesCount: 2 });
+    saveGeneration({ brief: 'Génération B', stories: 's', storiesCount: 5 });
+    saveGeneration({ brief: 'Génération C', stories: 's', storiesCount: 1 });
+    saveGeneration({ brief: 'Génération D la plus récente', stories: 's', storiesCount: 3 });
+  }
+
+  it('affiche les bonnes valeurs sur les 3 cartes stats', () => {
+    seedFour();
+    renderDashboard();
+
+    const total = getStatCard('Générations totales');
+    expect(within(total).getByText('4')).toBeInTheDocument();
+    expect(within(total).getByText('Sauvegardées en local')).toBeInTheDocument();
+
+    const monthly = getStatCard('Stories sauvegardées ce mois');
+    expect(within(monthly).getByText('11')).toBeInTheDocument(); // 2+5+1+3
+    expect(within(monthly).getByText('via 4 génération(s)')).toBeInTheDocument();
+
+    const last = getStatCard('Dernière génération');
+    expect(within(last).getByText('Il y a 0 min')).toBeInTheDocument();
+    expect(within(last).getByText('Génération D la plus récente')).toBeInTheDocument();
+  });
+
+  it('affiche uniquement les 3 générations les plus récentes dans "Générations récentes"', () => {
+    seedFour();
+    renderDashboard();
+
+    const recent = within(getRecentSection());
+    expect(recent.getByText('Génération D la plus récente')).toBeInTheDocument();
+    expect(recent.getByText('Génération C')).toBeInTheDocument();
+    expect(recent.getByText('Génération B')).toBeInTheDocument();
+    expect(recent.queryByText(/Ancienne génération avant les trois autres/)).not.toBeInTheDocument();
+  });
+
+  it('affiche le bon storiesCount ("X stories") sur chaque carte récente', () => {
+    seedFour();
+    renderDashboard();
+
+    expect(screen.getByText(/· 3 stories$/)).toBeInTheDocument(); // D
+    expect(screen.getByText(/· 1 stories$/)).toBeInTheDocument(); // C
+    expect(screen.getByText(/· 5 stories$/)).toBeInTheDocument(); // B
+  });
+
+  it('appelle onNavigate("library") au clic sur une carte de génération', () => {
+    saveGeneration({ brief: 'Une génération quelconque', stories: 's', storiesCount: 1 });
+    const { onNavigate } = renderDashboard();
+
+    fireEvent.click(within(getRecentSection()).getByText('Une génération quelconque'));
+
+    expect(onNavigate).toHaveBeenCalledWith('library');
+  });
+});
+
+describe('Dashboard — suppression d\'une génération', () => {
+  it('ne déclenche pas onNavigate (stopPropagation) et retire réellement la génération du storage', () => {
+    // saveGeneration génère l'id via Date.now().toString() : deux appels
+    // synchrones consécutifs peuvent tomber sur la même milliseconde et
+    // produire le même id (vérifié empiriquement), ce qui ferait supprimer
+    // les deux entrées au lieu d'une seule via deleteGeneration. On fige le
+    // temps et on l'avance manuellement entre les deux appels pour garantir
+    // des id distincts, sans dépendre du timing réel de la machine.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-15T12:00:00.000Z'));
+    saveGeneration({ brief: 'Génération à garder', stories: 's', storiesCount: 1 });
+    vi.setSystemTime(new Date('2026-06-15T12:00:00.001Z'));
+    saveGeneration({ brief: 'Génération à supprimer', stories: 's', storiesCount: 1 });
+    vi.useRealTimers();
+
+    const { onNavigate } = renderDashboard();
+
+    // .closest('div') depuis le titre remonte à .info (son parent direct),
+    // pas à GenerationCard qui contient aussi le bouton supprimer — un
+    // niveau plus haut.
+    const cardToDelete = within(getRecentSection()).getByText('Génération à supprimer').closest('div').parentElement;
+    fireEvent.click(within(cardToDelete).getByTitle('Supprimer cette génération'));
+
+    expect(onNavigate).not.toHaveBeenCalled();
+    expect(screen.queryByText('Génération à supprimer')).not.toBeInTheDocument();
+    // "Génération à garder" est désormais la seule entrée : elle apparaît à
+    // la fois dans la liste et comme sub de "Dernière génération" (doublon
+    // légitime, même motif que getRecentSection ailleurs dans ce fichier).
+    expect(within(getRecentSection()).getByText('Génération à garder')).toBeInTheDocument();
+    expect(within(getStatCard('Générations totales')).getByText('1')).toBeInTheDocument();
+  });
+});
+
+describe('Dashboard — CTA "Nouvelle génération"', () => {
+  it('appelle onNavigate("forge") une seule fois au clic sur la carte (hors du bouton Générer)', () => {
+    const { onNavigate } = renderDashboard();
+
+    fireEvent.click(screen.getByText('Nouvelle génération'));
+
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(onNavigate).toHaveBeenCalledWith('forge');
+  });
+
+  it('appelle onNavigate("forge") DEUX FOIS au clic sur le bouton "Générer" (comportement actuel, pas corrigé)', () => {
+    // GenerateBtn a son propre onClick ET est imbriqué dans CTACard qui a
+    // aussi un onClick sur "forge" sans stopPropagation. Un clic sur le
+    // bouton déclenche donc le handler du bouton, puis l'événement bubble
+    // jusqu'à CTACard dont le handler se déclenche à son tour — deux appels
+    // à onNavigate("forge") pour un seul clic. Documenté tel quel, non
+    // corrigé (pas de bug fonctionnel visible : les deux appels sont
+    // idempotents côté navigation).
+    const { onNavigate } = renderDashboard();
+
+    fireEvent.click(screen.getByRole('button', { name: /Générer/i }));
+
+    expect(onNavigate).toHaveBeenCalledTimes(2);
+    expect(onNavigate).toHaveBeenNthCalledWith(1, 'forge');
+    expect(onNavigate).toHaveBeenNthCalledWith(2, 'forge');
+  });
+});
