@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseStories } from './storyParser';
+import { parseStories } from '../logic/storyParser';
 
 // Fixture au format exact produit par le prompt système de
 // api/generate-stories.js.
