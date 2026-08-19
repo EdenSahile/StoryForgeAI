@@ -327,7 +327,7 @@ const ComplexityBadge = styled.span`
   font-size: ${theme.fontSizes.xs};
   font-weight: 700;
   padding: 4px 12px;
-  border-radius: ${theme.radii.full};
+  border-radius: ${theme.radii.sm};
   background: ${({ $level }) =>
     $level === "S"
       ? "rgba(74, 222, 128, 0.1)"
@@ -357,7 +357,7 @@ const IncompleteTag = styled.span`
   font-size: ${theme.fontSizes.xs};
   font-weight: 700;
   padding: 4px 10px;
-  border-radius: ${theme.radii.full};
+  border-radius: ${theme.radii.sm};
   background: rgba(234, 179, 8, 0.1);
   color: ${theme.colors.textWarning};
   border: 1px solid rgba(234, 179, 8, 0.3);

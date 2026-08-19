@@ -17,24 +17,25 @@ import Library from "./screens/Library";
 import Settings from "./screens/Settings";
 
 const GlobalStyle = createGlobalStyle`
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
   :root {
-    --color-background: #0c0a09;
-    --color-surface: #0c0a09;
-    --color-surfaceContainerLowest: #0c0a09;
-    --color-surfaceContainerLow: #171412;
-    --color-surfaceContainer: #221f1d;
-    --color-surfaceContainerHigh: #2c2825;
-    --color-surfaceContainerHighest: #363130;
-    --color-surfaceBright: #423c39;
+    /* Palette "Graphite & Émeraude" — cf. artefact de comparaison,
+       ratios WCAG 2.1 vérifiés par calcul (pas estimés). */
+    --color-background: #0d1210;
+    --color-surface: #0d1210;
+    --color-surfaceContainerLowest: #0d1210;
+    --color-surfaceContainerLow: #141a17;
+    --color-surfaceContainer: #141a17;
+    --color-surfaceContainerHigh: #141a17;
+    --color-surfaceContainerHighest: #141a17;
+    --color-surfaceBright: #141a17;
 
-    --color-primary: #2563eb;
-    --color-primaryContainer: #2563eb;
-    --color-onPrimary: #ffffff;
-    --color-onPrimaryContainer: #ffffff;
-    --color-inversePrimary: #2563eb;
+    --color-primary: #4fbf8b;
+    --color-primaryContainer: #4fbf8b;
+    --color-onPrimary: #0d1210;
+    --color-onPrimaryContainer: #0d1210;
+    --color-inversePrimary: #4fbf8b;
 
     --color-secondary: #78716c;
     --color-secondaryContainer: #78716c;
@@ -43,40 +44,40 @@ const GlobalStyle = createGlobalStyle`
 
     --color-tertiary: #78716c;
 
-    --color-onSurface: #f5f4f2;
-    --color-onSurfaceVariant: #a8a29e;
-    --color-onBackground: #f5f4f2;
+    --color-onSurface: #eef2f0;
+    --color-onSurfaceVariant: #9fada6;
+    --color-onBackground: #eef2f0;
 
-    --color-outline: #57534e;
-    --color-outlineVariant: #292524;
+    --color-outline: #57635c;
+    --color-outlineVariant: #57635c;
 
-    --color-error: #f87171;
-    --color-success: #4ade80;
-    --color-amber: #fbbf24;
+    --color-error: #f5a3a3;
+    --color-success: #7fdba6;
+    --color-amber: #f3c568;
 
-    --color-bgSuccess: #052e16;
-    --color-textSuccess: #4ade80;
-    --color-bgWarning: #451a03;
-    --color-textWarning: #fbbf24;
-    --color-bgError: #450a0a;
-    --color-textError: #f87171;
+    --color-bgSuccess: #0d2b1c;
+    --color-textSuccess: #7fdba6;
+    --color-bgWarning: #332205;
+    --color-textWarning: #f3c568;
+    --color-bgError: #3a0f0f;
+    --color-textError: #f5a3a3;
   }
 
   [data-theme="light"] {
-    --color-background: #f5f4f2;
-    --color-surface: #f5f4f2;
-    --color-surfaceContainerLowest: #f5f4f2;
-    --color-surfaceContainerLow: #efeeeb;
+    --color-background: #f4f6f4;
+    --color-surface: #f4f6f4;
+    --color-surfaceContainerLowest: #f4f6f4;
+    --color-surfaceContainerLow: #ffffff;
     --color-surfaceContainer: #ffffff;
-    --color-surfaceContainerHigh: #fbfaf9;
-    --color-surfaceContainerHighest: #f5f4f2;
+    --color-surfaceContainerHigh: #ffffff;
+    --color-surfaceContainerHighest: #ffffff;
     --color-surfaceBright: #ffffff;
 
-    --color-primary: #2563eb;
-    --color-primaryContainer: #2563eb;
+    --color-primary: #1f7a52;
+    --color-primaryContainer: #1f7a52;
     --color-onPrimary: #ffffff;
     --color-onPrimaryContainer: #ffffff;
-    --color-inversePrimary: #2563eb;
+    --color-inversePrimary: #1f7a52;
 
     --color-secondary: #78716c;
     --color-secondaryContainer: #78716c;
@@ -85,23 +86,23 @@ const GlobalStyle = createGlobalStyle`
 
     --color-tertiary: #78716c;
 
-    --color-onSurface: #1c1917;
-    --color-onSurfaceVariant: #78716c;
-    --color-onBackground: #1c1917;
+    --color-onSurface: #161a18;
+    --color-onSurfaceVariant: #5c655f;
+    --color-onBackground: #161a18;
 
-    --color-outline: #d6d3d1;
-    --color-outlineVariant: #e7e5e4;
+    --color-outline: #707a74;
+    --color-outlineVariant: #707a74;
 
-    --color-error: #dc2626;
-    --color-success: #16a34a;
-    --color-amber: #b45309;
+    --color-error: #b42323;
+    --color-success: #166534;
+    --color-amber: #92610a;
 
-    --color-bgSuccess: #f0fdf4;
-    --color-textSuccess: #15803d;
-    --color-bgWarning: #fffbeb;
-    --color-textWarning: #b45309;
-    --color-bgError: #fef2f2;
-    --color-textError: #b91c1c;
+    --color-bgSuccess: #e9f7ef;
+    --color-textSuccess: #166534;
+    --color-bgWarning: #fdf3dc;
+    --color-textWarning: #92610a;
+    --color-bgError: #fbe9e9;
+    --color-textError: #b42323;
   }
 
   *, *::before, *::after {

@@ -360,7 +360,7 @@ const MetaBadge = styled.span`
   font-size: ${theme.fontSizes.xs};
   font-weight: 700;
   padding: 4px 10px;
-  border-radius: ${theme.radii.full};
+  border-radius: ${theme.radii.sm};
   background: ${theme.colors.surfaceContainerHighest};
   color: ${theme.colors.onSurfaceVariant};
   letter-spacing: 0.04em;

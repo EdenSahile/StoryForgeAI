@@ -112,7 +112,7 @@ const GeneratingBadge = styled.div`
   gap: ${theme.spacing.sm};
   padding: 6px ${theme.spacing.md};
   background: ${theme.colors.surfaceContainer};
-  border-radius: ${theme.radii.full};
+  border-radius: ${theme.radii.sm};
   font-size: ${theme.fontSizes.xs};
   font-weight: 700;
   color: ${theme.colors.onSurfaceVariant};
@@ -370,9 +370,7 @@ const GenerateBtn = styled.button`
   border-radius: ${theme.radii.lg};
   border: none;
   background: ${({ $disabled }) =>
-    $disabled
-      ? theme.colors.surfaceContainerHighest
-      : `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`};
+    $disabled ? theme.colors.surfaceContainerHighest : theme.colors.primary};
   color: ${({ $disabled }) =>
     $disabled ? theme.colors.onSurfaceVariant : theme.colors.onPrimary};
   font-weight: 700;
@@ -671,7 +669,7 @@ const KBHeader = styled.div`
     background: rgba(74, 222, 128, 0.1);
     border: 1px solid rgba(74, 222, 128, 0.2);
     padding: 4px 10px;
-    border-radius: ${theme.radii.full};
+    border-radius: ${theme.radii.sm};
 
     .icon {
       font-family: "Material Symbols Outlined";
@@ -798,7 +796,7 @@ const ProgressBar = styled.div`
 
   .fill {
     height: 100%;
-    background: linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.secondary});
+    background: ${theme.colors.primary};
     border-radius: 999px;
     width: ${({ $pct }) => $pct}%;
     transition: width 0.5s ease;

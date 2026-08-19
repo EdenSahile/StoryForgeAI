@@ -55,14 +55,15 @@ export const theme = {
     textError: "var(--color-textError)",
   },
 
+  // Zéro dégradé : fond plein, cohérent avec la palette Graphite & Émeraude.
   gradients: {
-    primary: "linear-gradient(135deg, #d1a954, #7fae9d)",
-    primaryContainer: "linear-gradient(135deg, #d1a954, #7fae9d)",
-    subtle: "linear-gradient(135deg, #d1a954, #7fae9d)",
+    primary: "var(--color-primary)",
+    primaryContainer: "var(--color-primary)",
+    subtle: "var(--color-primary)",
   },
 
   fonts: {
-    sans: "'Inter', sans-serif",
+    sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     mono: "'JetBrains Mono', 'Courier New', monospace",
   },
 
@@ -96,8 +97,6 @@ export const theme = {
   },
 
   shadows: {
-    primary: "0 0 20px rgba(209, 169, 84, 0.15)",
-    primaryStrong: "0 8px 32px rgba(209, 169, 84, 0.25)",
     card: "0 2px 12px rgba(0, 0, 0, 0.3)",
   },
 

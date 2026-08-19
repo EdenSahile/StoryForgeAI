@@ -419,7 +419,7 @@ const GenerateBtn = styled.button`
   padding: ${theme.spacing.sm} ${theme.spacing.xl};
   border-radius: ${theme.radii.full};
   border: none;
-  background: linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary});
+  background: ${theme.colors.primary};
   color: ${theme.colors.onPrimary};
   font-weight: 700;
   font-size: ${theme.fontSizes.md};
@@ -502,7 +502,7 @@ export default function Dashboard({ onNavigate }) {
               style={{
                 width: "100%",
                 height: "100%",
-                background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
+                background: theme.colors.primary,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
