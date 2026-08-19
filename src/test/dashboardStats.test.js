@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { formatRelativeDate, getMonthlyStats } from './dashboardStats';
+import { formatRelativeDate, getMonthlyStats } from '../logic/dashboardStats';
 
 describe('formatRelativeDate', () => {
   const NOW = new Date('2026-06-15T12:00:00.000Z');
