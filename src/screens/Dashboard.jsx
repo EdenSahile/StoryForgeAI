@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { theme } from "../theme";
 import { getGenerations, deleteGeneration } from "../utils/libraryStorage";
+import { formatRelativeDate, getMonthlyStats } from "../logic/dashboardStats";
 
 // ─── Animations ───────────────────────────────────────────
 const fadeInUp = keyframes`
@@ -444,17 +445,6 @@ const GenerateBtn = styled.button`
   }
 `;
 
-function formatRelativeDate(isoString) {
-  const diff = Date.now() - new Date(isoString).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 60) return `Il y a ${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Il y a ${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return "Hier";
-  return `Il y a ${days} jours`;
-}
-
 // ─── Component ────────────────────────────────────────────
 export default function Dashboard({ onNavigate }) {
   const [generations, setGenerations] = useState([]);
@@ -469,13 +459,7 @@ export default function Dashboard({ onNavigate }) {
     setGenerations(getGenerations());
   };
 
-  const thisMonth = new Date();
-  thisMonth.setDate(1);
-  thisMonth.setHours(0, 0, 0, 0);
-
-  const storiesThisMonth = generations
-    .filter((g) => new Date(g.createdAt) >= thisMonth)
-    .reduce((sum, g) => sum + (g.storiesCount || 0), 0);
+  const { storiesThisMonth, generationsThisMonth } = getMonthlyStats(generations);
 
   const lastGen = generations[0];
 
@@ -483,7 +467,7 @@ export default function Dashboard({ onNavigate }) {
     {
       label: "Stories sauvegardées ce mois",
       value: storiesThisMonth || "—",
-      sub: `via ${generations.filter((g) => new Date(g.createdAt) >= thisMonth).length} génération(s)`,
+      sub: `via ${generationsThisMonth} génération(s)`,
       color: theme.colors.primary,
       icon: "description",
     },
