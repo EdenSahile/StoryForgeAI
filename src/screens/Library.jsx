@@ -29,12 +29,36 @@ const TopBar = styled.header`
   z-index: 30;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   height: 64px;
   padding: 0 ${theme.spacing.lg};
-  background: rgba(13, 25, 23, 0.85);
+  background: color-mix(in srgb, ${theme.colors.surface} 85%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid ${theme.colors.outlineVariant};
   gap: ${theme.spacing.sm};
+`;
+
+const IconBtn = styled.button`
+  background: none;
+  border: none;
+  color: ${theme.colors.onSurfaceVariant};
+  cursor: pointer;
+  padding: 6px;
+  border-radius: ${theme.radii.sm};
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  .icon {
+    font-family: "Material Symbols Outlined";
+    font-size: 22px;
+  }
+
+  &:hover {
+    color: ${theme.colors.primary};
+    background: ${theme.colors.surfaceContainerHighest};
+  }
 `;
 
 const TopBarLeft = styled.div`
@@ -165,7 +189,7 @@ const EntryCard = styled.div`
 
   &:hover {
     background: ${theme.colors.surfaceContainer};
-    border-color: rgba(209, 169, 84, 0.25);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 25%, transparent);
     &::before { width: 3px; }
   }
 
@@ -217,8 +241,8 @@ const Pill = styled.a`
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(209, 169, 84, 0.08);
-  border: 1px solid rgba(209, 169, 84, 0.18);
+  background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
+  border: 1px solid color-mix(in srgb, ${theme.colors.primary} 18%, transparent);
   color: ${theme.colors.onSurfaceVariant};
   max-width: 160px;
   white-space: nowrap;
@@ -229,8 +253,8 @@ const Pill = styled.a`
   transition: background 0.15s, border-color 0.15s;
 
   &:hover {
-    background: rgba(209, 169, 84, 0.08);
-    border-color: rgba(209, 169, 84, 0.35);
+    background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 35%, transparent);
     color: ${theme.colors.primary};
   }
 `;
@@ -250,7 +274,7 @@ const DeleteBtn = styled.button`
 
   &:hover {
     color: ${theme.colors.error};
-    background: rgba(255, 180, 171, 0.1);
+    background: ${theme.colors.bgError};
   }
 `;
 
@@ -266,8 +290,8 @@ const DocChip = styled.a`
   gap: 6px;
   padding: 8px 14px;
   border-radius: ${theme.radii.md};
-  background: rgba(209, 169, 84, 0.08);
-  border: 1px solid rgba(209, 169, 84, 0.22);
+  background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
+  border: 1px solid color-mix(in srgb, ${theme.colors.primary} 22%, transparent);
   color: ${theme.colors.primary};
   font-size: ${theme.fontSizes.sm};
   font-weight: 600;
@@ -283,8 +307,8 @@ const DocChip = styled.a`
   }
 
   &:hover {
-    background: rgba(209, 169, 84, 0.08);
-    border-color: rgba(209, 169, 84, 0.45);
+    background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 45%, transparent);
   }
 
   &:active {
@@ -304,7 +328,7 @@ const DetailDeleteBtn = styled.button`
   gap: 6px;
   padding: 8px 16px;
   border-radius: ${theme.radii.md};
-  border: 1px solid rgba(255, 180, 171, 0.3);
+  border: 1px solid color-mix(in srgb, ${theme.colors.error} 30%, transparent);
   background: transparent;
   color: ${theme.colors.error};
   font-size: ${theme.fontSizes.sm};
@@ -319,7 +343,7 @@ const DetailDeleteBtn = styled.button`
   }
 
   &:hover {
-    background: rgba(255, 180, 171, 0.1);
+    background: ${theme.colors.bgError};
     border-color: ${theme.colors.error};
   }
 `;
@@ -360,7 +384,7 @@ const MetaBadge = styled.span`
   font-size: ${theme.fontSizes.xs};
   font-weight: 700;
   padding: 4px 10px;
-  border-radius: ${theme.radii.full};
+  border-radius: ${theme.radii.sm};
   background: ${theme.colors.surfaceContainerHighest};
   color: ${theme.colors.onSurfaceVariant};
   letter-spacing: 0.04em;
@@ -425,7 +449,7 @@ const CopyBtn = styled.button`
   padding: 8px 16px;
   border-radius: ${theme.radii.md};
   border: 1px solid ${({ $copied }) => $copied ? theme.colors.primary : theme.colors.outlineVariant};
-  background: ${({ $copied }) => $copied ? "rgba(209, 169, 84,0.08)" : "transparent"};
+  background: ${({ $copied }) => $copied ? `color-mix(in srgb, ${theme.colors.primary} 8%, transparent)` : "transparent"};
   color: ${({ $copied }) => $copied ? theme.colors.primary : theme.colors.onSurfaceVariant};
   font-size: ${theme.fontSizes.sm};
   font-weight: 600;
@@ -470,7 +494,7 @@ function formatDate(iso) {
 }
 
 // ─── Component ────────────────────────────────────────────
-export default function Library({ onNavigate }) {
+export default function Library({ onNavigate, themeMode, onThemeChange }) {
   const [generations, setGenerations] = useState([]);
   const [selected, setSelected] = useState(null);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -540,6 +564,17 @@ export default function Library({ onNavigate }) {
             </>
           )}
         </TopBarLeft>
+        <IconBtn
+          onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
+          title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+        >
+          <span
+            className="icon"
+            style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
+          >
+            {themeMode === "dark" ? "light_mode" : "dark_mode"}
+          </span>
+        </IconBtn>
       </TopBar>
 
       <Content>

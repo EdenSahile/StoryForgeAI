@@ -39,7 +39,7 @@ const TopBar = styled.header`
   justify-content: space-between;
   height: 64px;
   padding: 0 ${theme.spacing.lg};
-  background: rgba(13, 25, 23, 0.85);
+  background: color-mix(in srgb, ${theme.colors.surface} 85%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid ${theme.colors.outlineVariant};
 `;
@@ -165,8 +165,8 @@ const ActionBar = styled.div`
   flex-wrap: wrap;
   gap: ${theme.spacing.md};
   padding: ${theme.spacing.md} ${theme.spacing.lg};
-  background: rgba(209, 169, 84, 0.05);
-  border: 1px solid rgba(209, 169, 84, 0.15);
+  background: color-mix(in srgb, ${theme.colors.primary} 5%, transparent);
+  border: 1px solid color-mix(in srgb, ${theme.colors.primary} 15%, transparent);
   border-radius: ${theme.radii.lg};
 `;
 
@@ -182,8 +182,8 @@ const StatusBadge = styled.div`
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #4ade80;
-    box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+    background: ${theme.colors.success};
+    box-shadow: 0 0 8px ${theme.colors.successGlow};
   }
 `;
 
@@ -193,14 +193,14 @@ const RagBadge = styled.div`
   gap: ${theme.spacing.sm};
   font-size: ${theme.fontSizes.sm};
   font-weight: 700;
-  color: ${({ $active }) => ($active ? "#4ade80" : theme.colors.onSurfaceVariant)};
+  color: ${({ $active }) => ($active ? theme.colors.success : theme.colors.onSurfaceVariant)};
 
   .dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: ${({ $active }) => ($active ? "#4ade80" : theme.colors.onSurfaceVariant)};
-    box-shadow: ${({ $active }) => ($active ? "0 0 8px rgba(74, 222, 128, 0.6)" : "none")};
+    background: ${({ $active }) => ($active ? theme.colors.success : theme.colors.onSurfaceVariant)};
+    box-shadow: ${({ $active }) => ($active ? `0 0 8px ${theme.colors.successGlow}` : "none")};
   }
 `;
 
@@ -227,9 +227,9 @@ const OutlineBtn = styled.button`
   border-radius: ${theme.radii.md};
   border: 1px solid ${theme.colors.outlineVariant};
   background: transparent;
-  color: ${({ $copied }) => ($copied ? "#0284c7" : theme.colors.onSurface)};
-  background: ${({ $copied }) => ($copied ? "#dbeafe22" : "transparent")};
-  border-color: ${({ $copied }) => ($copied ? "#0284c7" : theme.colors.outlineVariant)};
+  color: ${({ $copied }) => ($copied ? theme.colors.primary : theme.colors.onSurface)};
+  background: ${({ $copied }) => ($copied ? `color-mix(in srgb, ${theme.colors.primary} 13%, transparent)` : "transparent")};
+  border-color: ${({ $copied }) => ($copied ? theme.colors.primary : theme.colors.outlineVariant)};
   font-size: ${theme.fontSizes.sm};
   font-weight: 600;
   cursor: pointer;
@@ -242,7 +242,7 @@ const OutlineBtn = styled.button`
 
   &:hover {
     background: ${theme.colors.surfaceContainerHighest};
-    border-color: rgba(209, 169, 84, 0.3);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 30%, transparent);
   }
 `;
 
@@ -254,12 +254,11 @@ const ExportBtn = styled.button`
   border-radius: ${theme.radii.md};
   border: none;
   background: ${theme.colors.inversePrimary};
-  color: #0d1917;
+  color: ${theme.colors.onPrimary};
   font-size: ${theme.fontSizes.sm};
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(209, 169, 84, 0.3);
 
   .icon {
     font-family: "Material Symbols Outlined";
@@ -269,7 +268,6 @@ const ExportBtn = styled.button`
   &:hover {
     opacity: 0.9;
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(209, 169, 84, 0.4);
   }
 
   &:active {
@@ -285,8 +283,7 @@ const StoryList = styled.div`
 `;
 
 const StoryCard = styled.article`
-  background: rgba(22, 33, 31, 0.4);
-  backdrop-filter: blur(12px);
+  background: ${theme.colors.surfaceContainer};
   border: 1px solid ${theme.colors.outlineVariant};
   border-radius: ${theme.radii.xl};
   overflow: hidden;
@@ -295,7 +292,7 @@ const StoryCard = styled.article`
   transition: border-color 0.2s;
 
   &:hover {
-    border-color: rgba(209, 169, 84, 0.25);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 25%, transparent);
   }
 `;
 
@@ -304,8 +301,8 @@ const CardHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: ${theme.spacing.lg};
-  background: rgba(15, 27, 25, 0.5);
-  border-bottom: 1px solid rgba(28, 41, 38, 0.3);
+  background: ${theme.colors.surfaceContainerHigh};
+  border-bottom: 1px solid color-mix(in srgb, ${theme.colors.outline} 30%, transparent);
 
   h3 {
     font-size: ${theme.fontSizes.xl};
@@ -327,26 +324,26 @@ const ComplexityBadge = styled.span`
   font-size: ${theme.fontSizes.xs};
   font-weight: 700;
   padding: 4px 12px;
-  border-radius: ${theme.radii.full};
+  border-radius: ${theme.radii.sm};
   background: ${({ $level }) =>
     $level === "S"
-      ? "rgba(74, 222, 128, 0.1)"
+      ? theme.colors.bgSuccess
       : $level === "M"
-      ? "rgba(251, 191, 36, 0.1)"
-      : "rgba(239, 68, 68, 0.1)"};
+      ? theme.colors.bgWarning
+      : theme.colors.bgError};
   color: ${({ $level }) =>
-    $level === "S" ? "#4ade80" : $level === "M" ? "#fbbf24" : "#ef4444"};
+    $level === "S" ? theme.colors.textSuccess : $level === "M" ? theme.colors.textWarning : theme.colors.textError};
   border: 1px solid ${({ $level }) =>
     $level === "S"
-      ? "rgba(74, 222, 128, 0.2)"
+      ? `color-mix(in srgb, ${theme.colors.success} 35%, transparent)`
       : $level === "M"
-      ? "rgba(251, 191, 36, 0.2)"
-      : "rgba(239, 68, 68, 0.2)"};
+      ? `color-mix(in srgb, ${theme.colors.amber} 35%, transparent)`
+      : `color-mix(in srgb, ${theme.colors.error} 35%, transparent)`};
 `;
 
 const StoryCopyBtn = styled(IconBtn)`
-  color: ${({ $copied }) => ($copied ? "#0284c7" : theme.colors.onSurfaceVariant)};
-  background: ${({ $copied }) => ($copied ? "#dbeafe22" : "transparent")};
+  color: ${({ $copied }) => ($copied ? theme.colors.primary : theme.colors.onSurfaceVariant)};
+  background: ${({ $copied }) => ($copied ? `color-mix(in srgb, ${theme.colors.primary} 13%, transparent)` : "transparent")};
 
   .icon {
     font-size: 18px;
@@ -357,10 +354,10 @@ const IncompleteTag = styled.span`
   font-size: ${theme.fontSizes.xs};
   font-weight: 700;
   padding: 4px 10px;
-  border-radius: ${theme.radii.full};
-  background: rgba(234, 179, 8, 0.1);
-  color: #ca8a04;
-  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-radius: ${theme.radii.sm};
+  background: ${theme.colors.bgWarning};
+  color: ${theme.colors.textWarning};
+  border: 1px solid color-mix(in srgb, ${theme.colors.amber} 35%, transparent);
 `;
 
 const CardBody = styled.div`
@@ -389,7 +386,7 @@ const CardGrid = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: ${theme.spacing.lg};
   padding-top: ${theme.spacing.md};
-  border-top: 1px solid rgba(28, 41, 38, 0.3);
+  border-top: 1px solid color-mix(in srgb, ${theme.colors.outline} 30%, transparent);
 
   @media (max-width: 600px) {
     grid-template-columns: 1fr;
@@ -423,7 +420,7 @@ const CriteriaItem = styled.li`
   .check {
     font-family: "Material Symbols Outlined";
     font-size: 16px;
-    color: #4ade80;
+    color: ${theme.colors.success};
     flex-shrink: 0;
     margin-top: 1px;
     font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
@@ -458,7 +455,7 @@ const GherkinBlock = styled.div`
 
   .keyword-given { color: ${theme.colors.secondary}; font-weight: 700; }
   .keyword-when { color: ${theme.colors.primary}; font-weight: 700; }
-  .keyword-then { color: #4ade80; font-weight: 700; }
+  .keyword-then { color: ${theme.colors.success}; font-weight: 700; }
   .keyword-and { color: ${theme.colors.tertiary}; font-weight: 700; }
 `;
 
@@ -474,7 +471,7 @@ const RightColumn = styled.aside`
 `;
 
 const Panel = styled.div`
-  background: rgba(22, 33, 31, 0.4);
+  background: ${theme.colors.surfaceContainer};
   border: 1px solid ${theme.colors.outlineVariant};
   border-radius: ${theme.radii.xl};
   padding: ${theme.spacing.lg};
@@ -514,21 +511,19 @@ const QuickActionBtn = styled.button`
       ? theme.colors.inversePrimary
       : "transparent"};
   color: ${({ $variant }) =>
-    $variant === "primary" ? "#0d1917" : theme.colors.onSurfaceVariant};
+    $variant === "primary" ? theme.colors.onPrimary : theme.colors.onSurfaceVariant};
   border: ${({ $variant }) =>
     $variant === "primary"
       ? "none"
       : `1px solid ${theme.colors.outlineVariant}`};
-  box-shadow: ${({ $variant }) =>
-    $variant === "primary" ? "0 4px 12px rgba(209, 169, 84, 0.3)" : "none"};
 
   &:hover {
     opacity: 0.9;
     transform: translateY(-1px);
     color: ${({ $variant }) =>
-      $variant === "primary" ? "#0d1917" : theme.colors.onSurface};
+      $variant === "primary" ? theme.colors.onPrimary : theme.colors.onSurface};
     border-color: ${({ $variant }) =>
-      $variant === "primary" ? "none" : "rgba(209, 169, 84, 0.3)"};
+      $variant === "primary" ? "none" : `color-mix(in srgb, ${theme.colors.primary} 30%, transparent)`};
   }
 
   &:active {
@@ -538,14 +533,14 @@ const QuickActionBtn = styled.button`
 
 const RecentItem = styled.div`
   padding: ${theme.spacing.md};
-  background: rgba(22, 33, 31, 0.4);
-  border: 1px solid rgba(28, 41, 38, 0.15);
+  background: ${theme.colors.surfaceContainer};
+  border: 1px solid color-mix(in srgb, ${theme.colors.outline} 15%, transparent);
   border-radius: ${theme.radii.md};
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    border-color: rgba(209, 169, 84, 0.25);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 25%, transparent);
   }
 
   .title {
@@ -596,8 +591,7 @@ const MobileStickyBar = styled.div`
   left: 0;
   right: 0;
   padding: ${theme.spacing.sm} ${theme.spacing.md};
-  background: rgba(15, 27, 25, 0.9);
-  backdrop-filter: blur(12px);
+  background: ${theme.colors.surfaceContainerHigh};
   border-top: 1px solid ${theme.colors.outlineVariant};
   gap: ${theme.spacing.sm};
   z-index: 40;
@@ -614,26 +608,26 @@ const TruncationWarning = styled.div`
   gap: ${theme.spacing.sm};
   padding: ${theme.spacing.sm} ${theme.spacing.md};
   margin-bottom: ${theme.spacing.md};
-  background: rgba(234, 179, 8, 0.1);
-  border: 1px solid rgba(234, 179, 8, 0.3);
+  background: ${theme.colors.bgWarning};
+  border: 1px solid color-mix(in srgb, ${theme.colors.amber} 30%, transparent);
   border-radius: ${theme.radii.sm};
-  color: #ca8a04;
+  color: ${theme.colors.textWarning};
   font-size: ${theme.fontSizes.sm};
   font-weight: 500;
 `;
 
 const RegenerateBtn = styled.button`
-  background: rgba(234, 179, 8, 0.15);
-  border: 1px solid rgba(234, 179, 8, 0.4);
+  background: color-mix(in srgb, ${theme.colors.amber} 15%, transparent);
+  border: 1px solid color-mix(in srgb, ${theme.colors.amber} 40%, transparent);
   border-radius: ${theme.radii.sm};
-  color: #ca8a04;
+  color: ${theme.colors.textWarning};
   font-size: ${theme.fontSizes.sm};
   font-weight: 600;
   padding: 4px 10px;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  &:hover { background: rgba(234, 179, 8, 0.25); }
+  &:hover { background: color-mix(in srgb, ${theme.colors.amber} 25%, transparent); }
 `;
 
 // ─── RAG Sources styled components ───────────────────────
@@ -649,13 +643,13 @@ const SourceItem = styled.div`
   gap: ${theme.spacing.sm};
   padding: 6px ${theme.spacing.sm};
   border-radius: ${theme.radii.md};
-  background: rgba(209, 169, 84, 0.05);
+  background: color-mix(in srgb, ${theme.colors.primary} 5%, transparent);
 
   .dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #4ade80;
+    background: ${theme.colors.success};
     flex-shrink: 0;
   }
 
@@ -671,13 +665,13 @@ const SourceItem = styled.div`
   .score {
     font-size: ${theme.fontSizes.xs};
     font-weight: 700;
-    color: #4ade80;
+    color: ${theme.colors.success};
     flex-shrink: 0;
   }
 `;
 
 // ─── Component ────────────────────────────────────────────
-export default function Results({ brief = "", stories, ragChunks = [], onNewGeneration, onRegenerate, onNavigate, truncated = false, autoSaved = false }) {
+export default function Results({ brief = "", stories, ragChunks = [], onNewGeneration, onRegenerate, onNavigate, truncated = false, autoSaved = false, themeMode, onThemeChange }) {
   const [copied, setCopied] = useState(false);
   const [copiedStoryId, setCopiedStoryId] = useState(null);
   const [showTrelloMsg, setShowTrelloMsg] = useState(false);
@@ -723,7 +717,17 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
           <span className="sub">Résultats</span>
         </TopBarLeft>
         <TopBarRight>
-          <IconBtn><span className="icon">dark_mode</span></IconBtn>
+          <IconBtn
+            onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
+            title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+          >
+            <span
+              className="icon"
+              style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
+            >
+              {themeMode === "dark" ? "light_mode" : "dark_mode"}
+            </span>
+          </IconBtn>
           <IconBtn><span className="icon">notifications</span></IconBtn>
         </TopBarRight>
       </TopBar>
@@ -835,9 +839,9 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
                         lineHeight: 1.7,
                         fontStyle: "italic",
                         padding: "12px 16px",
-                        background: "rgba(22, 33, 31, 0.4)",
+                        background: theme.colors.surfaceContainerHigh,
                         borderRadius: "8px",
-                        borderLeft: "3px solid rgba(209, 169, 84, 0.2)"
+                        borderLeft: `3px solid color-mix(in srgb, ${theme.colors.primary} 20%, transparent)`
                       }}>
                         {story.description}
                       </p>

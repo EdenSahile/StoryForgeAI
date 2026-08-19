@@ -28,9 +28,10 @@ const TopBar = styled.header`
   z-index: 30;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   height: 64px;
   padding: 0 ${theme.spacing.lg};
-  background: rgba(13, 25, 23, 0.85);
+  background: color-mix(in srgb, ${theme.colors.surface} 85%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid ${theme.colors.outlineVariant};
   gap: ${theme.spacing.sm};
@@ -40,6 +41,29 @@ const TopBarTitle = styled.h1`
   font-size: ${theme.fontSizes.xl};
   font-weight: 800;
   color: ${theme.colors.onSurface};
+`;
+
+const IconBtn = styled.button`
+  background: none;
+  border: none;
+  color: ${theme.colors.onSurfaceVariant};
+  cursor: pointer;
+  padding: 6px;
+  border-radius: ${theme.radii.sm};
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  .icon {
+    font-family: "Material Symbols Outlined";
+    font-size: 22px;
+  }
+
+  &:hover {
+    color: ${theme.colors.primary};
+    background: ${theme.colors.surfaceContainerHighest};
+  }
 `;
 
 const Content = styled.main`
@@ -119,7 +143,7 @@ const RowLabel = styled.div`
 
 // ── Apparence ──────────────────────────────────────────────
 
-const ThemeChip = styled.div`
+const ThemeChip = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
@@ -129,16 +153,23 @@ const ThemeChip = styled.div`
   font-weight: 700;
   letter-spacing: 0.04em;
   border: 1px solid;
-  cursor: ${({ $active }) => ($active ? "default" : "not-allowed")};
+  font-family: inherit;
+  cursor: pointer;
   background: ${({ $active }) =>
     $active
-      ? "rgba(209, 169, 84, 0.12)"
+      ? `color-mix(in srgb, ${theme.colors.primary} 12%, transparent)`
       : "transparent"};
   border-color: ${({ $active }) =>
     $active ? theme.colors.primary : theme.colors.outlineVariant};
   color: ${({ $active }) =>
     $active ? theme.colors.primary : theme.colors.outline};
-  opacity: ${({ $active }) => ($active ? 1 : 0.45)};
+  opacity: ${({ $active }) => ($active ? 1 : 0.7)};
+  transition: all 0.15s;
+
+  &:hover {
+    opacity: 1;
+    border-color: ${theme.colors.primary};
+  }
 
   .dot {
     width: 8px;
@@ -163,7 +194,7 @@ const DangerBtn = styled.button`
   transition: background 0.15s;
 
   &:hover:not(:disabled) {
-    background: rgba(255, 180, 171, 0.1);
+    background: ${theme.colors.bgError};
   }
 
   &:disabled {
@@ -198,7 +229,7 @@ const ConfirmRow = styled.div`
 
   .btn-confirm {
     background: ${theme.colors.error};
-    color: #1a0500;
+    color: ${theme.colors.onPrimary};
   }
 
   .btn-cancel {
@@ -245,7 +276,7 @@ const AppIdentity = styled.div`
     justify-content: center;
     font-family: "Material Symbols Outlined";
     font-size: 22px;
-    color: #0d1917;
+    color: ${theme.colors.onPrimary};
   }
 
   .meta {
@@ -287,7 +318,7 @@ const Tag = styled.span`
 
 // ─── Component ─────────────────────────────────────────────
 
-export default function Settings() {
+export default function Settings({ themeMode, onThemeChange }) {
   const [genCount, setGenCount] = useState(0);
   const [resetConfirm, setResetConfirm] = useState(false);
   const [resetDone, setResetDone] = useState(false);
@@ -307,6 +338,17 @@ export default function Settings() {
     <PageWrapper>
       <TopBar>
         <TopBarTitle>Réglages</TopBarTitle>
+        <IconBtn
+          onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
+          title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+        >
+          <span
+            className="icon"
+            style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
+          >
+            {themeMode === "dark" ? "light_mode" : "dark_mode"}
+          </span>
+        </IconBtn>
       </TopBar>
 
       <Content>
@@ -319,14 +361,22 @@ export default function Settings() {
           <Row>
             <RowLabel>
               <span className="label">Thème</span>
-              <span className="sublabel">Thème clair disponible dans une prochaine version.</span>
+              <span className="sublabel">Basculez entre le thème sombre et le thème clair.</span>
             </RowLabel>
             <div style={{ display: "flex", gap: "8px" }}>
-              <ThemeChip $active>
+              <ThemeChip
+                type="button"
+                $active={themeMode === "dark"}
+                onClick={() => onThemeChange?.("dark")}
+              >
                 <span className="dot" />
                 Sombre
               </ThemeChip>
-              <ThemeChip>
+              <ThemeChip
+                type="button"
+                $active={themeMode === "light"}
+                onClick={() => onThemeChange?.("light")}
+              >
                 <span className="dot" />
                 Clair
               </ThemeChip>

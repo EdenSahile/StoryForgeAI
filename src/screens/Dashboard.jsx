@@ -34,7 +34,7 @@ const TopBar = styled.header`
   align-items: center;
   height: 64px;
   padding: 0 ${theme.spacing.lg};
-  background: rgba(13, 25, 23, 0.85);
+  background: color-mix(in srgb, ${theme.colors.surface} 85%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid ${theme.colors.outlineVariant};
 `;
@@ -163,7 +163,7 @@ const StatCard = styled.div`
   }
 
   &:hover {
-    border-color: rgba(209, 169, 84, 0.3);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 30%, transparent);
   }
 
   .label {
@@ -278,7 +278,7 @@ const GenerationCard = styled.div`
 
   &:hover {
     background: ${theme.colors.surfaceContainer};
-    border-color: rgba(209, 169, 84, 0.2);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 20%, transparent);
 
     &::before {
       width: 3px;
@@ -331,7 +331,9 @@ const DashDeleteBtn = styled.button`
   line-height: 1;
   flex-shrink: 0;
   opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
 
   ${GenerationCard}:hover & {
     opacity: 1;
@@ -350,7 +352,7 @@ const DashDeleteBtn = styled.button`
 const CTACard = styled.div`
   height: 100%;
   min-height: 280px;
-  background: rgba(29, 43, 40, 0.3);
+  background: ${theme.colors.surfaceContainer};
   border: 2px dashed ${theme.colors.outlineVariant};
   border-radius: 24px;
   display: flex;
@@ -364,7 +366,7 @@ const CTACard = styled.div`
   cursor: pointer;
 
   &:hover {
-    border-color: rgba(209, 169, 84, 0.4);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 40%, transparent);
 
     .cta-icon {
       transform: scale(1.1);
@@ -375,13 +377,12 @@ const CTACard = styled.div`
     width: 64px;
     height: 64px;
     border-radius: 16px;
-    background: rgba(209, 169, 84, 0.1);
+    background: color-mix(in srgb, ${theme.colors.primary} 10%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
     color: ${theme.colors.primary};
     transition: transform 0.2s;
-    box-shadow: 0 0 20px rgba(209, 169, 84, 0.2);
 
     .icon {
       font-family: "Material Symbols Outlined";
@@ -419,8 +420,8 @@ const GenerateBtn = styled.button`
   padding: ${theme.spacing.sm} ${theme.spacing.xl};
   border-radius: ${theme.radii.full};
   border: none;
-  background: linear-gradient(135deg, #d1a954, #7fae9d);
-  color: #0d1917;
+  background: ${theme.colors.primary};
+  color: ${theme.colors.onPrimary};
   font-weight: 700;
   font-size: ${theme.fontSizes.md};
   cursor: pointer;
@@ -428,7 +429,6 @@ const GenerateBtn = styled.button`
   align-items: center;
   gap: ${theme.spacing.sm};
   transition: all 0.2s;
-  box-shadow: 0 4px 20px rgba(209, 169, 84, 0.3);
 
   .icon {
     font-family: "Material Symbols Outlined";
@@ -436,7 +436,6 @@ const GenerateBtn = styled.button`
   }
 
   &:hover {
-    box-shadow: 0 8px 28px rgba(209, 169, 84, 0.45);
     transform: translateY(-1px);
   }
 
@@ -446,7 +445,7 @@ const GenerateBtn = styled.button`
 `;
 
 // ─── Component ────────────────────────────────────────────
-export default function Dashboard({ onNavigate }) {
+export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
   const [generations, setGenerations] = useState([]);
 
   useEffect(() => {
@@ -459,7 +458,8 @@ export default function Dashboard({ onNavigate }) {
     setGenerations(getGenerations());
   };
 
-  const { storiesThisMonth, generationsThisMonth } = getMonthlyStats(generations);
+  const { storiesThisMonth, generationsThisMonth } =
+    getMonthlyStats(generations);
 
   const lastGen = generations[0];
 
@@ -482,7 +482,7 @@ export default function Dashboard({ onNavigate }) {
       label: "Dernière génération",
       value: lastGen ? formatRelativeDate(lastGen.createdAt) : "—",
       sub: lastGen ? lastGen.title : null,
-      color: "#4ade80",
+      color: theme.colors.success,
       icon: "schedule",
     },
   ];
@@ -494,19 +494,36 @@ export default function Dashboard({ onNavigate }) {
       <TopBar>
         <TopBarTitle>StoryPilot AI</TopBarTitle>
         <TopBarActions>
-          <IconBtn>
-            <span className="icon">dark_mode</span>
+          <IconBtn
+            onClick={() =>
+              onThemeChange?.(themeMode === "dark" ? "light" : "dark")
+            }
+            title={
+              themeMode === "dark"
+                ? "Passer en thème clair"
+                : "Passer en thème sombre"
+            }
+          >
+            <span
+              className="icon"
+              style={{
+                fontVariationSettings:
+                  '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24',
+              }}
+            >
+              {themeMode === "dark" ? "light_mode" : "dark_mode"}
+            </span>
           </IconBtn>
           <Avatar>
             <div
               style={{
                 width: "100%",
                 height: "100%",
-                background: "linear-gradient(135deg, #d1a954, #7fae9d)",
+                background: theme.colors.primary,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#0d1917",
+                color: theme.colors.onPrimary,
                 fontWeight: 700,
                 fontSize: "14px",
               }}
@@ -520,7 +537,7 @@ export default function Dashboard({ onNavigate }) {
       <Content>
         {/* Welcome */}
         <WelcomeSection>
-          <h3>Bonjour Eden 👋</h3>
+          <h3>Bonjour 👋</h3>
           <p>Prêt à forger vos prochaines user stories ?</p>
         </WelcomeSection>
 
@@ -547,7 +564,12 @@ export default function Dashboard({ onNavigate }) {
             <h4>Générations récentes</h4>
             <GenerationList>
               {recent.length === 0 ? (
-                <span style={{ fontSize: theme.fontSizes.sm, color: theme.colors.onSurfaceVariant }}>
+                <span
+                  style={{
+                    fontSize: theme.fontSizes.sm,
+                    color: theme.colors.onSurfaceVariant,
+                  }}
+                >
                   Aucune génération sauvegardée pour l'instant.
                 </span>
               ) : (
@@ -559,7 +581,8 @@ export default function Dashboard({ onNavigate }) {
                     <div className="info">
                       <span className="title">{item.title}</span>
                       <span className="meta">
-                        {formatRelativeDate(item.createdAt)} · {item.storiesCount} stories
+                        {formatRelativeDate(item.createdAt)} ·{" "}
+                        {item.storiesCount} stories
                       </span>
                     </div>
                     <DashDeleteBtn

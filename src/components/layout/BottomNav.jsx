@@ -15,7 +15,6 @@ const NavWrapper = styled.nav`
   align-items: center;
   padding: 0 ${theme.spacing.sm};
   border-radius: 16px 16px 0 0;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
   z-index: 50;
 
   @media (max-width: ${theme.breakpoints.mobile}) {

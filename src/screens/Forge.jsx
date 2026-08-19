@@ -27,8 +27,8 @@ const pulse = keyframes`
 `;
 
 const glow = keyframes`
-  0%, 100% { box-shadow: 0 0 20px rgba(209, 169, 84, 0.15); }
-  50% { box-shadow: 0 0 30px rgba(209, 169, 84, 0.35); }
+  0%, 100% { box-shadow: 0 0 20px ${theme.colors.primaryGlow}; }
+  50% { box-shadow: 0 0 30px ${theme.colors.primaryGlow}; }
 `;
 
 // ─── Layout ───────────────────────────────────────────────
@@ -53,7 +53,7 @@ const TopBar = styled.header`
   align-items: center;
   height: 64px;
   padding: 0 ${theme.spacing.lg};
-  background: rgba(13, 25, 23, 0.85);
+  background: color-mix(in srgb, ${theme.colors.surface} 85%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid ${theme.colors.outlineVariant};
   gap: ${theme.spacing.sm};
@@ -112,7 +112,7 @@ const GeneratingBadge = styled.div`
   gap: ${theme.spacing.sm};
   padding: 6px ${theme.spacing.md};
   background: ${theme.colors.surfaceContainer};
-  border-radius: ${theme.radii.full};
+  border-radius: ${theme.radii.sm};
   font-size: ${theme.fontSizes.xs};
   font-weight: 700;
   color: ${theme.colors.onSurfaceVariant};
@@ -274,7 +274,7 @@ const TextareaFooter = styled.div`
 const KbdHint = styled.span`
   font-size: ${theme.fontSizes.xs};
   color: ${theme.colors.onSurfaceVariant};
-  background: rgba(29, 43, 40, 0.8);
+  background: ${theme.colors.surfaceContainerHigh};
   padding: 3px 8px;
   border-radius: 6px;
   border: 1px solid ${theme.colors.outlineVariant};
@@ -284,7 +284,7 @@ const CharCount = styled.span`
   font-size: ${theme.fontSizes.xs};
   color: ${({ $over }) =>
     $over ? theme.colors.error : theme.colors.onSurfaceVariant};
-  background: rgba(29, 43, 40, 0.8);
+  background: ${theme.colors.surfaceContainerHigh};
   padding: 3px 8px;
   border-radius: 6px;
 `;
@@ -295,8 +295,8 @@ const RestoreHint = styled.div`
   gap: 6px;
   padding: 8px 12px;
   margin-bottom: ${theme.spacing.sm};
-  background: rgba(209, 169, 84, 0.08);
-  border: 1px solid rgba(209, 169, 84, 0.2);
+  background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
+  border: 1px solid color-mix(in srgb, ${theme.colors.primary} 20%, transparent);
   border-radius: ${theme.radii.sm};
   color: ${theme.colors.primary};
   font-size: ${theme.fontSizes.xs};
@@ -357,7 +357,7 @@ const RagToggleRow = styled.label`
 
   input:checked + .track::after {
     left: 17px;
-    background: #0d1917;
+    background: ${theme.colors.onPrimary};
   }
 `;
 
@@ -370,11 +370,9 @@ const GenerateBtn = styled.button`
   border-radius: ${theme.radii.lg};
   border: none;
   background: ${({ $disabled }) =>
-    $disabled
-      ? theme.colors.surfaceContainerHighest
-      : "linear-gradient(135deg, #d1a954, #7fae9d)"};
+    $disabled ? theme.colors.surfaceContainerHighest : theme.colors.primary};
   color: ${({ $disabled }) =>
-    $disabled ? theme.colors.onSurfaceVariant : "#0d1917"};
+    $disabled ? theme.colors.onSurfaceVariant : theme.colors.onPrimary};
   font-weight: 700;
   font-size: ${theme.fontSizes.md};
   cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
@@ -385,7 +383,6 @@ const GenerateBtn = styled.button`
   &:hover:not(:disabled) {
     opacity: 0.9;
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(209, 169, 84, 0.35);
   }
 
   &:active:not(:disabled) {
@@ -478,8 +475,8 @@ const SourcePill = styled.div`
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: rgba(209, 169, 84, 0.08);
-  border: 1px solid rgba(209, 169, 84, 0.18);
+  background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
+  border: 1px solid color-mix(in srgb, ${theme.colors.primary} 18%, transparent);
   border-radius: 999px;
   font-size: 11px;
   color: ${theme.colors.onSurface};
@@ -489,7 +486,7 @@ const SourcePill = styled.div`
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #4ade80;
+    background: ${theme.colors.success};
     flex-shrink: 0;
   }
 
@@ -512,18 +509,6 @@ const StreamingCard = styled.div`
   animation: ${glow} 2s ease-in-out infinite;
   position: relative;
   overflow: hidden;
-
-  &::after {
-    content: "";
-    position: absolute;
-    right: -60px;
-    bottom: -60px;
-    width: 180px;
-    height: 180px;
-    background: rgba(209, 169, 84, 0.05);
-    border-radius: 50%;
-    filter: blur(30px);
-  }
 `;
 
 const StreamingBadge = styled.span`
@@ -535,10 +520,10 @@ const StreamingBadge = styled.span`
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: ${theme.colors.primary};
-  background: rgba(209, 169, 84, 0.08);
+  background: color-mix(in srgb, ${theme.colors.primary} 8%, transparent);
   padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid rgba(209, 169, 84, 0.2);
+  border: 1px solid color-mix(in srgb, ${theme.colors.primary} 20%, transparent);
 
   .spin-icon {
     font-family: "Material Symbols Outlined";
@@ -667,11 +652,11 @@ const KBHeader = styled.div`
     gap: 4px;
     font-size: ${theme.fontSizes.xs};
     font-weight: 700;
-    color: #4ade80;
-    background: rgba(74, 222, 128, 0.1);
-    border: 1px solid rgba(74, 222, 128, 0.2);
+    color: ${theme.colors.textSuccess};
+    background: ${theme.colors.bgSuccess};
+    border: 1px solid color-mix(in srgb, ${theme.colors.success} 35%, transparent);
     padding: 4px 10px;
-    border-radius: ${theme.radii.full};
+    border-radius: ${theme.radii.sm};
 
     .icon {
       font-family: "Material Symbols Outlined";
@@ -717,7 +702,7 @@ const DocCard = styled.div`
   transition: border-color 0.2s;
 
   &:hover {
-    border-color: rgba(209, 169, 84, 0.3);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 30%, transparent);
   }
 
   .doc-icon {
@@ -762,7 +747,7 @@ const DocCard = styled.div`
       margin-top: 4px;
       color: ${({ $status }) =>
         $status === "indexed"
-          ? "#4ade80"
+          ? theme.colors.textSuccess
           : $status === "loading"
             ? theme.colors.primary
             : theme.colors.error};
@@ -772,9 +757,9 @@ const DocCard = styled.div`
   .chunks-badge {
     font-size: 10px;
     font-weight: 700;
-    color: #4ade80;
-    background: rgba(74, 222, 128, 0.1);
-    border: 1px solid rgba(74, 222, 128, 0.2);
+    color: ${theme.colors.textSuccess};
+    background: ${theme.colors.bgSuccess};
+    border: 1px solid color-mix(in srgb, ${theme.colors.success} 35%, transparent);
     padding: 3px 8px;
     border-radius: 6px;
     white-space: nowrap;
@@ -798,7 +783,7 @@ const ProgressBar = styled.div`
 
   .fill {
     height: 100%;
-    background: linear-gradient(90deg, #d1a954, #7fae9d);
+    background: ${theme.colors.primary};
     border-radius: 999px;
     width: ${({ $pct }) => $pct}%;
     transition: width 0.5s ease;
@@ -818,7 +803,7 @@ const UploadZone = styled.div`
   cursor: pointer;
   transition: all 0.2s;
   background: ${({ $dragOver }) =>
-    $dragOver ? "rgba(209, 169, 84, 0.05)" : "transparent"};
+    $dragOver ? `color-mix(in srgb, ${theme.colors.primary} 5%, transparent)` : "transparent"};
   border-color: ${({ $dragOver }) =>
     $dragOver ? theme.colors.primary : theme.colors.outlineVariant};
 
@@ -831,8 +816,8 @@ const UploadZone = styled.div`
   `}
 
   &:hover {
-    border-color: rgba(209, 169, 84, 0.4);
-    background: rgba(209, 169, 84, 0.03);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 40%, transparent);
+    background: color-mix(in srgb, ${theme.colors.primary} 3%, transparent);
   }
 
   .upload-icon {
@@ -891,7 +876,7 @@ const DeleteDocBtn = styled.button`
 
   &:hover {
     color: ${theme.colors.error};
-    background: rgba(255, 180, 171, 0.1);
+    background: ${theme.colors.bgError};
   }
 `;
 
@@ -910,7 +895,7 @@ const IndexBtn = styled.button`
   &:hover {
     background: ${theme.colors.surfaceContainerHighest};
     color: ${theme.colors.onSurface};
-    border-color: rgba(209, 169, 84, 0.3);
+    border-color: color-mix(in srgb, ${theme.colors.primary} 30%, transparent);
   }
 `;
 
@@ -932,8 +917,8 @@ const ModeHint = styled.p`
   line-height: 1.6;
   margin: 0;
   padding: ${theme.spacing.sm} ${theme.spacing.md};
-  background: rgba(209, 169, 84, 0.06);
-  border-left: 2px solid rgba(209, 169, 84, 0.3);
+  background: color-mix(in srgb, ${theme.colors.primary} 6%, transparent);
+  border-left: 2px solid color-mix(in srgb, ${theme.colors.primary} 30%, transparent);
   border-radius: 0 ${theme.radii.sm} ${theme.radii.sm} 0;
 
   strong {
@@ -964,7 +949,7 @@ const Chip = styled.button`
   &:hover {
     border-color: ${theme.colors.primary};
     color: ${theme.colors.primary};
-    background: rgba(209, 169, 84, 0.06);
+    background: color-mix(in srgb, ${theme.colors.primary} 6%, transparent);
   }
 
   &:active {
@@ -974,11 +959,11 @@ const Chip = styled.button`
 
 // ─── Error / Copy ─────────────────────────────────────────
 const ErrorMsg = styled.div`
-  background: rgba(255, 180, 171, 0.1);
-  border: 1px solid rgba(255, 180, 171, 0.3);
+  background: ${theme.colors.bgError};
+  border: 1px solid color-mix(in srgb, ${theme.colors.error} 30%, transparent);
   border-radius: ${theme.radii.lg};
   padding: ${theme.spacing.md};
-  color: ${theme.colors.error};
+  color: ${theme.colors.textError};
   font-size: ${theme.fontSizes.sm};
   display: flex;
   justify-content: space-between;
@@ -987,7 +972,7 @@ const ErrorMsg = styled.div`
   button {
     background: none;
     border: none;
-    color: ${theme.colors.error};
+    color: ${theme.colors.textError};
     cursor: pointer;
     font-size: 18px;
   }
@@ -1006,11 +991,11 @@ const CopyBtn = styled.button`
   padding: 8px 16px;
   border-radius: ${theme.radii.md};
   border: 1px solid ${theme.colors.outlineVariant};
-  background: white;
-  color: ${({ $copied }) => ($copied ? "#0284c7" : theme.colors.primary)};
-  background: ${({ $copied }) => ($copied ? "#dbeafe" : "white")};
+  color: ${theme.colors.primary};
+  background: ${({ $copied }) =>
+    $copied ? `color-mix(in srgb, ${theme.colors.primary} 15%, transparent)` : "transparent"};
   border-color: ${({ $copied }) =>
-    $copied ? "#0284c7" : theme.colors.outlineVariant};
+    $copied ? theme.colors.primary : theme.colors.outlineVariant};
   font-size: ${theme.fontSizes.sm};
   font-weight: 600;
   cursor: pointer;
@@ -1060,6 +1045,8 @@ export default function Forge({
   setTruncated,
   keepBrief = false,
   onClearKeepBrief,
+  themeMode,
+  onThemeChange,
 }) {
   const [status, setStatus] = useState("idle"); // 'idle' | 'loading' | 'success' | 'error'
   const [error, setError] = useState(null);
@@ -1133,8 +1120,16 @@ export default function Forge({
               <span className="badge-text">Génération en cours...</span>
             </GeneratingBadge>
           )}
-          <IconBtn>
-            <span className="icon">dark_mode</span>
+          <IconBtn
+            onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
+            title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+          >
+            <span
+              className="icon"
+              style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
+            >
+              {themeMode === "dark" ? "light_mode" : "dark_mode"}
+            </span>
           </IconBtn>
           <IconBtn>
             <span className="icon">notifications</span>
