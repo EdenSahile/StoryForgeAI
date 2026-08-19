@@ -59,6 +59,12 @@ jobs:
             re-run the full suite yourself; run a single focused test only if
             you need to double check a specific concern.
 
+            Do not run `gh pr checks`, `gh api`, `gh pr list`, or any other gh
+            command beyond `gh pr view`, `gh pr diff`, and `gh pr review` — you
+            do not have permission for anything else, and the `test` job status
+            is already known to have passed by the time you run (this job
+            depends on it via `needs: test`). Go straight to reviewing the diff.
+
             Categorize findings as Critical / Important / Minor, same as this
             project's /code-review skill would.
 
