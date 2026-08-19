@@ -1,13 +1,9 @@
 // src/screens/Forge.jsx
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { theme } from "../theme";
 import { generateStories } from "../components/services/claudeService";
-import {
-  uploadDocument,
-  retrieveContext,
-  deleteDocument,
-} from "../components/services/ragService";
+import { retrieveContext } from "../components/services/ragService";
 
 // ─── Animations ───────────────────────────────────────────
 const fadeInUp = keyframes`
@@ -977,47 +973,6 @@ const Chip = styled.button`
 `;
 
 // ─── Error / Copy ─────────────────────────────────────────
-const ConfirmBanner = styled.div`
-  background: rgba(251, 191, 36, 0.08);
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  border-radius: ${theme.radii.lg};
-  padding: ${theme.spacing.sm} ${theme.spacing.md};
-  font-size: ${theme.fontSizes.sm};
-  color: ${theme.colors.onSurface};
-
-  .message {
-    margin-bottom: ${theme.spacing.sm};
-  }
-
-  .filename {
-    font-weight: 600;
-  }
-
-  .actions {
-    display: flex;
-    gap: ${theme.spacing.sm};
-  }
-
-  button {
-    padding: 4px 12px;
-    border-radius: ${theme.radii.md};
-    font-size: ${theme.fontSizes.xs};
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-  }
-
-  .btn-replace {
-    background: ${theme.colors.primary};
-    color: #fff;
-  }
-
-  .btn-cancel {
-    background: ${theme.colors.surfaceContainerHighest};
-    color: ${theme.colors.onSurfaceVariant};
-  }
-`;
-
 const ErrorMsg = styled.div`
   background: rgba(255, 180, 171, 0.1);
   border: 1px solid rgba(255, 180, 171, 0.3);
@@ -1110,16 +1065,7 @@ export default function Forge({
   const [error, setError] = useState(null);
   const [ragDisabled, setRagDisabled] = useState(false);
   const [ragOpen, setRagOpen] = useState(true);
-  const [dragOver, setDragOver] = useState(false);
-  const [uploadingFile, setUploadingFile] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState(null);
-  const [pendingReplaceFile, setPendingReplaceFile] = useState(null);
-  const fileInputRef = useRef(null);
-  const documentsRef = useRef(documents);
-  useEffect(() => {
-    documentsRef.current = documents;
-  }, [documents]);
 
   const charCount = brief.length;
   const MAX = 2000;
@@ -1170,85 +1116,6 @@ export default function Forge({
 
   const handleKeyDown = (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") handleSubmit();
-  };
-
-  const handleFileUpload = async (files) => {
-    for (const file of files) {
-      const alreadyIndexed = documentsRef.current.some(
-        (d) => d.name === file.name && d.status === "indexed",
-      );
-      if (alreadyIndexed) {
-        setPendingReplaceFile(file);
-        return;
-      }
-      await uploadSingleFile(file);
-    }
-  };
-
-  const uploadSingleFile = async (file) => {
-    try {
-      setUploadError(null);
-      const newDoc = {
-        id: Date.now(),
-        name: file.name,
-        size: file.size,
-        status: "loading",
-        pct: 0,
-        chunks: 0,
-      };
-      setDocuments((prev) => [...prev, newDoc]);
-      setUploadingFile(file.name);
-
-      const result = await uploadDocument(file, (pct) => {
-        setUploadProgress(pct);
-        setDocuments((prev) =>
-          prev.map((d) => (d.name === file.name ? { ...d, pct } : d)),
-        );
-      });
-
-      setDocuments((prev) =>
-        prev.map((d) =>
-          d.name === file.name
-            ? { ...d, status: "indexed", chunks: result.chunks, pct: 100 }
-            : d,
-        ),
-      );
-      setUploadingFile(null);
-    } catch (err) {
-      console.error("uploadDocument failed:", err);
-      setDocuments((prev) =>
-        prev.map((d) => (d.name === file.name ? { ...d, status: "error" } : d)),
-      );
-      setUploadError(err.message);
-      setUploadingFile(null);
-    }
-  };
-
-  const handleConfirmReplace = async () => {
-    const file = pendingReplaceFile;
-    setPendingReplaceFile(null);
-    setDocuments((prev) => prev.filter((d) => d.name !== file.name));
-    await uploadSingleFile(file);
-  };
-
-  const handleCancelReplace = () => setPendingReplaceFile(null);
-
-  const handleDeleteDoc = async (doc) => {
-    if (!confirm(`Supprimer "${doc.name}" et ses ${doc.chunks || 0} chunks ?`))
-      return;
-    try {
-      await deleteDocument(doc.name);
-      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
-    } catch (err) {
-      setUploadError(err.message);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragOver(false);
-    const files = Array.from(e.dataTransfer.files);
-    handleFileUpload(files);
   };
 
   return (
@@ -1514,26 +1381,6 @@ export default function Forge({
                 </DocCard>
               ))}
             </DocList>
-
-            {pendingReplaceFile && (
-              <ConfirmBanner>
-                <p className="message">
-                  <span className="filename">{pendingReplaceFile.name}</span>{" "}
-                  est déjà indexé. Remplacer ?
-                </p>
-                <div className="actions">
-                  <button
-                    className="btn-replace"
-                    onClick={handleConfirmReplace}
-                  >
-                    Remplacer
-                  </button>
-                  <button className="btn-cancel" onClick={handleCancelReplace}>
-                    Annuler
-                  </button>
-                </div>
-              </ConfirmBanner>
-            )}
 
             {uploadError && (
               <ErrorMsg>

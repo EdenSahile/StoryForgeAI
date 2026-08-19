@@ -3,6 +3,20 @@
 
 ---
 
+## Session CLEAN-FORGE-UPLOAD (2026-08-19) — Suppression du code mort d'upload dans Forge.jsx
+
+**Contexte :** l'écran Forge est verrouillé en mode démo publique (`UploadZone`, `DeleteDocBtn`, `IndexBtn` tous rendus avec `disabled` en dur, aucun `onClick`/`onDrop`/`onDragOver` câblé). Toute la logique d'upload derrière ces éléments n'était donc plus jamais atteignable depuis l'UI — vérifié explicitement par `grep` (`onDrop`, `onDragOver`, `fileInputRef`, chaque handler) avant toute suppression, pas supposé.
+
+### Réalisé
+
+- [x] **Supprimé dans `src/screens/Forge.jsx`** : `handleFileUpload`, `uploadSingleFile`, `handleConfirmReplace`, `handleCancelReplace`, `handleDeleteDoc`, `handleDrop` (aucun appelant restant après suppression, vérifié) ; les states `uploadingFile`, `uploadProgress`, `pendingReplaceFile` (lus nulle part ailleurs) ; `fileInputRef` (jamais attaché à un `<input type="file">`, ce dernier n'existe même pas dans le fichier) et `documentsRef` + son `useEffect` (son seul lecteur était `handleFileUpload`) ; le bloc JSX `ConfirmBanner` (jamais atteignable, `pendingReplaceFile` ne pouvant plus jamais devenir vrai) et sa définition `styled.div` désormais orpheline.
+- [x] **Extra trouvé pendant l'audit, hors de la liste initiale mais même critère** : le state `dragOver` — son seul setter vivait dans `handleDrop` (supprimé) et il n'était jamais lu dans le JSX réellement rendu (`UploadZone` n'utilise pas la prop `$dragOver` au rendu, seulement dans sa définition CSS). Supprimé pour la même raison que `uploadingFile`/`uploadProgress`.
+- [x] **Imports nettoyés en conséquence** : `useRef` (React), `uploadDocument` et `deleteDocument` (`ragService`) — tous devenus inutilisés après les suppressions ci-dessus.
+- [x] **Gardé tel quel, signalé sans corriger (cas ambigu, comme demandé)** : `uploadError` reste techniquement vivant — son seul appelant restant est le bouton "✕" qui le remet à `null` (`onClick={() => setUploadError(null)}`), donc il ne peut plus jamais redevenir vrai après cette suppression, mais il n'est pas à 100% mort comme les autres (il a encore un point d'écriture actif). À trancher dans une session dédiée si ce bouton/état doit aussi partir.
+- [x] **Vérifié** : `npm run test:run` (204/204 verts, dont `Forge.test.jsx` inchangé), `npm run build` (bundle légèrement plus petit : 264,47 kB → 262,02 kB), et contrôle visuel via `npm run dev` + Playwright sur l'écran Forge (Base de connaissance, message "Upload désactivé en mode démo publique", bouton "Indexer les documents" désactivé — rendu identique à avant, aucune erreur console).
+
+---
+
 ## Session TEST-INVENTORY (2026-08-19) — Inventaire de couverture de test + nettoyage legacy v1
 
 **Objectif :** Produire `testing/inventaire-tests.md` (couverture de test par fonctionnalité, pas par ticket) avant d'attaquer les priorités identifiées.
