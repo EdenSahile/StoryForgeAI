@@ -39,7 +39,7 @@ const TopBar = styled.header`
   justify-content: space-between;
   height: 64px;
   padding: 0 ${theme.spacing.lg};
-  background: rgba(13, 25, 23, 0.85);
+  background: color-mix(in srgb, ${theme.colors.surface} 85%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid ${theme.colors.outlineVariant};
 `;
