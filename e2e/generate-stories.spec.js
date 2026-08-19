@@ -173,4 +173,26 @@ test.describe('Parcours critique — génération de user stories', () => {
     await page.getByRole('button', { name: '✕' }).click();
     await expect(errorMessage).toBeHidden();
   });
+
+  test('la Sidebar permet de parcourir tous les écrans sans erreur', async ({ page }) => {
+    await page.goto('/');
+
+    // currentScreen initial = "dashboard" dans App.jsx.
+    await expect(page.getByRole('heading', { name: /Bonjour Eden/ })).toBeVisible();
+
+    await page.locator('aside nav a', { hasText: 'Forge' }).click();
+    await expect(page.getByPlaceholder(/Décris ton besoin métier ici/)).toBeVisible();
+
+    await page.locator('aside nav a', { hasText: 'Historique' }).click();
+    await expect(page.getByRole('heading', { name: 'Historique' })).toBeVisible();
+
+    // Libellé Sidebar "Settings" (anglais) vs titre affiché sur l'écran "Réglages" (français) :
+    // deux textes différents, vérifiés séparément dans le vrai code (src/components/layout/
+    // Sidebar.jsx et src/screens/Settings.jsx), pas supposés identiques.
+    await page.locator('aside nav a', { hasText: 'Settings' }).click();
+    await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
+
+    await page.locator('aside nav a', { hasText: 'Dashboard' }).click();
+    await expect(page.getByRole('heading', { name: /Bonjour Eden/ })).toBeVisible();
+  });
 });
