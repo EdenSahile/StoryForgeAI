@@ -15,8 +15,8 @@ Générateur de user stories à partir d'un brief métier, avec streaming en tem
 ```
 api/generate-stories.js     # route serverless, appelle Claude, gère rate limiting et CORS
 src/components/services/claudeService.js   # client streaming SSE, gère timeout et erreurs
-src/components/BriefInput.jsx              # formulaire de saisie du brief
-src/components/StoriesOutput.jsx           # rendu markdown + copy-to-clipboard
+src/screens/Forge.jsx                      # formulaire de saisie du brief + upload RAG
+src/screens/Results.jsx                    # parsing et rendu des user stories générées
 src/App.jsx                                # état global, orchestration
 ```
 

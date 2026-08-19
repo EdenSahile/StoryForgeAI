@@ -1,5 +1,17 @@
 # StoryPilot AI — Contexte actif
-*Mis à jour le 2026-08-18*
+*Mis à jour le 2026-08-19*
+
+---
+
+## Session TEST-INVENTORY (2026-08-19) — Inventaire de couverture de test + nettoyage legacy v1
+
+**Objectif :** Produire `testing/inventaire-tests.md` (couverture de test par fonctionnalité, pas par ticket) avant d'attaquer les priorités identifiées.
+
+### Réalisé
+
+- [x] `testing/inventaire-tests.md` créé — classement 🟢/🟠/🔴 des fonctionnalités existantes, priorités : `claudeService.js` (streaming/troncature/timeout non testés), `libraryStorage.js` (aucun test direct malgré 4 écrans dépendants), `ragService.js` (miroir non testé de `claudeService.js`).
+- [x] **Suppression de `src/components/BriefInput.jsx` et `src/components/StoriesOutput.jsx`** (+ leurs tests `src/test/BriefInput.test.jsx`, `src/test/StoriesOutput.test.jsx`) : composants legacy v1 confirmés morts (non importés nulle part, `grep` à l'appui), déjà notés comme tels dans `README.md`. `App.jsx` utilise le textarea inline de `Forge.jsx` et le rendu parsé de `Results.jsx` à la place.
+- [x] `CLAUDE.md` — section Architecture corrigée : les deux fichiers supprimés remplacés par `src/screens/Forge.jsx` et `src/screens/Results.jsx`, qui reflètent l'architecture réelle.
 
 ---
 
