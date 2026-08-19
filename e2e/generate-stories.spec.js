@@ -137,4 +137,40 @@ test.describe('Parcours critique — génération de user stories', () => {
     // Vue détail : le contenu de la story sauvegardée est bien celui généré (FAKE_STORY).
     await expect(page.getByText(/suivre ma commande en temps réel/)).toBeVisible();
   });
+
+  test('une erreur API pendant la génération s\'affiche à l\'écran sans planter l\'app', async ({ page }) => {
+    // Écrase, pour ce test précis, le mock **/api/generate-stories enregistré dans beforeEach :
+    // Playwright fait gagner la dernière définition pour un pattern déjà routé. Le message repris
+    // ici est celui réellement renvoyé par api/generate-stories.js en cas de rate limiting (429).
+    await page.route('**/api/generate-stories', (route) =>
+      route.fulfill({
+        status: 429,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Trop de requêtes. Maximum 10 par 15 minutes.' }),
+      }),
+    );
+
+    await page.goto('/');
+
+    await page.locator('aside nav a', { hasText: 'Forge' }).click();
+
+    const textarea = page.getByPlaceholder(/Décris ton besoin métier ici/);
+    await textarea.fill(BRIEF);
+
+    const generateBtn = page.getByRole('button', { name: /Générer les user stories/ });
+    await generateBtn.click();
+
+    // claudeService.js relaie tel quel le champ `error` du body JSON via onError().
+    const errorMessage = page.getByText('Trop de requêtes. Maximum 10 par 15 minutes.');
+    await expect(errorMessage).toBeVisible();
+
+    // L'app reste utilisable après l'erreur : le bouton n'est pas resté bloqué sur
+    // "Génération en cours...", le textarea reste éditable.
+    await expect(generateBtn).toBeEnabled();
+    await expect(textarea).toBeEditable();
+
+    // Le "✕" à côté du message fait disparaître l'erreur (setError(null) dans Forge.jsx).
+    await page.getByRole('button', { name: '✕' }).click();
+    await expect(errorMessage).toBeHidden();
+  });
 });
