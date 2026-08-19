@@ -331,7 +331,9 @@ const DashDeleteBtn = styled.button`
   line-height: 1;
   flex-shrink: 0;
   opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
 
   ${GenerationCard}:hover & {
     opacity: 1;
@@ -456,7 +458,8 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
     setGenerations(getGenerations());
   };
 
-  const { storiesThisMonth, generationsThisMonth } = getMonthlyStats(generations);
+  const { storiesThisMonth, generationsThisMonth } =
+    getMonthlyStats(generations);
 
   const lastGen = generations[0];
 
@@ -492,12 +495,21 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
         <TopBarTitle>StoryPilot AI</TopBarTitle>
         <TopBarActions>
           <IconBtn
-            onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
-            title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+            onClick={() =>
+              onThemeChange?.(themeMode === "dark" ? "light" : "dark")
+            }
+            title={
+              themeMode === "dark"
+                ? "Passer en thème clair"
+                : "Passer en thème sombre"
+            }
           >
             <span
               className="icon"
-              style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
+              style={{
+                fontVariationSettings:
+                  '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24',
+              }}
             >
               {themeMode === "dark" ? "light_mode" : "dark_mode"}
             </span>
@@ -525,7 +537,7 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
       <Content>
         {/* Welcome */}
         <WelcomeSection>
-          <h3>Bonjour Eden 👋</h3>
+          <h3>Bonjour 👋</h3>
           <p>Prêt à forger vos prochaines user stories ?</p>
         </WelcomeSection>
 
@@ -552,7 +564,12 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
             <h4>Générations récentes</h4>
             <GenerationList>
               {recent.length === 0 ? (
-                <span style={{ fontSize: theme.fontSizes.sm, color: theme.colors.onSurfaceVariant }}>
+                <span
+                  style={{
+                    fontSize: theme.fontSizes.sm,
+                    color: theme.colors.onSurfaceVariant,
+                  }}
+                >
                   Aucune génération sauvegardée pour l'instant.
                 </span>
               ) : (
@@ -564,7 +581,8 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
                     <div className="info">
                       <span className="title">{item.title}</span>
                       <span className="meta">
-                        {formatRelativeDate(item.createdAt)} · {item.storiesCount} stories
+                        {formatRelativeDate(item.createdAt)} ·{" "}
+                        {item.storiesCount} stories
                       </span>
                     </div>
                     <DashDeleteBtn
