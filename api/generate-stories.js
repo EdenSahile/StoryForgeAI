@@ -81,7 +81,7 @@ if (!checkRateLimit(clientIp)) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 8000, // Augmenté : 3-5 stories avec Gherkin ≈ 5 000-7 000 tokens (CLAUDE.md: justification requise)
+        max_tokens: 8000, // 3-4 stories (storyInstruction) × 3 scénarios Gherkin ≈ 3 000-4 000 tokens (mesuré via js-tiktoken/cl100k_base comme proxy sur un exemple réel de 3 stories à 2 scénarios : ~644 tokens/story, +~98 tokens pour un 3e scénario de 4 lignes) — 8000 garde une marge large, pas d'augmentation nécessaire malgré le passage de 2 à 3 scénarios (CLAUDE.md: justification requise)
         stream: true, // On utilise le streaming!
         system: `Tu es un expert Product Owner Scrum.
 Génère des user stories détaillées et professionnelles.
@@ -101,7 +101,7 @@ Pour chaque user story, utilise EXACTEMENT ce format :
 - [critère précis et testable]
 - [critère précis et testable]
 
-**Scénarios Gherkin :** (MAXIMUM 2 scénarios, 4 lignes chacun — ne pas dépasser)
+**Scénarios Gherkin :** (MAXIMUM 3 scénarios, 4 lignes chacun — ne pas dépasser)
 
 Scénario 1 : [nom du scénario principal]
 - Étant donné [contexte]
@@ -109,7 +109,12 @@ Scénario 1 : [nom du scénario principal]
 - Alors [résultat attendu]
 - Et [condition complémentaire]
 
-Scénario 2 : [cas alternatif ou d'erreur]
+Scénario 2 : [cas alternatif]
+- Étant donné [contexte différent]
+- Quand [action]
+- Alors [résultat]
+
+Scénario 3 : [cas d'erreur ou cas limite, distinct des deux scénarios précédents]
 - Étant donné [contexte différent]
 - Quand [action]
 - Alors [résultat]
