@@ -5,6 +5,8 @@ import { parseStories } from '../logic/storyParser';
 // api/generate-stories.js.
 const STORY_1 = `**User Story 1** En tant que client, je veux consulter mes factures afin de suivre mes paiements.
 
+**Titre :** Consulter l'historique des factures
+
 **Description :**
 Le client doit pouvoir accéder à l'historique de ses factures depuis son espace personnel.
 
@@ -29,6 +31,8 @@ Scénario 2 : Aucune facture
 
 const STORY_2 = `**User Story 1** En tant que gestionnaire, je veux exporter les factures afin de faciliter la comptabilité.
 
+**Titre :** Exporter les factures en CSV
+
 **Description :**
 Le gestionnaire doit pouvoir exporter un lot de factures en CSV.
 
@@ -48,9 +52,9 @@ Scénario 1 : Export réussi
 describe('parseStories — story bien formée', () => {
   const [story] = parseStories(STORY_1);
 
-  it('extrait id, title et hasValidTitle/incomplete corrects', () => {
+  it('extrait id, title (issu du champ **Titre :**) et hasValidTitle/incomplete corrects', () => {
     expect(story.id).toBe(1);
-    expect(story.title).toBe('User Story 1');
+    expect(story.title).toBe("Consulter l'historique des factures");
     expect(story.hasValidTitle).toBe(true);
     expect(story.incomplete).toBe(false);
   });
@@ -110,20 +114,21 @@ describe('parseStories — story bien formée', () => {
 });
 
 describe('parseStories — plusieurs stories séparées par "---"', () => {
-  it('réassigne ids et titres séquentiellement dans l\'ordre, quel que soit le numéro littéral dans le texte brut', () => {
+  it('réassigne les ids séquentiellement dans l\'ordre, quel que soit le numéro littéral dans le texte brut, et garde le titre réel de chaque bloc', () => {
     // Les deux fixtures utilisent toutes les deux "**User Story 1**" dans
-    // leur texte brut : la réassignation ne doit dépendre que de la
-    // position, pas du chiffre écrit par le modèle.
+    // leur texte brut : la réassignation d'id ne doit dépendre que de la
+    // position, pas du chiffre écrit par le modèle. Le titre, lui, vient
+    // du champ **Titre :** propre à chaque bloc.
     const rawText = `${STORY_1}\n\n---\n\n${STORY_2}`;
 
     const stories = parseStories(rawText);
 
     expect(stories).toHaveLength(2);
     expect(stories[0].id).toBe(1);
-    expect(stories[0].title).toBe('User Story 1');
+    expect(stories[0].title).toBe("Consulter l'historique des factures");
     expect(stories[0].statement.role).toBe('client');
     expect(stories[1].id).toBe(2);
-    expect(stories[1].title).toBe('User Story 2');
+    expect(stories[1].title).toBe('Exporter les factures en CSV');
     expect(stories[1].statement.role).toBe('gestionnaire');
   });
 });
@@ -160,7 +165,10 @@ describe('parseStories — bloc sans "**User Story N**" du tout', () => {
 
     expect(stories).toHaveLength(2);
     expect(stories.map(s => s.id)).toEqual([1, 2]);
-    expect(stories.map(s => s.title)).toEqual(['User Story 1', 'User Story 2']);
+    expect(stories.map(s => s.title)).toEqual([
+      "Consulter l'historique des factures",
+      'Exporter les factures en CSV',
+    ]);
     expect(stories[0].statement.role).toBe('client');
     expect(stories[1].statement.role).toBe('gestionnaire');
   });
@@ -214,6 +222,10 @@ describe('parseStories — sections optionnelles absentes', () => {
   const minimal = "**User Story 1** En tant que client, je veux faire quelque chose afin d'obtenir un résultat.";
   const [story] = parseStories(minimal);
 
+  it('titre (**Titre :**) absent → repli sur "User Story N"', () => {
+    expect(story.title).toBe('User Story 1');
+  });
+
   it('complexité absente → "M" par défaut', () => {
     expect(story.complexity).toBe('M');
   });
@@ -228,6 +240,55 @@ describe('parseStories — sections optionnelles absentes', () => {
 
   it('description absente → ""', () => {
     expect(story.description).toBe('');
+  });
+});
+
+describe('parseStories — champ **Titre :** vide (présent mais sans contenu après)', () => {
+  // Contrairement à fullStatement (cf. describe "titre suivi de rien sur la
+  // même ligne" plus haut, qui a toujours ce défaut), la regex de **Titre :**
+  // utilise [ \t]* — pas \s* — entre les deux-points et le contenu capturé :
+  // elle ne consomme que l'espace horizontal sur la même ligne, jamais un
+  // retour à la ligne. Un champ vide ne capture donc jamais le texte de la
+  // section suivante, qu'elle soit collée juste après (cas réel du prompt,
+  // testé ci-dessous) ou séparée par une ligne vide.
+  it('repli sur "User Story N" quand le champ est présent mais vide après trim (espaces seuls)', () => {
+    const rawText = "**User Story 1** En tant que client, je veux faire quelque chose afin d'obtenir un résultat.\n\n**Titre :**   ";
+
+    const [story] = parseStories(rawText);
+
+    expect(story.title).toBe('User Story 1');
+  });
+
+  it('ne fait pas planter le parsing du reste du bloc quand le titre est vide (Complexité placée avant le marqueur vide)', () => {
+    const rawText = "**User Story 1** En tant que client, je veux faire quelque chose afin d'obtenir un résultat.\n\n**Complexité :** S\n\n**Titre :**";
+
+    const [story] = parseStories(rawText);
+
+    expect(story.title).toBe('User Story 1');
+    expect(story.complexity).toBe('S');
+    expect(story.fullStatement).toBe("En tant que client, je veux faire quelque chose afin d'obtenir un résultat.");
+  });
+
+  it('repli sur "User Story N" quand le titre est vide sur sa propre ligne et immédiatement suivi de **Description :** (cas réel du prompt, régression revue PR #66)', () => {
+    const rawText = "**User Story 1** En tant que client, je veux faire quelque chose afin d'obtenir un résultat.\n\n**Titre :**\n\n**Description :**\nUn contexte métier détaillé.";
+
+    const [story] = parseStories(rawText);
+
+    expect(story.title).toBe('User Story 1');
+    expect(story.description).toBe('Un contexte métier détaillé.');
+  });
+});
+
+describe('parseStories — mélange titre réel et repli sur plusieurs stories', () => {
+  it('numérote le repli "User Story N" selon la position finale, pas l\'index brut du bloc', () => {
+    const withoutTitle = "**User Story 1** En tant que client, je veux faire quelque chose afin d'obtenir un résultat.";
+    const rawText = `${withoutTitle}\n\n---\n\n${STORY_2}`;
+
+    const stories = parseStories(rawText);
+
+    expect(stories).toHaveLength(2);
+    expect(stories[0].title).toBe('User Story 1'); // repli, position 1
+    expect(stories[1].title).toBe('Exporter les factures en CSV'); // titre réel
   });
 });
 

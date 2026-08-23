@@ -17,6 +17,17 @@ export function parseStories(rawText) {
     const titleMatch = block.match(/\*\*User Story \d+\*\*\s*(.+?)(?=\n|$)/);
     const fullStatement = titleMatch ? titleMatch[1].trim() : "";
 
+    // Titre court (nouveau champ) — repli sur "User Story N" géré après
+    // renumérotation finale si absent ou vide (sortie malformée/ancien format).
+    // [ \t]* (pas \s*) après les deux-points : ne consomme que l'espace
+    // horizontal sur la même ligne, jamais un retour à la ligne — sinon,
+    // un champ vide suivi immédiatement de **Description :** (cas réel,
+    // puisque ce champ suit toujours **Titre :** dans le prompt) ferait
+    // capturer le texte de la section suivante comme titre au lieu de
+    // déclencher le repli.
+    const shortTitleMatch = block.match(/\*\*Titre\s*:\*\*[ \t]*(.+?)(?=\n|$)/i);
+    const shortTitle = shortTitleMatch ? shortTitleMatch[1].trim() : "";
+
     // Critères
     const criteriaMatch = block.match(/\*\*Crit[èe]res.*?\*\*\s*\n([\s\S]*?)(?=\*\*Sc[ée]narios|\*\*Complexit|$)/i);
     const criteria = criteriaMatch
@@ -62,7 +73,7 @@ export function parseStories(rawText) {
 
     return {
       id: index + 1,
-      title: `User Story ${index + 1}`,
+      title: shortTitle,
       rawBlock: block.trim(),
       fullStatement,
       incomplete: hasValidTitle && !fullStatement,
@@ -78,5 +89,5 @@ export function parseStories(rawText) {
       gherkinGroups,
     };
   }).filter(s => s.hasValidTitle)
-    .map((story, i) => ({ ...story, id: i + 1, title: `User Story ${i + 1}` }));
+    .map((story, i) => ({ ...story, id: i + 1, title: story.title || `User Story ${i + 1}` }));
 }
