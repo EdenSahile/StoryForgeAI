@@ -685,8 +685,8 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
 
   const parsedStories = parseStories(stories);
 
-  const handleCsvExport = () => {
-    const csv = storiesToJiraCSV(parsedStories);
+  const exportStoriesToCsv = (storiesToExport, filenameSuffix = "") => {
+    const csv = storiesToJiraCSV(storiesToExport);
     // BOM UTF-8 : sans lui, Excel ne détecte pas toujours l'UTF-8 et affiche
     // les accents français en mojibake si le fichier est ouvert directement.
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -694,12 +694,16 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
     const date = new Date().toISOString().slice(0, 10);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `storypilot-export-jira-${date}.csv`;
+    link.download = `storypilot-export-jira${filenameSuffix}-${date}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  const handleCsvExport = () => exportStoriesToCsv(parsedStories);
+
+  const handleCsvExportStory = (story) => exportStoriesToCsv([story], `-us-${story.id}`);
 
   useEffect(() => {
     setRecentGenerations(getGenerations().slice(0, 3));
@@ -804,7 +808,7 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
               borderRadius: theme.radii.md,
               lineHeight: 1.6,
             }}>
-              Export direct vers Trello bientôt disponible — utilise "Copier" pour récupérer le texte formaté.
+              Indisponible pour la démo. En situation réelle : intégration via l'API Trello (OAuth).
             </div>
           )}
 
@@ -829,6 +833,20 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
                         aria-label={copiedStoryId === story.id ? "Copié" : "Copier cette user story"}
                       >
                         <span className="icon">{copiedStoryId === story.id ? "done" : "content_copy"}</span>
+                      </StoryCopyBtn>
+                      <StoryCopyBtn
+                        onClick={handleTrelloExport}
+                        title="Exporter vers Trello"
+                        aria-label="Exporter vers Trello"
+                      >
+                        <span className="icon">view_kanban</span>
+                      </StoryCopyBtn>
+                      <StoryCopyBtn
+                        onClick={() => handleCsvExportStory(story)}
+                        title="Exporter en CSV (Jira)"
+                        aria-label="Exporter en CSV (Jira)"
+                      >
+                        <span className="icon">download</span>
                       </StoryCopyBtn>
                     </div>
                   </CardHeader>

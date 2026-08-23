@@ -81,3 +81,67 @@ describe('Results — boutons Copier', () => {
     });
   });
 });
+
+describe('Results — boutons d\'export par story', () => {
+  it('affiche un bouton "Exporter vers Trello" et un bouton "Exporter en CSV (Jira)" par user story', () => {
+    render(<Results stories={STORIES} />);
+
+    expect(screen.getAllByRole('button', { name: 'Exporter vers Trello' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Exporter en CSV (Jira)' })).toHaveLength(2);
+  });
+
+  it('le clic sur le bouton Trello d\'une story affiche le message "Indisponible pour la démo"', () => {
+    render(<Results stories={STORIES} />);
+    const trelloButtons = screen.getAllByRole('button', { name: 'Exporter vers Trello' });
+
+    fireEvent.click(trelloButtons[1]);
+
+    expect(screen.getByText(/Indisponible pour la démo/)).toBeInTheDocument();
+  });
+
+  it('le clic sur le bouton CSV d\'une story télécharge uniquement le CSV de cette story, pas de tout le tableau', async () => {
+    const createObjectURL = vi.fn(() => 'blob:mock-url');
+    const revokeObjectURL = vi.fn();
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
+
+    render(<Results stories={STORIES} />);
+    const csvButtons = screen.getAllByRole('button', { name: 'Exporter en CSV (Jira)' });
+
+    fireEvent.click(csvButtons[1]); // 2e story : "gérer les accès" (administrateur)
+
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    const blob = createObjectURL.mock.calls[0][0];
+    const csvText = await blob.text();
+
+    expect(csvText).toContain('administrateur');
+    expect(csvText).not.toContain('utilisateur, je veux me connecter');
+    // Une seule ligne de données (+ l'en-tête) : le CSV ne contient qu'une story.
+    expect(csvText.split('\r\n')).toHaveLength(2);
+  });
+
+  it('le nom de fichier téléchargé identifie la story exportée (US-02)', () => {
+    const clicks = [];
+    const originalCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+      const el = originalCreateElement(tag);
+      if (tag === 'a') {
+        const originalClick = el.click.bind(el);
+        el.click = () => {
+          clicks.push(el.download);
+          originalClick();
+        };
+      }
+      return el;
+    });
+    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:mock-url'), revokeObjectURL: vi.fn() });
+
+    render(<Results stories={STORIES} />);
+    const csvButtons = screen.getAllByRole('button', { name: 'Exporter en CSV (Jira)' });
+    fireEvent.click(csvButtons[1]);
+
+    expect(clicks).toHaveLength(1);
+    expect(clicks[0]).toMatch(/^storypilot-export-jira-us-2-\d{4}-\d{2}-\d{2}\.csv$/);
+
+    document.createElement.mockRestore();
+  });
+});
