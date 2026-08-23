@@ -34,6 +34,8 @@ src/App.jsx                                # état global, orchestration
 
 ## CI (`claude-pr-review.yml`)
 
+- Trois jobs sur chaque pull request : `test` (`npx vitest run`), `e2e` (`npx playwright install --with-deps chromium` puis `npx playwright test`), et `claude-review`, qui dépend des deux premiers (`needs: [test, e2e]`).
+- `e2e` fait partie de la CI depuis le 2026-08-23 seulement. Avant cette date, seul `npx vitest run` tournait en CI : la suite Playwright (`e2e/generate-stories.spec.js`) n'existait qu'en local, via `npm run test:e2e`. Une régression e2e (deux bugs indépendants : un texte de heading Dashboard désynchronisé depuis 177d67a, et l'écran initial conditionnel introduit par dd5bff2 qui envoie désormais un nouvel utilisateur sans historique sur Forge plutôt que Dashboard) est passée inaperçue faute d'exécution automatique — d'où l'ajout du job `e2e`.
 - Le job `claude-review` (`anthropics/claude-code-action@v1`) refuse de s'exécuter, et ne soumet donc jamais de review, tant que le fichier `.github/workflows/claude-pr-review.yml` de la branche de la PR diffère de celui sur `main` — protection anti-triche intentionnelle de l'action, pas un bug de ce projet. Une PR qui modifie ce fichier ne recevra donc jamais sa propre review automatique ; elle doit être mergée (bypass admin si la branch protection l'exige) avant que le nouveau comportement s'applique aux PR suivantes.
 - Symptôme trompeur : le job apparaît vert ("succeeded"), mais aucune review n'existe (vérifiable via `GET /repos/.../pulls/<n>/reviews`). Le détail réel (message "Workflow validation failed…") n'apparaît qu'avec `show_full_output: true` sur l'action, désactivé par défaut.
 
