@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { theme } from "../theme";
 import { getGenerations, deleteGeneration, updateGeneration, clearGenerations } from "../utils/libraryStorage";
+import { parseStories } from "../logic/storyParser";
+import StoryCard from "../components/StoryCard";
 
 const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(12px); }
@@ -469,20 +471,9 @@ const CopyBtn = styled.button`
 `;
 
 const StoriesBlock = styled.div`
-  background: ${theme.colors.surfaceContainer};
-  border: 1px solid ${theme.colors.outlineVariant};
-  border-radius: ${theme.radii.xl};
-  padding: ${theme.spacing.lg};
-  font-size: ${theme.fontSizes.md};
-  color: ${theme.colors.onSurface};
-  line-height: 1.8;
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-x: auto;
-  font-family: ${theme.fonts.sans};
-
-  h2, h3 { color: ${theme.colors.primary}; margin: 16px 0 8px; }
-  strong { font-weight: 700; }
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.lg};
 `;
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -536,6 +527,8 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
     }
     setEditingTitle(false);
   };
+
+  const parsedStories = selected ? parseStories(selected.stories) : [];
 
   const handleCopy = async () => {
     try {
@@ -650,7 +643,28 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
               </DetailDeleteBtn>
             </div>
 
-            <StoriesBlock>{selected.stories}</StoriesBlock>
+            <StoriesBlock>
+              {parsedStories.length > 0 ? (
+                parsedStories.map((story) => (
+                  <StoryCard story={story} key={story.id} />
+                ))
+              ) : (
+                /* Fallback — texte brut si parsing échoue (sortie ancien format/malformée) */
+                <div style={{
+                  background: theme.colors.surfaceContainer,
+                  border: `1px solid ${theme.colors.outlineVariant}`,
+                  borderRadius: theme.radii.xl,
+                  padding: theme.spacing.lg,
+                  fontSize: theme.fontSizes.md,
+                  color: theme.colors.onSurface,
+                  lineHeight: 1.8,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                }}>
+                  {selected.stories}
+                </div>
+              )}
+            </StoriesBlock>
           </>
         ) : (
           /* ── Vue liste ── */
