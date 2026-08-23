@@ -28,7 +28,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "^6.0.0",
-    "unpdf": "^1.6.2"
+    "unpdf": "~1.7.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
