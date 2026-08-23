@@ -207,6 +207,38 @@ describe('parseStories — statement du modèle placé sur la ligne suivante plu
   });
 });
 
+describe('parseStories — statement du modèle séparé du marqueur par une ligne vide (régression round 2, cas réel)', () => {
+  // Observé sur une deuxième vraie génération (brief "choisir la couleur du
+  // téléphone...", sans RAG cette fois — cf. context.md) : le modèle a
+  // laissé "**User Story N**" seul sur sa ligne (avec un espace en fin de
+  // ligne), suivi d'une ligne VIDE, puis du statement sur la ligne d'après —
+  // un cas non couvert par le repli "ligne suivante directe" de PR #78. Le
+  // repli scanne désormais les lignes après le marqueur en sautant les
+  // lignes vides, et s'arrête sur la première ligne non vide rencontrée :
+  // contenu réel → capturé comme statement ; marqueur d'un autre champ →
+  // fullStatement reste vide (même garde-fou que PR #73/#78).
+  it('capture le statement après une ligne vide intercalée entre le marqueur et le contenu (texte brut réel)', () => {
+    const rawText = "**User Story 1** \n\nEn tant que client sur le site e-commerce, je veux sélectionner la couleur du téléphone que je souhaite acheter afin de personnaliser mon achat selon mes préférences esthétiques et recevoir exactement le produit que je désire.\n\n**Titre :** Sélectionner la couleur du téléphone avant achat";
+
+    const [story] = parseStories(rawText);
+
+    expect(story.fullStatement).toBe(
+      "En tant que client sur le site e-commerce, je veux sélectionner la couleur du téléphone que je souhaite acheter afin de personnaliser mon achat selon mes préférences esthétiques et recevoir exactement le produit que je désire.",
+    );
+    expect(story.incomplete).toBe(false);
+    expect(story.title).toBe('Sélectionner la couleur du téléphone avant achat');
+  });
+
+  it('ne capture toujours pas si les lignes vides sont suivies directement d\'un autre marqueur de champ (garde-fou PR #73, non régressé)', () => {
+    const rawText = "**User Story 1**\n\n\n**Titre :** Un titre quelconque";
+
+    const [story] = parseStories(rawText);
+
+    expect(story.fullStatement).toBe('');
+    expect(story.title).toBe('Un titre quelconque');
+  });
+});
+
 describe('parseStories — bloc sans "**User Story N**" du tout', () => {
   it('exclut le bloc invalide et réindexe les stories valides restantes sans laisser de trou', () => {
     const invalidBlock = "Ceci est un bloc de texte parasite qui ne contient aucun marqueur de user story valide, juste du bruit.";

@@ -3,6 +3,28 @@
 
 ---
 
+## Session PARSING-STATEMENT-ROUND-2 (2026-08-23) — 3e format de statement non couvert par PR #78
+
+**Contexte :** le repli ajouté en PR #78 dans `storyParser.js` (`titleMatch`) ne couvrait pas tous les cas. Nouvelle génération réelle avec le brief "je veux pouvoir choisir la couleur du téléphone que je veux..." (**sans RAG** cette fois, badge "RAG non utilisé — US Générique" — sans lien avec la clause d'exception RAG de PR #78) : `StoryCard.jsx` affichait encore "Statement non détecté dans la réponse générée." et le badge "Story incomplète" sur les 3 stories, alors que description/critères/Gherkin s'affichaient normalement.
+
+**Reproduction :** le modèle étant non déterministe, plusieurs appels au même brief via `vercel dev` (`api/generate-stories.js` en direct, `contextChunks: []`) ont été nécessaires — certains passaient, un a reproduit le bug. Texte brut exact reçu qui a fait échouer le parsing (premier bloc, tronqué à l'essentiel) :
+
+```
+**User Story 1** 
+
+En tant que client sur le site e-commerce, je veux sélectionner la couleur du téléphone que je souhaite acheter afin de personnaliser mon achat selon mes préférences esthétiques et recevoir exactement le produit que je désire.
+
+**Titre :** Sélectionner la couleur du téléphone avant achat
+```
+
+**Cause confirmée (3e format, distinct des deux déjà couverts) :** le marqueur `**User Story 1**` (avec un espace en fin de ligne) est suivi d'une **ligne vide**, puis du statement sur la ligne d'après — le repli de PR #78 (`/\*\*User Story \d+\*\*[ \t]*\n([^\n*][^\n]*)/`) exigeait que le contenu soit sur la toute première ligne suivant le marqueur, sans ligne vide intercalée. Confirmé en lançant `parseStories()` directement sur cette sortie brute réelle capturée, avant tout correctif.
+
+**Correctif :** repli généralisé — scan des lignes après le marqueur, lignes vides sautées, arrêt sur la première ligne non vide rencontrée (contenu réel → capturé comme statement ; marqueur d'un autre champ → `fullStatement` reste vide, même garde-fou que PR #73/#78 non régressé, revérifié par test). Remplace le repli regex de PR #78 par une logique équivalente mais plus générale (couvre aussi son propre cas d'origine). 2 nouveaux tests dans `src/test/storyParser.test.js`, dont un basé texte pour texte sur la sortie brute réelle ci-dessus.
+
+**Après (reproduit à nouveau, même brief, plusieurs appels successifs pour couvrir la non-déterminisme, + 2 briefs différents avec et sans RAG) :** "Statement non détecté" n'apparaît plus sur aucune des générations testées ; `parseStories()` sur la sortie brute capturée initialement confirme `fullStatement` correctement rempli et `incomplete: false` sur les 3 stories.
+
+---
+
 ## Session HALLUCINATION-RAG-PARSING (2026-08-23) — Rattachement métier inventé + parsing statement, brief réel "téléphone"
 
 **Contexte :** deux bugs distincts remontés sur une vraie génération via la démo Lumeo Boutique (déco/luminaires), brief hors-sujet "je souhaite pouvoir choisir la couleur de mon téléphone". Les deux causes ont été confirmées sur la vraie sortie du modèle (`vercel dev` + appels réels à `api/retrieve-context.js`/`api/generate-stories.js`, jamais mockés) avant tout correctif — pas seulement supposées.
