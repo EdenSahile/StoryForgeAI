@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { getGenerations } from "../utils/libraryStorage";
 import { parseStories } from "../logic/storyParser";
+import { storiesToJiraCSV } from "../logic/csvExport";
 import styled, { keyframes } from "styled-components";
 import { theme } from "../theme";
 
@@ -684,6 +685,20 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
 
   const parsedStories = parseStories(stories);
 
+  const handleCsvExport = () => {
+    const csv = storiesToJiraCSV(parsedStories);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const date = new Date().toISOString().slice(0, 10);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `storypilot-export-jira-${date}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     setRecentGenerations(getGenerations().slice(0, 3));
   }, [autoSaved]);
@@ -769,6 +784,10 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
               <ExportBtn onClick={handleTrelloExport}>
                 <span className="icon">view_kanban</span>
                 Exporter vers Trello
+              </ExportBtn>
+              <ExportBtn onClick={handleCsvExport}>
+                <span className="icon">download</span>
+                Exporter CSV (Jira)
               </ExportBtn>
             </ActionBtns>
           </ActionBar>
@@ -929,6 +948,10 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
               <span className="icon">view_kanban</span>
               Exporter vers Trello
             </QuickActionBtn>
+            <QuickActionBtn onClick={handleCsvExport}>
+              <span className="icon">download</span>
+              Exporter CSV (Jira)
+            </QuickActionBtn>
             <QuickActionBtn disabled style={{ opacity: autoSaved ? 1 : 0.5, cursor: "default" }}>
               <span className="icon">{autoSaved ? "check_circle" : "bookmark"}</span>
               {autoSaved ? "✓ Sauvegardé automatiquement" : "Sauvegarde en cours..."}
@@ -992,6 +1015,10 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
         <ExportBtn style={{ flex: 2 }} onClick={handleTrelloExport}>
           <span className="icon">view_kanban</span>
           Exporter vers Trello
+        </ExportBtn>
+        <ExportBtn style={{ flex: 1 }} onClick={handleCsvExport}>
+          <span className="icon">download</span>
+          CSV
         </ExportBtn>
       </MobileStickyBar>
     </PageWrapper>

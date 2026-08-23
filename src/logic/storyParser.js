@@ -17,6 +17,11 @@ export function parseStories(rawText) {
     const titleMatch = block.match(/\*\*User Story \d+\*\*\s*(.+?)(?=\n|$)/);
     const fullStatement = titleMatch ? titleMatch[1].trim() : "";
 
+    // Titre court (nouveau champ) — repli sur "User Story N" géré après
+    // renumérotation finale si absent ou vide (sortie malformée/ancien format).
+    const shortTitleMatch = block.match(/\*\*Titre\s*:\*\*\s*(.+?)(?=\n|$)/i);
+    const shortTitle = shortTitleMatch ? shortTitleMatch[1].trim() : "";
+
     // Critères
     const criteriaMatch = block.match(/\*\*Crit[èe]res.*?\*\*\s*\n([\s\S]*?)(?=\*\*Sc[ée]narios|\*\*Complexit|$)/i);
     const criteria = criteriaMatch
@@ -62,7 +67,7 @@ export function parseStories(rawText) {
 
     return {
       id: index + 1,
-      title: `User Story ${index + 1}`,
+      title: shortTitle,
       rawBlock: block.trim(),
       fullStatement,
       incomplete: hasValidTitle && !fullStatement,
@@ -78,5 +83,5 @@ export function parseStories(rawText) {
       gherkinGroups,
     };
   }).filter(s => s.hasValidTitle)
-    .map((story, i) => ({ ...story, id: i + 1, title: `User Story ${i + 1}` }));
+    .map((story, i) => ({ ...story, id: i + 1, title: story.title || `User Story ${i + 1}` }));
 }

@@ -90,6 +90,8 @@ Pour chaque user story, utilise EXACTEMENT ce format :
 
 **User Story N** En tant que [rôle précis], je veux [action détaillée] afin de [bénéfice métier concret].
 
+**Titre :** [titre court, verbe + objet, 8 mots maximum, distinct de la phrase "En tant que / je veux / afin de"]
+
 **Description :**
 [2-3 phrases de contexte métier détaillé expliquant le besoin]
 

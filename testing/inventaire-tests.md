@@ -22,7 +22,7 @@
 | `ragService.js` | 🟢 déjà fait | `src/test/ragService.test.js` — même patron que `claudeService.js` (`fetch` mocké, aucun rendu) : `uploadDocument`, `retrieveContext`, `listDocuments`, `deleteDocument`, cas d'erreur HTTP et fallback de message. | Rien de significatif. |
 | `libraryStorage.js` | 🟢 déjà fait | `src/test/libraryStorage.test.js` — fonctions pures manipulant `localStorage` : troncature du titre, tri décroissant dans `getGenerations`, `deleteGeneration`, `updateGeneration` (merge partiel), `clearGenerations`, JSON corrompu (`catch` → `[]`). | Rien de significatif. |
 | `Forge.jsx` | 🟢 déjà fait | `src/test/Forge.test.jsx` (13 tests au total : toggle "Générer sans RAG" existant + soumission bloquée, limite 2000 caractères, Ctrl+Entrée, erreurs, panneau RAG streaming, navigation auto, restauration du brief). | Rien de significatif. Note : le "flux complet d'upload" mentionné dans l'ancienne version de cet inventaire n'existe plus — code mort supprimé le 2026-08-19 (mode démo verrouillé, voir `context.md`). |
-| `Results.jsx` | 🟢 déjà fait | `src/logic/storyParser.js` + `storyParser.test.js` (22 tests, `parseStories()` extraite) et `src/test/Results.test.jsx` existant (5 tests de rendu, inchangé). | Rien de significatif. |
+| `Results.jsx` | 🟢 déjà fait | `src/logic/storyParser.js` + `storyParser.test.js` (26 tests, `parseStories()` extraite — inclut le champ `**Titre :**` : présent, absent → repli `User Story N`, vide → repli aussi) et `src/test/Results.test.jsx` existant (5 tests de rendu, inchangé). Export CSV Jira : `src/logic/csvExport.js` + `csvExport.test.js` (13 tests, `storiesToJiraCSV()` — en-têtes, mapping complexité→priorité, échappement RFC 4180 virgule/guillemets/retour à la ligne). | Rien de significatif. |
 | `Library.jsx` | 🟢 déjà fait | `src/test/Library.test.jsx` (21 tests au total : "Supprimer tout" existant + navigation liste/détail, renommage, suppression individuelle, copier, chips de documents source). | Rien de significatif. |
 | ~~`BriefInput.jsx`~~ | — | — | **Supprimé le 2026-08-19** (composant + `src/test/BriefInput.test.jsx`), confirmé mort (non importé nulle part), déjà noté "legacy v1" dans `README.md`. Voir `context.md`. |
 | ~~`StoriesOutput.jsx`~~ | — | — | **Supprimé le 2026-08-19** (composant + `src/test/StoriesOutput.test.jsx`), même constat. Voir `context.md`. |
@@ -32,5 +32,7 @@
 ## Priorités
 
 Toutes les priorités identifiées dans cet inventaire sont couvertes au 2026-08-19 (232 tests unitaires, 15 fichiers de test — `npm run test:run` ; 4 tests e2e — `npx playwright test`). Le parcours e2e étendu (sauvegarde auto en historique, flux d'erreur visible à l'écran, navigation complète entre écrans) a été comblé par les PR #57, #58 et #59. Le seul gap restant (viewport mobile / BottomNav) est un choix volontaire, hors périmètre, et non un trou non traité.
+
+Mise à jour au 2026-08-23 (export CSV Jira, PR en cours) : **258 tests unitaires, 18 fichiers de test**. `storyParser.test.js` étendu de 22 à 26 tests (champ `**Titre :**`) et `csvExport.test.js` créé (13 tests, nouveau).
 
 *Note hors tableau :* `BriefInput.jsx` et `StoriesOutput.jsx`, repérés dans cet inventaire comme morts (meilleure couverture de test du projet, mais non branchés dans l'app réelle), ont été supprimés le 2026-08-19 — composants et tests associés. Voir `context.md` pour la trace de ce nettoyage.
