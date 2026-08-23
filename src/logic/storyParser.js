@@ -14,7 +14,11 @@ export function parseStories(rawText) {
 
   return blocks.map((block, index) => {
     // Titre et statement
-    const titleMatch = block.match(/\*\*User Story \d+\*\*\s*(.+?)(?=\n|$)/);
+    // [ \t]* (pas \s*), même raison que shortTitleMatch ci-dessous : ne pas
+    // laisser un retour à la ligne se faire avaler et capturer le texte de
+    // la section suivante comme statement si **User Story N** était un jour
+    // vide sur sa propre ligne.
+    const titleMatch = block.match(/\*\*User Story \d+\*\*[ \t]*(.+?)(?=\n|$)/);
     const fullStatement = titleMatch ? titleMatch[1].trim() : "";
 
     // Titre court (nouveau champ) — repli sur "User Story N" géré après

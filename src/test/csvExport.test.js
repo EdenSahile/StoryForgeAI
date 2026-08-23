@@ -74,6 +74,15 @@ describe('storiesToJiraCSV — mapping des colonnes', () => {
     // Pas de double saut de ligne consécutif qui trahirait une section vide insérée.
     expect(dataLine).not.toContain('\n\n\n');
   });
+
+  it('story.fullStatement absent (bloc malformé) n\'ajoute pas de ligne vide en tête de la Description CSV', () => {
+    const csv = storiesToJiraCSV([makeStory({ fullStatement: '', criteria: [], gherkinGroups: [] })]);
+    const [, dataLine] = csv.split('\r\n');
+    const descriptionField = dataLine.split('Story,')[1].replace(/^"/, '');
+
+    expect(descriptionField.startsWith('\n')).toBe(false);
+    expect(descriptionField.startsWith('Le client doit pouvoir')).toBe(true);
+  });
 });
 
 describe('storiesToJiraCSV — numérotation des scénarios Gherkin', () => {
@@ -185,5 +194,12 @@ describe('storiesToJiraCSV — neutralisation de l\'injection de formule CSV (OW
     const descriptionField = dataLine.split('Story,')[1];
 
     expect(descriptionField.startsWith("\"'=")).toBe(true);
+  });
+
+  it('un titre commençant par un retour chariot (\\r) est aussi préfixé d\'une apostrophe (défense en profondeur : \\r seul n\'est pas un déclencheur de formule reconnu, mais reste couvert par cohérence)', () => {
+    const csv = storiesToJiraCSV([makeStory({ title: '\rpas vraiment une formule', description: '', criteria: [], gherkinGroups: [] })]);
+    const [, dataLine] = csv.split('\r\n');
+
+    expect(dataLine.startsWith('"\'\r')).toBe(true);
   });
 });

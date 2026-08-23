@@ -156,6 +156,22 @@ describe('parseStories — titre suivi de rien sur la même ligne', () => {
   });
 });
 
+describe('parseStories — "**User Story N**" vide sur sa propre ligne, suivi d\'une ligne vide puis de **Titre :**', () => {
+  // Même défaut que celui déjà corrigé sur shortTitleMatch (cf. describe "champ
+  // **Titre :** vide" plus bas) : titleMatch utilise désormais [ \t]*, pas \s*,
+  // entre le marqueur et le contenu capturé — un retour à la ligne n'est donc
+  // jamais avalé, et le texte de la section suivante (ici **Titre :**) n'est
+  // plus capturé comme fullStatement.
+  it('fullStatement="" et pas le contenu du champ **Titre :**', () => {
+    const rawText = "**User Story 1**\n\n**Titre :** Suivi de commande en temps réel.";
+
+    const [story] = parseStories(rawText);
+
+    expect(story.fullStatement).toBe('');
+    expect(story.title).toBe('Suivi de commande en temps réel.');
+  });
+});
+
 describe('parseStories — bloc sans "**User Story N**" du tout', () => {
   it('exclut le bloc invalide et réindexe les stories valides restantes sans laisser de trou', () => {
     const invalidBlock = "Ceci est un bloc de texte parasite qui ne contient aucun marqueur de user story valide, juste du bruit.";
