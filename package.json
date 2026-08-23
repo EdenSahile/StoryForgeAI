@@ -15,6 +15,10 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "HEADED=1 playwright test"
   },
+  "engines": {
+    "node": ">=20 <21",
+    "npm": ">=10 <11"
+  },
   "dependencies": {
     "@langchain/textsplitters": "^1.0.1",
     "@pinecone-database/pinecone": "^7.2.0",
@@ -24,7 +28,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "^6.0.0",
-    "unpdf": "^1.6.2"
+    "unpdf": "~1.7.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
