@@ -207,8 +207,9 @@ export default function Sidebar({ activeItem = "dashboard", onNavigate }) {
           </NewStoryBtn>
         )}
         <SecondaryLinks>
-          <a href="#">Help Center</a>
-          <a href="#">Feedback</a>
+          <a href={`mailto:contact.storypilot@gmail.com?subject=${encodeURIComponent("[StoryPilot AI] ")}`}>
+            Feedback
+          </a>
         </SecondaryLinks>
       </SidebarBottom>
     </SidebarWrapper>
