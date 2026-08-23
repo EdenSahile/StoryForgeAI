@@ -146,20 +146,16 @@ describe('Dashboard — CTA "Nouvelle génération"', () => {
     expect(onNavigate).toHaveBeenCalledWith('forge');
   });
 
-  it('appelle onNavigate("forge") DEUX FOIS au clic sur le bouton "Générer" (comportement actuel, pas corrigé)', () => {
+  it('appelle onNavigate("forge") une seule fois au clic sur le bouton "Générer" (stopPropagation empêche le bubbling vers CTACard)', () => {
     // GenerateBtn a son propre onClick ET est imbriqué dans CTACard qui a
-    // aussi un onClick sur "forge" sans stopPropagation. Un clic sur le
-    // bouton déclenche donc le handler du bouton, puis l'événement bubble
-    // jusqu'à CTACard dont le handler se déclenche à son tour — deux appels
-    // à onNavigate("forge") pour un seul clic. Documenté tel quel, non
-    // corrigé (pas de bug fonctionnel visible : les deux appels sont
-    // idempotents côté navigation).
+    // aussi un onClick sur "forge". stopPropagation() dans le handler du
+    // bouton empêche l'événement de remonter jusqu'à CTACard, donc un seul
+    // appel à onNavigate("forge") pour un clic sur le bouton.
     const { onNavigate } = renderDashboard();
 
     fireEvent.click(screen.getByRole('button', { name: /Générer/i }));
 
-    expect(onNavigate).toHaveBeenCalledTimes(2);
-    expect(onNavigate).toHaveBeenNthCalledWith(1, 'forge');
-    expect(onNavigate).toHaveBeenNthCalledWith(2, 'forge');
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(onNavigate).toHaveBeenCalledWith('forge');
   });
 });

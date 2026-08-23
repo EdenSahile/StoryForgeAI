@@ -97,6 +97,7 @@ export async function generateStories(brief, onChunk, onError, contextChunks = [
 
           if (parsed.truncated) {
             onTruncated?.();
+            receivedStop = true;
           }
 
           if (parsed.stop) {
