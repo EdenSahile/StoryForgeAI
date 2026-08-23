@@ -29,7 +29,7 @@ export function saveGeneration({ brief, stories, sourcesUsed, storiesCount }) {
       : raw.slice(0, MAX_TITLE) + "…";
 
   const entry = {
-    id: Date.now().toString(),
+    id: crypto.randomUUID(),
     title,
     brief,
     stories,

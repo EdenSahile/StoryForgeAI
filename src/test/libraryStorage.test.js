@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   saveGeneration,
   getGenerations,
@@ -72,6 +72,18 @@ describe('saveGeneration — valeurs par défaut et métadonnées', () => {
     expect(entry.id.length).toBeGreaterThan(0);
     // Round-trip : une vraie date ISO redonne exactement la même chaîne via toISOString().
     expect(new Date(entry.createdAt).toISOString()).toBe(entry.createdAt);
+  });
+
+  it('deux appels synchrones à la même milliseconde produisent des ids différents (régression collision)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-23T12:00:00.000Z'));
+
+    const first = saveGeneration({ brief: 'Premier brief', stories: 's1', storiesCount: 1 });
+    const second = saveGeneration({ brief: 'Second brief', stories: 's2', storiesCount: 1 });
+
+    vi.useRealTimers();
+
+    expect(first.id).not.toBe(second.id);
   });
 
   it('ajoute la nouvelle entrée en tête de liste, pas en queue', () => {
