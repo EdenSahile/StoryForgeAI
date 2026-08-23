@@ -19,7 +19,13 @@ export function parseStories(rawText) {
 
     // Titre court (nouveau champ) — repli sur "User Story N" géré après
     // renumérotation finale si absent ou vide (sortie malformée/ancien format).
-    const shortTitleMatch = block.match(/\*\*Titre\s*:\*\*\s*(.+?)(?=\n|$)/i);
+    // [ \t]* (pas \s*) après les deux-points : ne consomme que l'espace
+    // horizontal sur la même ligne, jamais un retour à la ligne — sinon,
+    // un champ vide suivi immédiatement de **Description :** (cas réel,
+    // puisque ce champ suit toujours **Titre :** dans le prompt) ferait
+    // capturer le texte de la section suivante comme titre au lieu de
+    // déclencher le repli.
+    const shortTitleMatch = block.match(/\*\*Titre\s*:\*\*[ \t]*(.+?)(?=\n|$)/i);
     const shortTitle = shortTitleMatch ? shortTitleMatch[1].trim() : "";
 
     // Critères

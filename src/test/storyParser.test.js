@@ -244,12 +244,13 @@ describe('parseStories — sections optionnelles absentes', () => {
 });
 
 describe('parseStories — champ **Titre :** vide (présent mais sans contenu après)', () => {
-  // Comme pour fullStatement (cf. describe "titre suivi de rien sur la même
-  // ligne" plus haut), le \s* de la regex avale les lignes vides : si du
-  // texte non-blanc existe plus loin dans le bloc après le marqueur, il est
-  // capturé à tort comme titre. Le marqueur **Titre :** doit donc être placé
-  // en dernier, sans rien d'autre que du whitespace après, pour tester un
-  // champ réellement vide.
+  // Contrairement à fullStatement (cf. describe "titre suivi de rien sur la
+  // même ligne" plus haut, qui a toujours ce défaut), la regex de **Titre :**
+  // utilise [ \t]* — pas \s* — entre les deux-points et le contenu capturé :
+  // elle ne consomme que l'espace horizontal sur la même ligne, jamais un
+  // retour à la ligne. Un champ vide ne capture donc jamais le texte de la
+  // section suivante, qu'elle soit collée juste après (cas réel du prompt,
+  // testé ci-dessous) ou séparée par une ligne vide.
   it('repli sur "User Story N" quand le champ est présent mais vide après trim (espaces seuls)', () => {
     const rawText = "**User Story 1** En tant que client, je veux faire quelque chose afin d'obtenir un résultat.\n\n**Titre :**   ";
 
@@ -266,6 +267,15 @@ describe('parseStories — champ **Titre :** vide (présent mais sans contenu ap
     expect(story.title).toBe('User Story 1');
     expect(story.complexity).toBe('S');
     expect(story.fullStatement).toBe("En tant que client, je veux faire quelque chose afin d'obtenir un résultat.");
+  });
+
+  it('repli sur "User Story N" quand le titre est vide sur sa propre ligne et immédiatement suivi de **Description :** (cas réel du prompt, régression revue PR #66)', () => {
+    const rawText = "**User Story 1** En tant que client, je veux faire quelque chose afin d'obtenir un résultat.\n\n**Titre :**\n\n**Description :**\nUn contexte métier détaillé.";
+
+    const [story] = parseStories(rawText);
+
+    expect(story.title).toBe('User Story 1');
+    expect(story.description).toBe('Un contexte métier détaillé.');
   });
 });
 
