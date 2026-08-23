@@ -185,7 +185,7 @@ export default function Sidebar({ activeItem = "dashboard", onNavigate }) {
         {activeItem !== "forge" && (
           <NewStoryBtn onClick={() => onNavigate?.("forge")}>
             <span className="icon">add</span>
-            New Story
+            Nouveau brief
           </NewStoryBtn>
         )}
       </SidebarBottom>
