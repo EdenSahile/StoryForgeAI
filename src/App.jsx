@@ -2,9 +2,10 @@
 // Remplace l'App.jsx existant
 
 import { useState, useEffect, useRef } from "react";
-import { saveGeneration } from "./utils/libraryStorage";
+import { saveGeneration, getGenerations } from "./utils/libraryStorage";
 import { listDocuments } from "./components/services/ragService";
 import { getStoredTheme, saveTheme } from "./logic/themeStorage";
+import { getInitialScreen } from "./logic/initialScreen";
 import styled, { createGlobalStyle } from "styled-components";
 import { theme } from "./theme";
 import Sidebar from "./components/layout/Sidebar";
@@ -158,7 +159,7 @@ const GlobalStyle = createGlobalStyle`
 
 
 function App() {
-  const [currentScreen, setCurrentScreen] = useState("dashboard");
+  const [currentScreen, setCurrentScreen] = useState(() => getInitialScreen(getGenerations()));
   const [brief, setBrief] = useState("");
   const [stories, setStories] = useState("");
   const [ragChunks, setRagChunks] = useState([]);
