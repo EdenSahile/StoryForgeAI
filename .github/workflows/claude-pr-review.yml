@@ -26,10 +26,25 @@ jobs:
       - run: npm ci
       - run: npx vitest run
 
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+
   claude-review:
     name: Claude review
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, e2e]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -54,16 +69,18 @@ jobs:
             French system prompt/response). Check for correctness bugs, security
             issues, and consistency with existing patterns in the codebase.
 
-            The `test` job already ran `npx vitest run` in CI before this step —
-            treat that as ground truth for whether the suite passes. Don't
-            re-run the full suite yourself; run a single focused test only if
-            you need to double check a specific concern.
+            The `test` and `e2e` jobs already ran `npx vitest run` and
+            `npx playwright test` in CI before this step — treat that as
+            ground truth for whether the suites pass. Don't re-run them
+            yourself; run a single focused test only if you need to double
+            check a specific concern.
 
             Do not run `gh pr checks`, `gh api`, `gh pr list`, or any other gh
             command beyond `gh pr view`, `gh pr diff`, and `gh pr review` — you
-            do not have permission for anything else, and the `test` job status
-            is already known to have passed by the time you run (this job
-            depends on it via `needs: test`). Go straight to reviewing the diff.
+            do not have permission for anything else, and the `test`/`e2e`
+            jobs' status is already known to have passed by the time you run
+            (this job depends on both via `needs: [test, e2e]`). Go straight
+            to reviewing the diff.
 
             Categorize findings as Critical / Important / Minor, same as this
             project's /code-review skill would.

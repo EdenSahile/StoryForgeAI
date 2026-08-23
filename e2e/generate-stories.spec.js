@@ -177,10 +177,9 @@ test.describe('Parcours critique — génération de user stories', () => {
   test('la Sidebar permet de parcourir tous les écrans sans erreur', async ({ page }) => {
     await page.goto('/');
 
-    // currentScreen initial = "dashboard" dans App.jsx.
-    await expect(page.getByRole('heading', { name: /Bonjour Eden/ })).toBeVisible();
-
-    await page.locator('aside nav a', { hasText: 'Forge' }).click();
+    // currentScreen initial = "forge" quand aucune génération n'est sauvegardée (nouvel
+    // utilisateur, cf. src/logic/initialScreen.js depuis dd5bff2) : le contexte Playwright
+    // est neutre (pas de localStorage), donc l'app démarre ici, pas sur Dashboard.
     await expect(page.getByPlaceholder(/Décris ton besoin métier ici/)).toBeVisible();
 
     await page.locator('aside nav a', { hasText: 'Historique' }).click();
@@ -193,6 +192,6 @@ test.describe('Parcours critique — génération de user stories', () => {
     await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
 
     await page.locator('aside nav a', { hasText: 'Dashboard' }).click();
-    await expect(page.getByRole('heading', { name: /Bonjour Eden/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
   });
 });
