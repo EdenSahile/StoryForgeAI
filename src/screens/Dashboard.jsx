@@ -607,7 +607,12 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
               <h5>Nouvelle génération</h5>
               <p>Décris un besoin métier pour commencer</p>
             </div>
-            <GenerateBtn onClick={() => onNavigate?.("forge")}>
+            <GenerateBtn
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigate?.("forge");
+              }}
+            >
               <span className="icon">bolt</span>
               Générer
             </GenerateBtn>

@@ -204,11 +204,10 @@ describe('generateStories — troncature (onTruncated)', () => {
 
     expect(onChunk).toHaveBeenCalledWith('Segment partiel');
     expect(onError).not.toHaveBeenCalled();
-    // Appelé deux fois avec le code actuel : une fois pour le flag
-    // `truncated: true` reçu explicitement, une fois de plus en fin de
-    // boucle car `stop: true` n'a jamais été reçu (receivedStop reste
-    // false — seul un `parsed.stop` le met à true, pas `parsed.truncated`).
-    expect(onTruncated).toHaveBeenCalledTimes(2);
+    // `parsed.truncated` met désormais receivedStop à true, donc le check
+    // de fin de boucle (charCount > 0 && !receivedStop) ne redéclenche
+    // plus onTruncated une seconde fois.
+    expect(onTruncated).toHaveBeenCalledTimes(1);
   });
 
   it('appelle onTruncated quand le stream se termine sans jamais avoir reçu { stop: true } (coupure anormale silencieuse)', async () => {
