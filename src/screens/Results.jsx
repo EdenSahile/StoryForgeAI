@@ -617,6 +617,26 @@ const TruncationWarning = styled.div`
   font-weight: 500;
 `;
 
+const TrelloMsgBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  background: ${theme.colors.bgWarning};
+  border: 1px solid color-mix(in srgb, ${theme.colors.amber} 30%, transparent);
+  border-radius: ${theme.radii.sm};
+  color: ${theme.colors.textWarning};
+  font-size: ${theme.fontSizes.sm};
+  font-weight: 500;
+  line-height: 1.6;
+
+  .icon {
+    font-family: "Material Symbols Outlined";
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+`;
+
 const RegenerateBtn = styled.button`
   background: color-mix(in srgb, ${theme.colors.amber} 15%, transparent);
   border: 1px solid color-mix(in srgb, ${theme.colors.amber} 40%, transparent);
@@ -671,22 +691,31 @@ const SourceItem = styled.div`
   }
 `;
 
+function TrelloUnavailableMsg() {
+  return (
+    <TrelloMsgBanner>
+      <span className="icon">info</span>
+      Indisponible pour la démo. En situation réelle : intégration via l'API Trello (OAuth).
+    </TrelloMsgBanner>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────
 export default function Results({ brief = "", stories, ragChunks = [], onNewGeneration, onRegenerate, onNavigate, truncated = false, autoSaved = false, themeMode, onThemeChange }) {
   const [copied, setCopied] = useState(false);
   const [copiedStoryId, setCopiedStoryId] = useState(null);
-  const [showTrelloMsg, setShowTrelloMsg] = useState(false);
+  const [trelloMsgFor, setTrelloMsgFor] = useState(null);
   const [recentGenerations, setRecentGenerations] = useState([]);
 
-  const handleTrelloExport = () => {
-    setShowTrelloMsg(true);
-    setTimeout(() => setShowTrelloMsg(false), 4000);
+  const handleTrelloExport = (source) => {
+    setTrelloMsgFor(source);
+    setTimeout(() => setTrelloMsgFor(null), 4000);
   };
 
   const parsedStories = parseStories(stories);
 
-  const handleCsvExport = () => {
-    const csv = storiesToJiraCSV(parsedStories);
+  const exportStoriesToCsv = (storiesToExport, filenameSuffix = "") => {
+    const csv = storiesToJiraCSV(storiesToExport);
     // BOM UTF-8 : sans lui, Excel ne détecte pas toujours l'UTF-8 et affiche
     // les accents français en mojibake si le fichier est ouvert directement.
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -694,12 +723,16 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
     const date = new Date().toISOString().slice(0, 10);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `storypilot-export-jira-${date}.csv`;
+    link.download = `storypilot-export-jira${filenameSuffix}-${date}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  const handleCsvExport = () => exportStoriesToCsv(parsedStories);
+
+  const handleCsvExportStory = (story) => exportStoriesToCsv([story], `-us-${story.id}`);
 
   useEffect(() => {
     setRecentGenerations(getGenerations().slice(0, 3));
@@ -783,7 +816,7 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
                 <span className="icon">{copied ? "done" : "content_copy"}</span>
                 {copied ? "Copié !" : "Copier tout"}
               </OutlineBtn>
-              <ExportBtn onClick={handleTrelloExport}>
+              <ExportBtn onClick={() => handleTrelloExport("global")}>
                 <span className="icon">view_kanban</span>
                 Exporter vers Trello
               </ExportBtn>
@@ -794,19 +827,7 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
             </ActionBtns>
           </ActionBar>
 
-          {showTrelloMsg && (
-            <div style={{
-              fontSize: theme.fontSizes.sm,
-              color: theme.colors.onSurfaceVariant,
-              padding: `${theme.spacing.sm} ${theme.spacing.md}`,
-              background: theme.colors.surfaceContainer,
-              border: `1px solid ${theme.colors.outlineVariant}`,
-              borderRadius: theme.radii.md,
-              lineHeight: 1.6,
-            }}>
-              Export direct vers Trello bientôt disponible — utilise "Copier" pour récupérer le texte formaté.
-            </div>
-          )}
+          {trelloMsgFor === "global" && <TrelloUnavailableMsg />}
 
           {/* Story Cards */}
           <StoryList>
@@ -830,8 +851,28 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
                       >
                         <span className="icon">{copiedStoryId === story.id ? "done" : "content_copy"}</span>
                       </StoryCopyBtn>
+                      <StoryCopyBtn
+                        onClick={() => handleTrelloExport(story.id)}
+                        title="Exporter vers Trello"
+                        aria-label="Exporter vers Trello"
+                      >
+                        <span className="icon">view_kanban</span>
+                      </StoryCopyBtn>
+                      <StoryCopyBtn
+                        onClick={() => handleCsvExportStory(story)}
+                        title="Exporter en CSV (Jira)"
+                        aria-label="Exporter en CSV (Jira)"
+                      >
+                        <span className="icon">download</span>
+                      </StoryCopyBtn>
                     </div>
                   </CardHeader>
+
+                  {trelloMsgFor === story.id && (
+                    <div style={{ padding: `0 ${theme.spacing.lg}`, marginTop: theme.spacing.md }}>
+                      <TrelloUnavailableMsg />
+                    </div>
+                  )}
 
                   <CardBody>
                     {/* Statement */}
@@ -946,7 +987,7 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
               <span className="icon">restart_alt</span>
               Nouvelle génération
             </QuickActionBtn>
-            <QuickActionBtn $variant="primary" onClick={handleTrelloExport}>
+            <QuickActionBtn $variant="primary" onClick={() => handleTrelloExport("global")}>
               <span className="icon">view_kanban</span>
               Exporter vers Trello
             </QuickActionBtn>
@@ -1014,7 +1055,7 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
           <span className="icon">{copied ? "done" : "content_copy"}</span>
           {copied ? "Copié !" : "Copier"}
         </OutlineBtn>
-        <ExportBtn style={{ flex: 2 }} onClick={handleTrelloExport}>
+        <ExportBtn style={{ flex: 2 }} onClick={() => handleTrelloExport("global")}>
           <span className="icon">view_kanban</span>
           Exporter vers Trello
         </ExportBtn>
