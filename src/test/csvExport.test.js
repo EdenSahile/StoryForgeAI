@@ -186,4 +186,11 @@ describe('storiesToJiraCSV — neutralisation de l\'injection de formule CSV (OW
 
     expect(descriptionField.startsWith("\"'=")).toBe(true);
   });
+
+  it('un titre commençant par un retour chariot (\\r) est aussi préfixé d\'une apostrophe (défense en profondeur : \\r seul n\'est pas un déclencheur de formule reconnu, mais reste couvert par cohérence)', () => {
+    const csv = storiesToJiraCSV([makeStory({ title: '\rpas vraiment une formule', description: '', criteria: [], gherkinGroups: [] })]);
+    const [, dataLine] = csv.split('\r\n');
+
+    expect(dataLine.startsWith('"\'\r')).toBe(true);
+  });
 });

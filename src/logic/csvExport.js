@@ -13,7 +13,7 @@ const CSV_HEADERS = ["Summary", "Issue Type", "Description", "Priority", "Labels
  */
 function escapeCsvField(field) {
   let value = field == null ? "" : String(field);
-  if (/^[=+\-@\t]/.test(value)) {
+  if (/^[=+\-@\t\r]/.test(value)) {
     value = `'${value}`;
   }
   if (/[",\n\r]/.test(value)) {
