@@ -251,9 +251,7 @@ Applique la palette "Pétrole & or" validée en session POLISH (voir section ci-
 | `#6e8782` sur `#16211f` | ~4.28:1 | légèrement sous AA texte normal — acceptable car jamais utilisé pour du texte de lecture, seulement icônes/séparateurs (seuil non-texte WCAG 1.4.11 = 3:1) |
 
 ### Reste à faire
-- [ ] Confirmer les 3 tokens dérivés (`tertiary`, `outline`, `outlineVariant`) — pas de retour utilisateur négatif obtenu pendant cette session, à valider au prochain passage si un ajustement visuel est souhaité.
-- [ ] Commit (pas fait automatiquement, à la demande explicite de l'utilisateur uniquement).
-- [ ] Tester Library/Results avec de vraies données sauvegardées (Dashboard était vide pendant le test visuel — pas de génération en historique sur ce profil de test).
+- [x] ~~Confirmer les 3 tokens dérivés / Commit à la demande explicite / Tester Library-Results avec de vraies données~~ — retirés le 2026-08-23 : les 3 items sont devenus obsolètes (palette "Pétrole & or" remplacée par "Graphite & Émeraude" en PR #62, discipline de branche/commit devenue la norme de fait, Library/Results testés depuis à de multiples reprises avec de vraies données).
 
 ---
 
