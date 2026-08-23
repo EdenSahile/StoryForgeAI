@@ -3,6 +3,36 @@
 
 ---
 
+## Session HALLUCINATION-RAG-PARSING (2026-08-23) — Rattachement métier inventé + parsing statement, brief réel "téléphone"
+
+**Contexte :** deux bugs distincts remontés sur une vraie génération via la démo Lumeo Boutique (déco/luminaires), brief hors-sujet "je souhaite pouvoir choisir la couleur de mon téléphone". Les deux causes ont été confirmées sur la vraie sortie du modèle (`vercel dev` + appels réels à `api/retrieve-context.js`/`api/generate-stories.js`, jamais mockés) avant tout correctif — pas seulement supposées.
+
+### BUG 1 — Le RAG forçait un rattachement métier inventé
+
+**Cause confirmée :** un seul chunk (`06_faq_service_client.pdf`, score réel 43%, juste au-dessus du seuil 0.42 dans `api/retrieve-context.js`) a suffi à déclencher l'injection de contexte, sans rapport thématique réel avec "téléphone". Le prompt système (`api/generate-stories.js`) contenait une instruction absolue ("INTERDIT de générer des user stories génériques") sans échappatoire pour le cas où le brief décrit un produit/service sans équivalent documenté.
+
+**Avant (reproduit) :** le modèle invente que Lumeo vend des téléphones, avec des couleurs référencées RAL/Pantone inventées, des prix inventés ("599€", "649€"), et détourne le programme fidélité réel "Lumeo+" en un faux calcul de cashback sur ces téléphones inventés.
+
+**Deux tentatives de correctif insuffisantes avant la bonne formulation, toutes deux reproduites et rejetées :**
+1. Une clause ajoutée en fin de bloc d'instructions ("reste générique sur ce point") — **ignorée** : les instructions `DOIS`/`INTERDIT` juste au-dessus, répétées et plus fortes, ont dominé, le modèle a continué à inventer un rattachement (variante atténuée mais toujours présente : "Lumeo Boutique propose plusieurs références de téléphones...").
+2. Une clause absolue en tête de bloc ("AVANT TOUTE CHOSE... INTERDIT d'inventer...") — **overcorrection** : le modèle a refusé de générer, produisant une réponse méta ("ALERTE INCOHÉRENCE MÉTIER DÉTECTÉE", 3 options proposées au client) au lieu de user stories exploitables — pire que le bug initial pour l'usage réel du produit.
+
+**Correctif retenu :** clause d'exception rattachée directement à l'instruction `INTERDIT` elle-même, avec une instruction explicite interdisant tout refus ou demande de clarification ("Tu dois TOUJOURS générer les user stories demandées — jamais refuser, jamais demander de clarification"). Voir `CLAUDE.md` (règle CSV Injection non touchée, nouvelle règle juste après) pour le texte exact et la justification.
+
+**Après (reproduit avec le même brief) :** 3 user stories générées normalement, aucune mention de "téléphone"/"smartphone"/"mobile", aucune mention du faux cashback/prix inventés — le modèle reste générique ("sélectionner la couleur d'un produit") tout en réutilisant correctement les faits réels documentés qui s'appliquent légitimement (référence RAL/Pantone pour la fidélité des couleurs, délai de modification de 2h, email SAV réel pour un contact SAV réel). Reconfirmé une seconde fois via l'UI réelle (navigateur + `vercel dev`, pas seulement `curl`) : mêmes résultats, `StoryCard` affiche les 3 statements normalement (voir BUG 2).
+
+**Non touché dans ce correctif, hors scope explicite :** le seuil de pertinence `0.42` dans `api/retrieve-context.js` — réglage empirique distinct.
+
+### BUG 2 — Message de fallback trompeur, vrai bug de parsing
+
+**Cause confirmée** (sur la sortie brute réelle du modèle, pas supposée) : `src/logic/storyParser.js`, `titleMatch` (regex du statement) ne capturait que du texte sur la même ligne que `**User Story N**`. Sur cette génération réelle, le modèle a mis `**User Story 1**` suivi de deux espaces puis d'un retour à la ligne, avec le statement sur la ligne suivante — cas non couvert par le fix PR #73 (qui traitait seulement le cas "vide et collé au champ suivant"). Résultat : `fullStatement` vide à tort sur les 3 stories, alors que description/critères/Gherkin étaient tous présents — ce n'était pas un stream interrompu (`src/components/StoryCard.jsx` affichait pourtant "Contenu non reçu — stream interrompu avant la fin de la story.", une cause non garantie).
+
+**Correctif :** `titleMatch` élargi avec un repli qui capture aussi le statement sur la ligne suivante, mais seulement si cette ligne est du contenu réel (ne commence pas par `*`, n'est pas vide) — pour ne pas réintroduire le bug corrigé en PR #73 (ligne vide suivie directement d'un autre champ `**Titre :**`/`**Description :**`). 3 nouveaux cas de test dans `src/test/storyParser.test.js` (même ligne déjà couvert, ligne suivante avec/sans espaces de fin de ligne, toujours vide si directement suivi d'un autre champ sans ligne vide). Message de fallback dans `StoryCard.jsx` remplacé par un texte neutre qui n'affirme plus de cause non garantie : "Statement non détecté dans la réponse générée."
+
+**Après (reproduit, même sortie brute réelle) :** les 3 stories ont un `fullStatement` correctement extrait, `incomplete: false` — confirmé à la fois par un test direct de `parseStories()` sur la sortie brute capturée et par l'UI réelle (les 3 `StoryCard` affichent leur statement, jamais le message de fallback).
+
+---
+
 ## Session NODE-VERSION-LOCK (2026-08-23) — Bug CI npm ci (PR #71), verrouillage Node/npm (PR #72)
 
 **Contexte :** PR #71 (nettoyage CLAUDE.md/context.md, retrait de `react-markdown`) a cassé la CI sur les jobs `Tests` et `E2E (Playwright)`, tous deux en échec dès `npm ci`. Root cause et correctifs traités dans la foulée, PR #72 verrouille la contrainte pour empêcher la récidive.

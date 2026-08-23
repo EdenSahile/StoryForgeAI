@@ -19,7 +19,17 @@ export function parseStories(rawText) {
     // la section suivante comme statement si **User Story N** était un jour
     // vide sur sa propre ligne.
     const titleMatch = block.match(/\*\*User Story \d+\*\*[ \t]*(.+?)(?=\n|$)/);
-    const fullStatement = titleMatch ? titleMatch[1].trim() : "";
+    let fullStatement = titleMatch ? titleMatch[1].trim() : "";
+    // Repli : le modèle place parfois le statement sur la ligne suivante au
+    // lieu de la même ligne (observé en pratique sur une vraie génération,
+    // cf. context.md) — capturé seulement si cette ligne suivante est du
+    // contenu réel, jamais si elle est vide ou commence par un autre
+    // marqueur de champ (**Titre :**, **Description :**...), pour ne pas
+    // réintroduire le bug corrigé en PR #73.
+    if (!fullStatement) {
+      const nextLineMatch = block.match(/\*\*User Story \d+\*\*[ \t]*\n([^\n*][^\n]*)/);
+      fullStatement = nextLineMatch ? nextLineMatch[1].trim() : "";
+    }
 
     // Titre court (nouveau champ) — repli sur "User Story N" géré après
     // renumérotation finale si absent ou vide (sortie malformée/ancien format).
