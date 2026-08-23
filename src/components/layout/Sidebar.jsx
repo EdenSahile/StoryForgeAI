@@ -153,24 +153,6 @@ const UserCard = styled.div`
   }
 `;
 
-const SecondaryLinks = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0 ${theme.spacing.md};
-
-  a {
-    font-size: ${theme.fontSizes.xs};
-    color: ${theme.colors.onSurfaceVariant};
-    text-decoration: none;
-    transition: color 0.2s;
-
-    &:hover {
-      color: ${theme.colors.primary};
-    }
-  }
-`;
-
 const NAV_ITEMS = [
   { id: "dashboard", label: "Tableau de bord", icon: "dashboard" },
   { id: "forge", label: "Brief", icon: "auto_awesome" },
@@ -206,11 +188,6 @@ export default function Sidebar({ activeItem = "dashboard", onNavigate }) {
             New Story
           </NewStoryBtn>
         )}
-        <SecondaryLinks>
-          <a href={`mailto:contact.storypilot@gmail.com?subject=${encodeURIComponent("[StoryPilot AI] ")}`}>
-            Feedback
-          </a>
-        </SecondaryLinks>
       </SidebarBottom>
     </SidebarWrapper>
   );
