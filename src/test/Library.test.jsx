@@ -76,17 +76,25 @@ describe('Library — navigation liste ↔ détail', () => {
     localStorage.clear();
   });
 
-  it('un clic sur une carte affiche la vue détail (titre, brief, stories) et masque la liste', () => {
+  it('un clic sur une carte affiche la vue détail (titre, brief, stories rendues via StoryCard) et masque la liste', () => {
     // Brief volontairement > 60 caractères : sinon saveGeneration() ne le
     // tronque pas et title === brief, rendant les deux textes ambigus pour
     // getByText (title est un heading, mais le brief affiché serait alors
     // identique au titre affiché).
     const brief = "Le brief complet de test, volontairement assez long pour dépasser la troncature du titre à 60 caractères.";
+    // Markdown réel, parseable par parseStories() — la vue détail rend
+    // désormais le résultat structuré via StoryCard, plus le texte brut.
+    const stories = `**User Story 1** En tant que client, je veux consulter mes factures afin de suivre mes paiements.
+
+**Critères d'acceptation :**
+- Le client voit la liste de ses factures
+
+**Complexité :** M`;
     const entry = saveGeneration({
       brief,
-      stories: 'Le contenu complet des stories',
+      stories,
       sourcesUsed: [],
-      storiesCount: 2,
+      storiesCount: 1,
     });
     render(<Library />);
 
@@ -94,8 +102,26 @@ describe('Library — navigation liste ↔ détail', () => {
 
     expect(screen.getByRole('heading', { name: entry.title })).toBeInTheDocument();
     expect(screen.getByText(brief)).toBeInTheDocument();
-    expect(screen.getByText('Le contenu complet des stories')).toBeInTheDocument();
+    // Rendu structuré (StoryCard), pas le markdown brut : statement colorisé...
+    expect(screen.getByText('client')).toBeInTheDocument();
+    expect(screen.getByText('consulter mes factures')).toBeInTheDocument();
+    // ...et critère en liste, préfixe "- " retiré par parseStories().
+    expect(screen.getByText('Le client voit la liste de ses factures')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Retour/i })).toBeInTheDocument();
+  });
+
+  it('affiche le texte brut si les stories ne sont pas parseables (sortie ancien format/malformée)', () => {
+    const entry = saveGeneration({
+      brief: 'B',
+      stories: 'Le contenu complet des stories, sans marqueur **User Story N** valide.',
+      sourcesUsed: [],
+      storiesCount: 1,
+    });
+    render(<Library />);
+
+    fireEvent.click(screen.getByText(entry.title));
+
+    expect(screen.getByText(/Le contenu complet des stories, sans marqueur/)).toBeInTheDocument();
   });
 
   it('le bouton "Retour" ramène à la vue liste', () => {

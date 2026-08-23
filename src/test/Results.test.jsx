@@ -102,23 +102,26 @@ describe('Results — boutons d\'export par story', () => {
     fireEvent.click(screen.getAllByText('Exporter vers Trello')[0]);
 
     expect(screen.getByText(/Indisponible pour la démo/)).toBeInTheDocument();
-    const cards = screen.getAllByRole('article');
-    cards.forEach((card) => {
-      expect(within(card).queryByText(/Indisponible pour la démo/)).not.toBeInTheDocument();
+    // Chaque story est un <article> (StoryCard) enveloppé dans un slot <div>
+    // qui porte aussi les boutons d'action et, le cas échéant, le message —
+    // on vérifie ce slot (article.parentElement), pas seulement l'article.
+    const slots = screen.getAllByRole('article').map((article) => article.parentElement);
+    slots.forEach((slot) => {
+      expect(within(slot).queryByText(/Indisponible pour la démo/)).not.toBeInTheDocument();
     });
   });
 
   it('le clic sur le bouton Trello d\'une story affiche le message sous cette story précise, pas ailleurs', () => {
     render(<Results stories={STORIES} />);
     const trelloButtons = screen.getAllByRole('button', { name: 'Exporter vers Trello' });
-    const cards = screen.getAllByRole('article');
+    const slots = screen.getAllByRole('article').map((article) => article.parentElement);
 
     fireEvent.click(trelloButtons[1]); // 2e story
 
     // Présent sous la 2e story...
-    expect(within(cards[1]).getByText(/Indisponible pour la démo/)).toBeInTheDocument();
+    expect(within(slots[1]).getByText(/Indisponible pour la démo/)).toBeInTheDocument();
     // ...absent de la 1ère story...
-    expect(within(cards[0]).queryByText(/Indisponible pour la démo/)).not.toBeInTheDocument();
+    expect(within(slots[0]).queryByText(/Indisponible pour la démo/)).not.toBeInTheDocument();
     // ...et un seul message affiché au total (pas de doublon en haut de page).
     expect(screen.getAllByText(/Indisponible pour la démo/)).toHaveLength(1);
   });
