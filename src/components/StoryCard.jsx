@@ -189,7 +189,7 @@ export default function StoryCard({ story }) {
           ) : (
             story.fullStatement || (
               <span style={{ fontStyle: "italic", opacity: 0.6 }}>
-                Contenu non reçu — stream interrompu avant la fin de la story.
+                Statement non détecté dans la réponse générée.
               </span>
             )
           )}

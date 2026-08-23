@@ -172,6 +172,41 @@ describe('parseStories — "**User Story N**" vide sur sa propre ligne, suivi d\
   });
 });
 
+describe('parseStories — statement du modèle placé sur la ligne suivante plutôt que sur la même ligne (régression, cas réel)', () => {
+  // Observé sur une vraie génération (brief hors-sujet "téléphone", cf.
+  // context.md) : le modèle a parfois laissé le marqueur "**User Story N**"
+  // seul sur sa ligne (avec des espaces en fin de ligne) et mis le statement
+  // sur la ligne suivante. Repli ajouté dans titleMatch : capturé seulement
+  // si cette ligne suivante est du contenu réel (ne commence pas par "*" et
+  // n'est pas vide), jamais si elle est vide ou marque un autre champ — pour
+  // ne pas réintroduire le bug corrigé en PR #73.
+  it('capture le statement sur la ligne suivante quand le marqueur est seul sur sa ligne', () => {
+    const rawText = "**User Story 1**\nEn tant que client, je veux faire quelque chose afin d'obtenir un résultat.";
+
+    const [story] = parseStories(rawText);
+
+    expect(story.fullStatement).toBe("En tant que client, je veux faire quelque chose afin d'obtenir un résultat.");
+    expect(story.incomplete).toBe(false);
+  });
+
+  it('capture aussi le statement sur la ligne suivante quand le marqueur a des espaces en fin de ligne (cas réel observé)', () => {
+    const rawText = "**User Story 1**  \nEn tant que client, je veux faire quelque chose afin d'obtenir un résultat.";
+
+    const [story] = parseStories(rawText);
+
+    expect(story.fullStatement).toBe("En tant que client, je veux faire quelque chose afin d'obtenir un résultat.");
+  });
+
+  it('ne capture toujours pas le statement si le marqueur est directement suivi d\'un autre champ, sans ligne vide entre les deux', () => {
+    const rawText = "**User Story 1**\n**Titre :** Un titre quelconque";
+
+    const [story] = parseStories(rawText);
+
+    expect(story.fullStatement).toBe('');
+    expect(story.title).toBe('Un titre quelconque');
+  });
+});
+
 describe('parseStories — bloc sans "**User Story N**" du tout', () => {
   it('exclut le bloc invalide et réindexe les stories valides restantes sans laisser de trou', () => {
     const invalidBlock = "Ceci est un bloc de texte parasite qui ne contient aucun marqueur de user story valide, juste du bruit.";
