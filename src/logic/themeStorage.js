@@ -1,10 +1,10 @@
 // Lecture/écriture du thème choisi (clé localStorage partagée avec le script
 // anti-FOUC de index.html — garder les deux synchronisés si la clé change).
 export const THEME_STORAGE_KEY = "storypilot-theme";
-export const DEFAULT_THEME = "dark";
+export const DEFAULT_THEME = "light";
 
 /**
- * Lit le thème sauvegardé, "dark" par défaut si absent.
+ * Lit le thème sauvegardé, "light" par défaut si absent.
  * @param {Storage} [storage] - injectable pour les tests
  * @returns {"dark"|"light"}
  */

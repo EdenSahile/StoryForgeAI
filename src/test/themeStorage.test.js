@@ -6,14 +6,14 @@ beforeEach(() => {
 });
 
 describe('getStoredTheme', () => {
-  it('retourne "dark" par défaut quand localStorage est vide', () => {
-    expect(getStoredTheme()).toBe('dark');
+  it('retourne "light" par défaut quand localStorage est vide', () => {
+    expect(getStoredTheme()).toBe('light');
   });
 
   it('retourne la valeur déjà sauvegardée quand elle existe', () => {
-    localStorage.setItem(THEME_STORAGE_KEY, 'light');
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
 
-    expect(getStoredTheme()).toBe('light');
+    expect(getStoredTheme()).toBe('dark');
   });
 });
 
