@@ -614,7 +614,7 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
     <PageWrapper>
       <TopBar>
         <TopBarLeft>
-          <span className="title">Forge</span>
+          <span className="title">Brief</span>
           <span className="sep">/</span>
           <span className="sub">Résultats</span>
         </TopBarLeft>

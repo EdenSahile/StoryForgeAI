@@ -172,10 +172,10 @@ const SecondaryLinks = styled.div`
 `;
 
 const NAV_ITEMS = [
-  { id: "dashboard", label: "Dashboard", icon: "dashboard" },
-  { id: "forge", label: "Forge", icon: "auto_awesome" },
+  { id: "dashboard", label: "Tableau de bord", icon: "dashboard" },
+  { id: "forge", label: "Brief", icon: "auto_awesome" },
   { id: "library", label: "Historique", icon: "history" },
-  { id: "settings", label: "Settings", icon: "settings" },
+  { id: "settings", label: "Réglages", icon: "settings" },
 ];
 
 export default function Sidebar({ activeItem = "dashboard", onNavigate }) {
