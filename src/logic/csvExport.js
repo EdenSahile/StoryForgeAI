@@ -32,7 +32,9 @@ function escapeCsvField(field) {
 function buildDescription(story) {
   const parts = [];
 
-  parts.push(story.fullStatement || "");
+  if (story.fullStatement) {
+    parts.push(story.fullStatement);
+  }
 
   if (story.description) {
     parts.push(story.description);
