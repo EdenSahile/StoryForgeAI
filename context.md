@@ -1,5 +1,30 @@
 # StoryPilot AI — Contexte actif
-*Mis à jour le 2026-08-19*
+*Mis à jour le 2026-08-23*
+
+---
+
+## Session PALETTE-EXPORT-CI (2026-08-23) — Rebrand visuel, export CSV/Jira, dette technique soldée, CI e2e
+
+**Contexte :** Session longue enchaînant plusieurs chantiers indépendants sur la même journée : repositionnement du README pour la stratégie "AI Product Builder", refonte visuelle complète (palette, thème clair/sombre), export réel des user stories, et fermeture de la dette technique accumulée.
+
+### Réalisé
+
+- [x] **README repositionné** — section "Méthode de développement" réécrite pour raconter le pilotage réel de l'agent (3 pannes CI diagnostiquées, corrections de convention, vérifications chiffrées) plutôt que "il y a des tests et une CI". (PR #61)
+- [x] **Refonte de la palette** — remplacement complet de l'ancienne palette pétrole/or par Graphite & Émeraude, contraste WCAG mesuré (pas estimé), zéro dégradé, police système au lieu d'Inter, badges aplatis, ~85 valeurs `#hex`/`rgba()` codées en dur retrouvées et remplacées par des tokens `theme.colors.*`. (PR #62)
+- [x] **Thème clair/sombre fonctionnel** — variables CSS (`:root` / `[data-theme="light"]`), toggle dans Settings.jsx et dans le header des 5 écrans, persistance `localStorage` (`src/logic/themeStorage.js`, testé), script anti-FOUC dans `index.html`. Clair devenu le thème par défaut. (PR #62)
+- [x] **Écran d'accueil conditionnel** — `src/logic/initialScreen.js` (fonction pure, testée) : Forge si aucune génération sauvegardée, Dashboard sinon. (PR #63)
+- [x] **Dette technique soldée** — collision d'id dans `libraryStorage.js` (`crypto.randomUUID()`), double appel `onTruncated`, double navigation `GenerateBtn`/`CTACard`. Deux items du backlog (`topK`, statut 400/500 upload-doc) découverts déjà corrigés lors d'une session antérieure, jamais cochés. (PR #64, #65)
+- [x] **Titre court par story** — nouveau champ `**Titre :**` dans le prompt système, extrait par `storyParser.js` avec repli sur "User Story N" (bug de regex gourmande `\s*` découvert et corrigé en cours de route).
+- [x] **Export CSV compatible import Jira** — `src/logic/csvExport.js` (fonction pure, testée), RFC 4180, neutralisation de l'injection de formule CSV (OWASP), BOM UTF-8, testé en conditions réelles (génération → export → import Jira → ticket vérifié). Export global et par story individuelle. Message Trello honnête et repositionné (pas d'import CSV natif chez Trello, contrairement à Jira — vérifié). (PR #66, #67)
+- [x] **Historique avec mise en forme riche** — `src/components/StoryCard.jsx` extrait en composant partagé entre Results.jsx et Library.jsx. (PR #68)
+- [x] **3 scénarios Gherkin par story** — passage de 2 à 3 (principal / alternatif / erreur explicitement différenciés), `max_tokens` vérifié suffisant par mesure réelle (js-tiktoken). (PR #69)
+- [x] **Playwright intégré à la CI** — n'existait qu'en local jusqu'ici ; une régression e2e était passée inaperçue pendant 4 PR faute d'exécution automatique. (PR #70)
+
+### Dette restante (voir aussi "Reste à faire" en tête de fichier)
+
+- Regex `fullStatement` dans `storyParser.js` (même défaut que `**Titre :**`, jamais déclenché en pratique)
+- `escapeCsvField` ne neutralise pas un `\r` seul en tête de champ (cosmétique)
+- Ligne vide possible dans la Description CSV si `fullStatement` est vide (cosmétique)
 
 ---
 
