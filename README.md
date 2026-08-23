@@ -15,7 +15,7 @@ Un PO écrit un brief en langage naturel. StoryPilot génère instantanément de
 - **Statement** structuré : En tant que / Je veux / Afin de
 - **Description métier** : contexte fonctionnel détaillé
 - **Critères d'acceptation** : 4-6 critères précis et testables
-- **Scénarios Gherkin** : plusieurs scénarios par story (happy path + edge cases), avec coloration syntaxique des mots-clés (Étant donné / Quand / Alors / Et)
+- **Scénarios Gherkin** : 3 scénarios par story (nominal, alternatif, cas d'erreur/limite), avec coloration syntaxique des mots-clés (Étant donné / Quand / Alors / Et)
 - **Complexité** : estimation S / M / L
 
 Le tout arrive en streaming — l'utilisateur voit la génération en temps réel.
@@ -37,13 +37,15 @@ L'écran principal. Deux colonnes : le brief à gauche, la base de connaissance 
 - Panel base de connaissance : upload de documents (PDF, DOCX, TXT), liste des documents indexés — désactivé en mode démo publique pour préserver l'expérience des autres visiteurs (la base de connaissance y est pré-chargée)
 
 ### Results
-Les user stories parsées et structurées en cards visuelles. Chaque card affiche le statement colorisé, la description, les critères avec checkmarks, et les scénarios Gherkin colorés. Badge **"RAG actif"** ou **"RAG non utilisé — US Générique"** selon qu'un contexte documentaire ait été utilisé, avec un panel "Sources utilisées" listant les documents mobilisés. Boutons de copie (par story et globale) et bouton de sauvegarde dans l'historique.
+Les user stories parsées et structurées en cards visuelles (composant `StoryCard`). Chaque card affiche le statement colorisé, la description, les critères avec checkmarks, et les scénarios Gherkin colorés. Badge **"RAG actif"** ou **"RAG non utilisé — US Générique"** selon qu'un contexte documentaire ait été utilisé, avec un panel "Sources utilisées" listant les documents mobilisés.
+
+Export CSV compatible avec l'import natif de Jira, par story ou pour toutes les stories d'un coup, généré côté client avec neutralisation de l'injection de formule CSV (OWASP CSV Injection). Export Trello listé mais volontairement non implémenté pour la démo — nécessiterait une authentification OAuth par utilisateur, absente d'une démo publique — un message explicite le précise plutôt que de simuler un succès. Boutons de copie (par story et globale) et bouton de sauvegarde dans l'historique.
 
 ### Historique (Library)
-Historique des générations sauvegardées, stocké en `localStorage` (local au navigateur, non synchronisé entre appareils). Vue liste + vue détail par génération, suppression individuelle ou totale.
+Historique des générations sauvegardées, stocké en `localStorage` (local au navigateur, non synchronisé entre appareils). Vue liste + vue détail par génération, avec la même mise en forme riche que l'écran Results (le composant `StoryCard` est partagé entre les deux écrans, plutôt qu'un texte brut). Suppression individuelle ou totale.
 
 ### Réglages (Settings)
-Trois sections : Apparence (thème sombre actif, thème clair prévu), Données locales (effacer l'historique), À propos (stack technique, version).
+Trois sections : Apparence (bascule thème sombre / thème clair, chip dédié dans Réglages ou icône dans le header sur les 5 écrans), Données locales (effacer l'historique), À propos (stack technique, version).
 
 ---
 
@@ -76,17 +78,24 @@ src/
 │   ├── services/
 │   │   ├── claudeService.js          # Client API Claude (streaming SSE)
 │   │   └── ragService.js             # Client upload/retrieval/suppression documents
+│   ├── StoryCard.jsx                 # Card story — partagée entre Results et Library
 │   ├── ErrorBoundary.jsx             # Catch erreurs React
 │   └── Footer.jsx
 ├── screens/
 │   ├── Dashboard.jsx                 # Stats + générations récentes
 │   ├── Forge.jsx                     # Brief + base de connaissance + streaming
-│   ├── Results.jsx                   # Stories structurées + Gherkin + badge RAG
+│   ├── Results.jsx                   # Stories structurées + Gherkin + export CSV/Trello
 │   ├── Library.jsx                   # Historique des générations (localStorage)
-│   └── Settings.jsx                  # Apparence, données locales, à propos
+│   └── Settings.jsx                  # Apparence (thème), données locales, à propos
+├── logic/                            # Logique métier pure, sans dépendance React — testée en Vitest sans rendu
+│   ├── storyParser.js                # Parsing du texte brut Claude → stories structurées
+│   ├── csvExport.js                  # Génération du CSV compatible import Jira
+│   ├── dashboardStats.js             # Calcul des stats Dashboard depuis l'historique
+│   ├── themeStorage.js               # Persistance du thème choisi (localStorage)
+│   └── initialScreen.js              # Écran de démarrage selon l'historique existant
 ├── utils/
 │   └── libraryStorage.js             # CRUD historique localStorage
-└── test/                             # Suites Vitest
+└── test/                             # Suites Vitest (18 fichiers, 273 tests)
 
 api/
 ├── generate-stories.js               # Serverless — proxy Claude API, streaming, rate limiting
@@ -182,7 +191,9 @@ Push sur `main` → Vercel déploie automatiquement. Ajoute les variables d'envi
 - Clé API manquante ou invalide (401)
 - Rate limiting Claude (429) — 10 requêtes / 15 min, limiteur en mémoire (non persistant entre cold starts Vercel, cf. limitation connue ci-dessous)
 - Timeout de 30s sur l'appel Claude
-- `max_tokens` plafonné à 1000 côté serveur
+- `max_tokens` à 8000 côté serveur (mesuré via js-tiktoken sur un exemple réel plutôt qu'estimé, marge documentée dans `CLAUDE.md`)
+- `topK` (retrieval RAG) validé côté serveur : entier entre 1 et 20, rejet 400 explicite sinon
+- Extension de fichier non supportée à l'upload (hors PDF/DOCX/TXT) : rejet 400 explicite, pas d'exception
 - Modèle indisponible (500)
 
 Chaque erreur renvoyée au client est un message générique — jamais le détail brut de l'erreur serveur (voir `CLAUDE.md`, règle SEC-001).
@@ -212,12 +223,14 @@ Le rate limiting (`api/generate-stories.js`) utilise une `Map` en mémoire, qui 
 - [x] Historique des générations en local (Library) — persistance `localStorage`, pas de backend
 - [x] Toggle manuel pour désactiver le RAG sur une génération donnée
 - [x] Mode démo publique (upload désactivé, base de connaissance pré-chargée)
+- [x] Thème sombre / clair avec bascule utilisateur (chip Réglages + icône header)
+- [x] Export CSV compatible import Jira, par story ou en masse, avec neutralisation d'injection de formule
+- [x] Historique avec la même mise en forme riche que Results (composant `StoryCard` partagé)
 
 ### v4 — Robustesse & intégrations
 - [ ] Rate limiting persistant (Vercel KV / Upstash Redis)
-- [ ] Export Jira / Trello réel (le bouton actuel est une simulation)
+- [ ] Export Trello réel (API Trello + OAuth par utilisateur — le bouton actuel indique clairement l'indisponibilité, pas de simulation trompeuse)
 - [ ] Persistance des générations côté serveur (au-delà du `localStorage` par navigateur)
-- [ ] Thème clair
 - [ ] Support multilingue (FR/EN)
 
 ---
@@ -228,11 +241,13 @@ Ce projet est développé avec Claude Code, piloté et relu à chaque étape plu
 
 **Les règles avant le code.** `CLAUDE.md` fixe les règles non négociables du repo (validation serveur, pas de fuite de détail d'erreur au client, CORS restreint par allowlist, timeouts, plafond de tokens) et une discipline de branche stricte (jamais d'édition directe sur `main`). C'est la référence unique, aussi bien pour moi que pour l'agent.
 
-**Une couverture de tests vérifiée, pas déclarée.** 232 tests unitaires/composants (Vitest + Testing Library) sur les 5 routes serverless, la logique métier et les 5 écrans, plus 4 parcours end-to-end (Playwright) sur le chemin critique. Ces chiffres sont confirmés par exécution réelle (`npm run test:run`, `npx playwright test`) avant d'être inscrits dans `testing/inventaire-tests.md`, pas recopiés depuis le résumé de l'agent.
+**Une couverture de tests vérifiée, pas déclarée.** 273 tests unitaires/composants (Vitest + Testing Library, 18 fichiers) sur les 5 routes serverless, la logique métier et les 5 écrans, plus 4 parcours end-to-end (Playwright) sur le chemin critique, intégrés à la CI. Ces chiffres sont confirmés par exécution réelle (`npx vitest run`, `npx playwright test`) avant d'être inscrits dans `testing/inventaire-tests.md`, pas recopiés depuis le résumé de l'agent.
 
-**Une revue à deux niveaux.** Chaque Pull Request est relue automatiquement par Claude (`claude-pr-review.yml`) selon les règles de `CLAUDE.md`, en plus de ma propre revue avant merge. Cette double revue a permis de détecter et corriger, en cours de développement, une politique CORS trop permissive et une fuite de détails d'erreur serveur sur plusieurs routes.
+**Une revue à deux niveaux.** Chaque Pull Request est relue automatiquement par Claude (`claude-pr-review.yml`) selon les règles de `CLAUDE.md`, en plus de ma propre revue avant merge. Cette double revue a permis de détecter et corriger, en cours de développement, une politique CORS trop permissive, une fuite de détails d'erreur serveur sur plusieurs routes, et une vulnérabilité d'injection de formule CSV (OWASP CSV Injection) sur l'export Jira.
 
 **Diagnostiquer, pas seulement accepter.** Le pipeline CI a connu trois pannes silencieuses distinctes (la revue automatique restait bloquée malgré des checks verts) : une protection anti-triche du workflow déclenchée sans le savoir, puis deux permissions manquantes sur les commandes `gh` utilisées par l'agent pour s'auto-vérifier. Chacune a été diagnostiquée en isolant les logs d'exécution réels, pas le résumé affiché par défaut, puis corrigée à la source dans le prompt de review plutôt que contournée.
+
+**Reproduire l'environnement CI, pas le deviner.** Une PR de documentation a fait échouer `npm ci` en CI : le lock file avait été régénéré avec une version npm locale plus récente que celle de la CI, ce qui en a fait disparaître une dépendance imbriquée — invisible avec `npm install` (permissif), bloquant avec `npm ci` (strict, utilisé en CI). Diagnostiqué en comparant le lock file commit par commit plutôt qu'en supposant, corrigé en régénérant avec la version npm exacte de la CI, puis verrouillé durablement (`.nvmrc`, `engines`, `engine-strict=true`) pour que l'écart ne puisse plus passer inaperçu. Le correctif suivant a lui-même reproduit brièvement le même bug, pour la même raison — repéré immédiatement dans le log CI et corrigé en isolant explicitement la version npm attendue, pas en réessayant à l'aveugle.
 
 **Vérifier plutôt que valider par défaut.** Les changements structurels proposés par l'agent (extraction de logique métier, suppression de code mort, déplacement de fichiers de test) sont relus avant merge : un chiffre de test périmé dans un résumé, une convention de test incohérente avec le reste du repo, un fichier légitimement disparu mais resté référencé dans la documentation ont été corrigés en cours de route plutôt qu'acceptés tels quels.
 
