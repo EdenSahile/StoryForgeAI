@@ -20,15 +20,28 @@ export function parseStories(rawText) {
     // vide sur sa propre ligne.
     const titleMatch = block.match(/\*\*User Story \d+\*\*[ \t]*(.+?)(?=\n|$)/);
     let fullStatement = titleMatch ? titleMatch[1].trim() : "";
-    // Repli : le modèle place parfois le statement sur la ligne suivante au
-    // lieu de la même ligne (observé en pratique sur une vraie génération,
-    // cf. context.md) — capturé seulement si cette ligne suivante est du
-    // contenu réel, jamais si elle est vide ou commence par un autre
-    // marqueur de champ (**Titre :**, **Description :**...), pour ne pas
-    // réintroduire le bug corrigé en PR #73.
+    // Repli : le modèle place parfois le statement plus bas que la même
+    // ligne — sur la ligne suivante directement, ou après une ou plusieurs
+    // lignes vides intercalées (les deux cas observés en pratique sur de
+    // vraies générations, cf. context.md). On saute les lignes vides après
+    // le marqueur et on s'arrête sur la première ligne non vide rencontrée :
+    // si c'est du contenu réel, c'est le statement ; si c'est un autre
+    // marqueur de champ (**Titre :**, **Description :**...), on ne le
+    // capture jamais et fullStatement reste vide — pour ne pas réintroduire
+    // le bug corrigé en PR #73.
     if (!fullStatement) {
-      const nextLineMatch = block.match(/\*\*User Story \d+\*\*[ \t]*\n([^\n*][^\n]*)/);
-      fullStatement = nextLineMatch ? nextLineMatch[1].trim() : "";
+      const markerIndex = block.search(/\*\*User Story \d+\*\*/);
+      if (markerIndex !== -1) {
+        const afterMarker = block.slice(markerIndex).replace(/^\*\*User Story \d+\*\*/, "");
+        const linesAfterMarker = afterMarker.split("\n").slice(1);
+        for (const line of linesAfterMarker) {
+          const trimmedLine = line.trim();
+          if (trimmedLine === "") continue;
+          if (trimmedLine.startsWith("*")) break;
+          fullStatement = trimmedLine;
+          break;
+        }
+      }
     }
 
     // Titre court (nouveau champ) — repli sur "User Story N" géré après
