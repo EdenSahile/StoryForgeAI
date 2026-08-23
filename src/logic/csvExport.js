@@ -3,14 +3,19 @@ const COMPLEXITY_TO_PRIORITY = { S: "Low", M: "Medium", L: "High" };
 const CSV_HEADERS = ["Summary", "Issue Type", "Description", "Priority", "Labels"];
 
 /**
- * Échappe un champ selon RFC 4180 : entouré de guillemets si le champ
- * contient une virgule, un guillemet ou un retour à la ligne, avec les
- * guillemets internes doublés.
+ * Échappe un champ pour l'export CSV : neutralise d'abord l'injection de
+ * formule (OWASP CSV Injection — un champ commençant par =, +, -, @ ou une
+ * tabulation peut s'exécuter comme formule à l'ouverture dans Excel/Sheets),
+ * puis applique l'échappement RFC 4180 (guillemets si virgule/guillemet/
+ * retour à la ligne, avec les guillemets internes doublés).
  * @param {string} field
  * @returns {string}
  */
 function escapeCsvField(field) {
-  const value = field == null ? "" : String(field);
+  let value = field == null ? "" : String(field);
+  if (/^[=+\-@\t]/.test(value)) {
+    value = `'${value}`;
+  }
   if (/[",\n\r]/.test(value)) {
     return `"${value.replace(/"/g, '""')}"`;
   }

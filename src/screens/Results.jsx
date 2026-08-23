@@ -687,7 +687,9 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
 
   const handleCsvExport = () => {
     const csv = storiesToJiraCSV(parsedStories);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    // BOM UTF-8 : sans lui, Excel ne détecte pas toujours l'UTF-8 et affiche
+    // les accents français en mojibake si le fichier est ouvert directement.
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const date = new Date().toISOString().slice(0, 10);
     const link = document.createElement("a");

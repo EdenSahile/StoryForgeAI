@@ -33,6 +33,6 @@
 
 Toutes les priorités identifiées dans cet inventaire sont couvertes au 2026-08-19 (232 tests unitaires, 15 fichiers de test — `npm run test:run` ; 4 tests e2e — `npx playwright test`). Le parcours e2e étendu (sauvegarde auto en historique, flux d'erreur visible à l'écran, navigation complète entre écrans) a été comblé par les PR #57, #58 et #59. Le seul gap restant (viewport mobile / BottomNav) est un choix volontaire, hors périmètre, et non un trou non traité.
 
-Mise à jour au 2026-08-23 (export CSV Jira, PR en cours) : **258 tests unitaires, 18 fichiers de test**. `storyParser.test.js` étendu de 22 à 26 tests (champ `**Titre :**`) et `csvExport.test.js` créé (13 tests, nouveau).
+Mise à jour au 2026-08-23 (export CSV Jira, PR #66, revue automatique traitée) : **263 tests unitaires, 18 fichiers de test** (vérifié via `grep -rE "^\s*it\(" src/test/*.test.*`). `storyParser.test.js` étendu de 22 à 26 tests (champ `**Titre :**`) et `csvExport.test.js` créé (18 tests, dont 2 de neutralisation de l'injection de formule CSV ajoutés suite à la revue).
 
 *Note hors tableau :* `BriefInput.jsx` et `StoriesOutput.jsx`, repérés dans cet inventaire comme morts (meilleure couverture de test du projet, mais non branchés dans l'app réelle), ont été supprimés le 2026-08-19 — composants et tests associés. Voir `context.md` pour la trace de ce nettoyage.
