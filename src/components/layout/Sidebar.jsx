@@ -200,10 +200,12 @@ export default function Sidebar({ activeItem = "dashboard", onNavigate }) {
       </Nav>
 
       <SidebarBottom>
-        <NewStoryBtn onClick={() => onNavigate?.("forge")}>
-          <span className="icon">add</span>
-          New Story
-        </NewStoryBtn>
+        {activeItem !== "forge" && (
+          <NewStoryBtn onClick={() => onNavigate?.("forge")}>
+            <span className="icon">add</span>
+            New Story
+          </NewStoryBtn>
+        )}
         <SecondaryLinks>
           <a href="#">Help Center</a>
           <a href="#">Feedback</a>
