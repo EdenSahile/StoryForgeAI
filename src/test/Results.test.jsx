@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import Results from '../screens/Results';
 
 const STORIES = `**User Story 1** En tant qu'utilisateur, je veux me connecter afin d'accéder à mon compte.
@@ -90,13 +90,37 @@ describe('Results — boutons d\'export par story', () => {
     expect(screen.getAllByRole('button', { name: 'Exporter en CSV (Jira)' })).toHaveLength(2);
   });
 
-  it('le clic sur le bouton Trello d\'une story affiche le message "Indisponible pour la démo"', () => {
+  it('le clic sur le bouton Trello global affiche le message en haut de page, pas dans une story', () => {
     render(<Results stories={STORIES} />);
-    const trelloButtons = screen.getAllByRole('button', { name: 'Exporter vers Trello' });
 
-    fireEvent.click(trelloButtons[1]);
+    // Les boutons globaux (ActionBar/QuickActionBtn/MobileStickyBar) n'ont pas
+    // d'aria-label : leur nom accessible inclut le texte de l'icône
+    // ("view_kanban Exporter vers Trello"), donc getByRole({name: 'Exporter
+    // vers Trello'}) exact ne matche que les boutons par story (aria-label).
+    // On cible le bouton global par son texte visible, même patron que
+    // "Copier tout" plus haut dans ce fichier.
+    fireEvent.click(screen.getAllByText('Exporter vers Trello')[0]);
 
     expect(screen.getByText(/Indisponible pour la démo/)).toBeInTheDocument();
+    const cards = screen.getAllByRole('article');
+    cards.forEach((card) => {
+      expect(within(card).queryByText(/Indisponible pour la démo/)).not.toBeInTheDocument();
+    });
+  });
+
+  it('le clic sur le bouton Trello d\'une story affiche le message sous cette story précise, pas ailleurs', () => {
+    render(<Results stories={STORIES} />);
+    const trelloButtons = screen.getAllByRole('button', { name: 'Exporter vers Trello' });
+    const cards = screen.getAllByRole('article');
+
+    fireEvent.click(trelloButtons[1]); // 2e story
+
+    // Présent sous la 2e story...
+    expect(within(cards[1]).getByText(/Indisponible pour la démo/)).toBeInTheDocument();
+    // ...absent de la 1ère story...
+    expect(within(cards[0]).queryByText(/Indisponible pour la démo/)).not.toBeInTheDocument();
+    // ...et un seul message affiché au total (pas de doublon en haut de page).
+    expect(screen.getAllByText(/Indisponible pour la démo/)).toHaveLength(1);
   });
 
   it('le clic sur le bouton CSV d\'une story télécharge uniquement le CSV de cette story, pas de tout le tableau', async () => {
