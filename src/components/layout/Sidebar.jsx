@@ -153,29 +153,11 @@ const UserCard = styled.div`
   }
 `;
 
-const SecondaryLinks = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0 ${theme.spacing.md};
-
-  a {
-    font-size: ${theme.fontSizes.xs};
-    color: ${theme.colors.onSurfaceVariant};
-    text-decoration: none;
-    transition: color 0.2s;
-
-    &:hover {
-      color: ${theme.colors.primary};
-    }
-  }
-`;
-
 const NAV_ITEMS = [
-  { id: "dashboard", label: "Dashboard", icon: "dashboard" },
-  { id: "forge", label: "Forge", icon: "auto_awesome" },
+  { id: "dashboard", label: "Tableau de bord", icon: "dashboard" },
+  { id: "forge", label: "Brief", icon: "auto_awesome" },
   { id: "library", label: "Historique", icon: "history" },
-  { id: "settings", label: "Settings", icon: "settings" },
+  { id: "settings", label: "Réglages", icon: "settings" },
 ];
 
 export default function Sidebar({ activeItem = "dashboard", onNavigate }) {
@@ -200,14 +182,12 @@ export default function Sidebar({ activeItem = "dashboard", onNavigate }) {
       </Nav>
 
       <SidebarBottom>
-        <NewStoryBtn onClick={() => onNavigate?.("forge")}>
-          <span className="icon">add</span>
-          New Story
-        </NewStoryBtn>
-        <SecondaryLinks>
-          <a href="#">Help Center</a>
-          <a href="#">Feedback</a>
-        </SecondaryLinks>
+        {activeItem !== "forge" && (
+          <NewStoryBtn onClick={() => onNavigate?.("forge")}>
+            <span className="icon">add</span>
+            Nouveau brief
+          </NewStoryBtn>
+        )}
       </SidebarBottom>
     </SidebarWrapper>
   );

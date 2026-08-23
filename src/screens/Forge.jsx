@@ -1109,9 +1109,9 @@ export default function Forge({
     <PageWrapper>
       <TopBar>
         <TopBarLeft>
-          <span className="title">Forge</span>
+          <span className="title">Brief</span>
           <span className="sep">/</span>
-          <span className="sub">Drafting User Stories</span>
+          <span className="sub">Génération</span>
         </TopBarLeft>
         <TopBarRight>
           {status === "loading" && (

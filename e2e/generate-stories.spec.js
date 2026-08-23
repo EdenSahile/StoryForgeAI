@@ -86,12 +86,12 @@ test.describe('Parcours critique — génération de user stories', () => {
     await page.goto('/');
 
     // La Sidebar affiche un libellé texte à largeur nulle tant qu'elle n'est pas survolée
-    // (constaté en debug : le <span> "Forge" a un getBoundingClientRect() de 0x0 hors hover,
+    // (constaté en debug : le <span> "Brief" a un getBoundingClientRect() de 0x0 hors hover,
     // Playwright le juge donc non cliquable). On cible le lien <a> parent, dont la zone
     // cliquable réelle ne dépend pas de cet état. `aside nav` distingue explicitement la
     // Sidebar desktop du BottomNav mobile : les deux existent dans le DOM en permanence, et
-    // "Forge" y apparaît deux fois — un sélecteur non scopé est ambigu (strict mode violation).
-    await page.locator('aside nav a', { hasText: 'Forge' }).click();
+    // "Brief" y apparaît deux fois — un sélecteur non scopé est ambigu (strict mode violation).
+    await page.locator('aside nav a', { hasText: 'Brief' }).click();
 
     const textarea = page.getByPlaceholder(/Décris ton besoin métier ici/);
     await textarea.fill(BRIEF);
@@ -107,7 +107,7 @@ test.describe('Parcours critique — génération de user stories', () => {
   test('la génération réussie est sauvegardée automatiquement et retrouvable dans l\'Historique', async ({ page }) => {
     await page.goto('/');
 
-    await page.locator('aside nav a', { hasText: 'Forge' }).click();
+    await page.locator('aside nav a', { hasText: 'Brief' }).click();
 
     const textarea = page.getByPlaceholder(/Décris ton besoin métier ici/);
     await textarea.fill(BRIEF);
@@ -120,7 +120,7 @@ test.describe('Parcours critique — génération de user stories', () => {
     await expect(page.getByRole('heading', { name: 'Backlog de Génération' })).toBeVisible();
     await expect(page.getByText(/suivre ma commande en temps réel/)).toBeVisible();
 
-    // Même piège de sélecteur que pour "Forge" : cibler aside nav a, jamais le texte seul
+    // Même piège de sélecteur que pour "Brief" : cibler aside nav a, jamais le texte seul
     // (le libellé "Historique" existe aussi dans le BottomNav mobile, présent dans le DOM).
     await page.locator('aside nav a', { hasText: 'Historique' }).click();
 
@@ -152,7 +152,7 @@ test.describe('Parcours critique — génération de user stories', () => {
 
     await page.goto('/');
 
-    await page.locator('aside nav a', { hasText: 'Forge' }).click();
+    await page.locator('aside nav a', { hasText: 'Brief' }).click();
 
     const textarea = page.getByPlaceholder(/Décris ton besoin métier ici/);
     await textarea.fill(BRIEF);
@@ -185,13 +185,13 @@ test.describe('Parcours critique — génération de user stories', () => {
     await page.locator('aside nav a', { hasText: 'Historique' }).click();
     await expect(page.getByRole('heading', { name: 'Historique' })).toBeVisible();
 
-    // Libellé Sidebar "Settings" (anglais) vs titre affiché sur l'écran "Réglages" (français) :
-    // deux textes différents, vérifiés séparément dans le vrai code (src/components/layout/
-    // Sidebar.jsx et src/screens/Settings.jsx), pas supposés identiques.
-    await page.locator('aside nav a', { hasText: 'Settings' }).click();
+    // Libellé Sidebar et titre d'écran sont désormais identiques ("Réglages") — scope quand
+    // même sur aside nav a : le libellé existe aussi dans le BottomNav mobile, présent dans
+    // le DOM en permanence (même piège que pour "Brief"/"Historique").
+    await page.locator('aside nav a', { hasText: 'Réglages' }).click();
     await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
 
-    await page.locator('aside nav a', { hasText: 'Dashboard' }).click();
+    await page.locator('aside nav a', { hasText: 'Tableau de bord' }).click();
     await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
   });
 });
