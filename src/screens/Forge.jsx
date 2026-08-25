@@ -1147,7 +1147,7 @@ export default function Forge({
               <br /><br />
               <em>En production, chaque entreprise importe ses propres documents (politiques internes, catalogues, process métier) pour des stories ancrées dans son contexte réel.</em>
               <br /><br />
-              <em>Brief hors-sujet ? Les stories générées seront génériques, sans les données spécifiques de Lumeo Boutique.</em>
+              <em>Si le brief s'éloigne du contexte Lumeo Boutique, la récupération ne trouve rien de pertinent et les stories sortent génériques automatiquement. Pour forcer ce comportement volontairement, même sur un brief pertinent (pour comparer), active le toggle "Générer sans RAG" ci-dessous.</em>
             </ModeHint>
 
             <ChipRow>
