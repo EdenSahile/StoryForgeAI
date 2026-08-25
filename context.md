@@ -1,5 +1,19 @@
 # StoryPilot AI — Contexte actif
-*Mis à jour le 2026-08-23*
+*Mis à jour le 2026-08-25*
+
+---
+
+## Session MAJ-VITE-AUDIT (2026-08-25) — Correctif vulnérabilité esbuild/vite, vite@5 → vite@6
+
+**Contexte :** `npm audit` remontait 2 vulnérabilités — `esbuild <=0.24.2` (moderate, permet à n'importe quel site web d'envoyer des requêtes au serveur de dev et de lire la réponse) et `vite <=6.4.2` qui en dépend (high) — affectant uniquement `vite dev`, pas le build de production. `npm audit fix --force` proposait de sauter à `vite@8.2.2`.
+
+**Décision : vite@6, pas vite@8.** `vite@8.2.2` exige Node `^20.19.0 || >=22.12.0` — plus strict que `engines.node` du projet (`>=20 <21`, n'importe quel Node 20.x accepté), un écart qui aurait recréé le type de bug déjà rencontré sur PR #71/#72 (un verrou qui affirme "compatible" sans l'être forcément dans tous les cas). Vite 6 suffit à corriger la vulnérabilité : `vite@6.4.3` embarque `esbuild@0.25.12` (confirmé via `package-lock.json`), et son exigence Node (`^18.0.0 || ^20.0.0 || >=22.0.0`) reste compatible avec `engines.node` actuel — **pas eu besoin de le modifier**.
+
+**Réalisé :**
+- `package.json` : `"vite": "^5.0.0"` → `"vite": "^6.0.0"`. `@vitejs/plugin-react` (`^4.0.0`, résout en `4.7.0`) et `terser` (`^5.47.1`, résout en `5.50.0`) inchangés — vérifiés compatibles avec Vite 6 après régénération du lock file.
+- `package-lock.json` régénéré avec `npx npm@10.8.2` (version exacte de la CI, pas le npm local).
+- `vite.config.js` vérifié contre le guide de migration Vite 5→6 : `build.minify: 'terser'` et `build.target: 'esnext'` inchangés, aucun changement cassant applicable à ce projet.
+- Vérification complète dans l'ordre demandé : `npm ci` (npm 10.8.2) OK, `npm audit` → **0 vulnérabilité**, `npx vitest run` → 278/278, `npx playwright test` → 4/4, `npm run build` → OK sans nouveau warning (les anciens warnings esbuild/oxc de `vite:react-babel` ont même disparu), `npm run dev` → démarrage propre, testé manuellement dans le navigateur (0 erreur console, HMR fonctionnel — vérifié par une modification live d'un composant, immédiatement répercutée sans rechargement complet, puis annulée).
 
 ---
 

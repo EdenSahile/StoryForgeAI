@@ -4,7 +4,7 @@ Générateur de user stories à partir d'un brief métier, avec streaming en tem
 
 ## Stack
 
-- React 18+ avec Vite 5+ (bundler)
+- React 18+ avec Vite 6+ (bundler)
 - styled-components pour le CSS-in-JS
 - API Claude (Sonnet) appelée côté serveur via `api/generate-stories.js` (route serverless Vercel)
 - Tests : Vitest + @testing-library/react
@@ -41,6 +41,7 @@ src/App.jsx                                # état global, orchestration
 - Le job `claude-review` (`anthropics/claude-code-action@v1`) refuse de s'exécuter, et ne soumet donc jamais de review, tant que le fichier `.github/workflows/claude-pr-review.yml` de la branche de la PR diffère de celui sur `main` — protection anti-triche intentionnelle de l'action, pas un bug de ce projet. Une PR qui modifie ce fichier ne recevra donc jamais sa propre review automatique ; elle doit être mergée (bypass admin si la branch protection l'exige) avant que le nouveau comportement s'applique aux PR suivantes.
 - Symptôme trompeur : le job apparaît vert ("succeeded"), mais aucune review n'existe (vérifiable via `GET /repos/.../pulls/<n>/reviews`). Le détail réel (message "Workflow validation failed…") n'apparaît qu'avec `show_full_output: true` sur l'action, désactivé par défaut.
 - **Version Node/npm verrouillée** (`.nvmrc`, `engines` dans `package.json`, `engine-strict=true` dans `.npmrc`) : la CI (`actions/setup-node@v4`) tourne sur Node 20 / npm ~10.x. Sur PR #71, `package-lock.json` avait été régénéré en local avec npm 11.17.0, qui résout différemment une dépendance imbriquée d'`esbuild` dans `vitest` — `npm ci` échouait alors en CI (`Missing: esbuild@0.28.2 from lock file`) sans que rien ne le signale en local (`npm install` accepte silencieusement l'incohérence, `npm ci` non). `engine-strict=true` fait refuser `npm install`/`npm ci` si la version locale ne correspond pas à `engines`, pour empêcher de reproduire ce bug.
+- **`vite` pin sur `^6.0.0`, pas `^8.0.0`** : `npm audit` (esbuild `<=0.24.2`, moderate, remonté via `vite <=6.4.2`, high — affecte uniquement le serveur de dev, pas le build de production) proposait via `npm audit fix --force` de sauter à `vite@8.2.2`, qui exige Node `^20.19.0 || >=22.12.0` — plus strict que `engines.node` du projet (`>=20 <21`, n'importe quel Node 20.x), un écart qui aurait recréé le type de bug de PR #71/#72 (verrou qui dit "compatible" sans l'être forcément). Vite 6 suffit à corriger la vulnérabilité (résolu en `vite@6.4.3` avec `esbuild@0.25.12`, confirmé) et son exigence Node (`^18.0.0 || ^20.0.0 || >=22.0.0`) reste compatible avec `engines.node` actuel, sans le modifier — vérifié via `npm audit` (0 vulnérabilité après ce changement).
 
 ## Discipline de branche
 
