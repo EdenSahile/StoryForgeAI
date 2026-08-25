@@ -13,7 +13,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:e2e": "playwright test",
-    "test:e2e:headed": "HEADED=1 playwright test"
+    "test:e2e:headed": "HEADED=1 playwright test",
+    "calibrate-threshold": "node --env-file=.env scripts/calibrate-threshold.mjs"
   },
   "engines": {
     "node": ">=20 <21",

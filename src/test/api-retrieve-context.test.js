@@ -396,7 +396,7 @@ describe('api/retrieve-context — appels externes (règle CLAUDE.md : jamais de
 });
 
 describe('api/retrieve-context — succès (filtrage et formatage des résultats)', () => {
-  it('filtre les matches sous le seuil de pertinence (score <= 0.42) et formate les autres', async () => {
+  it('filtre les matches sous le seuil de pertinence (score <= 0.45) et formate les autres', async () => {
     mockQuery = vi.fn().mockResolvedValue({
       matches: [
         {
@@ -404,7 +404,7 @@ describe('api/retrieve-context — succès (filtrage et formatage des résultats
           metadata: { text: 'chunk pertinent', filename: 'doc.txt', chunkIndex: 0 },
         },
         {
-          score: 0.42,
+          score: 0.45,
           metadata: { text: 'chunk à la limite exacte', filename: 'doc.txt', chunkIndex: 1 },
         },
         {
@@ -420,7 +420,9 @@ describe('api/retrieve-context — succès (filtrage et formatage des résultats
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    // score > 0.42 strictement : le match à 0.42 pile est exclu, seul le premier passe.
+    // score > 0.45 strictement : le match à 0.45 pile est exclu, seul le premier passe.
+    // Seuil calibré empiriquement le 2026-08-25 (scripts/calibrate-threshold.mjs,
+    // cf. context.md session CALIBRATION-SEUIL-RAG), remplace l'ancien 0.42 en dur.
     expect(res.body.chunks).toEqual([
       { text: 'chunk pertinent', score: 91, filename: 'doc.txt', chunkIndex: 0 },
     ]);
