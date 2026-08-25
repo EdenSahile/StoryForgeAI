@@ -3,6 +3,60 @@
 
 ---
 
+## Session CALIBRATION-SEUIL-RAG (2026-08-25) — Calibration empirique du seuil RAG, 0.42 → 0.45
+
+**Contexte :** le seuil de pertinence `0.42` dans `api/retrieve-context.js` (ligne ~78) avait été fixé empiriquement, sans évaluation documentée. Script de calibration créé (`scripts/calibrate-threshold.mjs`, `npm run calibrate-threshold`) pour le calibrer sérieusement. Résultats d'abord présentés sans modifier le code (comportement de production, décision à prendre séparément), puis, après confirmation explicite du cas de reproduction "téléphone" (PR #78) sous le nouveau seuil, **`api/retrieve-context.js` mis à jour : `0.42` → `0.45`**.
+
+### Méthode
+
+20 briefs de test (10 on-topic, 10 off-topic), étiquetés **avant** tout appel — jamais déduits après coup. On-topic inspirés du contenu réel des 8 documents indexés dans `public/docs/` (choix produit/couleur, livraison, paiement Alma, retours, SAV, programme fidélité Lumeo+, catalogue, facturation, fournisseurs). Off-topic répartis sur 10 catégories sans aucun rapport avec Lumeo Boutique (restauration, fitness, voyage, banque, informatique, mode, automobile, immobilier, éducation, jeux vidéo) — pas de répétition d'une même catégorie. Chaque brief embeddé via OpenAI (`text-embedding-3-small`, `dimensions: 512` — mêmes paramètres que `api/retrieve-context.js`), interrogé contre Pinecone avec `topK: 20` et **sans filtre de score**, pour voir la distribution complète.
+
+### Résultat brut complet (score du meilleur match par brief, sur 100)
+
+| Label | Brief (tronqué) | Top1 score | Top1 doc | Top2 score | Top3 score |
+|---|---|---|---|---|---|
+| on-topic | Choisir la couleur de ma suspension | 46.18 | 06_faq_service_client.pdf | 44.80 | 44.67 |
+| on-topic | Voir le délai de livraison estimé | 62.57 | 02_politique_livraison_retours.pdf | 61.54 | 59.17 |
+| on-topic | Payer en plusieurs fois via Alma | 48.93 | 06_faq_service_client.pdf | 48.65 | 42.98 |
+| on-topic | Retourner un article sous 14 jours | 54.57 | 07_guide_complet_long.pdf | 52.94 | 51.43 |
+| on-topic | Contacter le SAV, luminaire endommagé | 60.68 | 07_guide_complet_long.pdf | 59.63 | 59.37 |
+| on-topic | Suivre livraison mobilier volumineux | 58.33 | 04_archive_commandes.pdf | 54.57 | 52.42 |
+| on-topic | Consulter cashback Lumeo+ | 66.01 | 07_guide_complet_long.pdf | 60.86 | 56.91 |
+| on-topic | Comparer suspensions par fournisseur/prix | 56.61 | 03_catalogue_produits.pdf | 51.21 | 50.16 |
+| on-topic | Recevoir une facture téléchargeable | 51.51 | 05_facture_exemple.pdf | 49.04 | 45.04 |
+| on-topic | Vérifier charte qualité fournisseur | 66.94 | 08_charte_qualite_fournisseurs.pdf | 58.22 | 50.26 |
+| off-topic | Réserver une table au restaurant | 40.73 | 04_archive_commandes.pdf | 38.25 | 36.38 |
+| off-topic | Suivre calories, app fitness | 32.14 | 06_faq_service_client.pdf | 29.41 | 29.34 |
+| off-topic | Réserver un vol pour les vacances | 31.31 | 07_guide_complet_long.pdf | 30.83 | 30.35 |
+| off-topic | Consulter solde bancaire, virement | 36.72 | 06_faq_service_client.pdf | 35.78 | 34.39 |
+| off-topic | Acheter une carte graphique | 30.94 | 07_guide_complet_long.pdf | 30.69 | 30.10 |
+| off-topic | Essayer virtuellement des vêtements | **44.66** | 07_guide_complet_long.pdf | 43.73 | 43.67 |
+| off-topic | Entretien annuel de la voiture | 34.56 | 07_guide_complet_long.pdf | 34.13 | 32.67 |
+| off-topic | Prix de l'immobilier dans le quartier | 30.80 | 07_guide_complet_long.pdf | 30.70 | 30.19 |
+| off-topic | Apprendre une langue, leçons quotidiennes | 38.43 | 07_guide_complet_long.pdf | 33.75 | 31.07 |
+| off-topic | Sauvegarder progression jeu vidéo | 34.97 | 07_guide_complet_long.pdf | 33.30 | 32.41 |
+| off-topic | **Choisir la couleur de mon téléphone** (cas de reproduction original PR #78) | **43.41** | 06_faq_service_client.pdf | 34.91 | 34.81 |
+
+### Statistiques
+
+- **On-topic (n=10)** : moyenne 57.23%, min **46.18%**, max 66.94%.
+- **Off-topic (n=11, avec le brief "téléphone")** : moyenne 36.24%, min 30.80%, max **44.66%** (le brief "téléphone" à 43.41% ne change pas le max du groupe, toujours "vêtements").
+- **Séparation nette confirmée sur cet échantillon** : max off-topic (44.66%) < min on-topic (46.18%) — écart de 1.52 point, étroit mais réel, sans chevauchement.
+
+### Confirmation du cas de reproduction original (PR #78)
+
+Le brief exact qui avait causé l'hallucination "Lumeo vend des téléphones" ("Je souhaite pouvoir choisir la couleur de mon téléphone") a été rejoué explicitement via le script : **score 43.41%, document top1 `06_faq_service_client.pdf`** — cohérent avec le score ~43% observé lors de l'incident original sous l'ancien seuil 0.42. **Confirmé sous 0.45**, avec une marge de 1.59 point (pas juste de justesse) — et sans redéfinir le max du groupe off-topic, qui reste porté par le brief "vêtements" (44.66%). Ajouté en permanence dans `TEST_BRIEFS` (11e brief off-topic, documenté comme cas de reproduction, pas un test ponctuel supprimé après coup) pour que toute recalibration future le revérifie explicitement.
+
+### Décision : seuil relevé à 0.45
+
+Le seuil précédent (**42%** / 0.42) était **en dessous** du max off-topic observé (44.66%) : le brief "essayer virtuellement des vêtements" (hors-sujet, catégorie mode) passait le seuil précédent à tort — même mécanisme que le bug réel de PR #78, ici démontré par calibration plutôt que par un incident isolé.
+
+Seuil médian exact des données : **45.42%** (0.4542). Seuil rond retenu et appliqué : **0.45** (45%) — sépare tout aussi proprement les deux groupes de cet échantillon (44.66 < 45 < 46.18), reste plus lisible dans le code, et confirmé compatible avec le cas de reproduction original (téléphone à 43.41%, sous le seuil avec marge).
+
+**Réserve à noter, toujours valable après la décision :** l'écart de séparation est étroit (1.52 point) sur un échantillon de 11+10 briefs — un échantillon plus large ou des formulations différentes pourraient réduire ou faire disparaître cette marge. Ce n'est pas une preuve statistique forte, seulement une indication empirique cohérente sur les briefs testés. Recalibrer avec `npm run calibrate-threshold` si de nouveaux documents sont ajoutés à `public/docs/` ou si le comportement observé en production suggère une dérive.
+
+---
+
 ## Session MAJ-VITE-AUDIT (2026-08-25) — Correctif vulnérabilité esbuild/vite, vite@5 → vite@6
 
 **Contexte :** `npm audit` remontait 2 vulnérabilités — `esbuild <=0.24.2` (moderate, permet à n'importe quel site web d'envoyer des requêtes au serveur de dev et de lire la réponse) et `vite <=6.4.2` qui en dépend (high) — affectant uniquement `vite dev`, pas le build de production. `npm audit fix --force` proposait de sauter à `vite@8.2.2`.
