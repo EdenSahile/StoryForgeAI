@@ -147,15 +147,26 @@ export default async function handler(req, res) {
     const index = pc.index("storyforge", indexHost);
 
     const prefix = `${filename.replace(/[^a-zA-Z0-9]/g, "_")}_chunk_`;
-    const existingIds = [];
+    const candidateIds = [];
     let paginationToken;
     while (true) {
       const params = { prefix, limit: 100 };
       if (paginationToken) params.paginationToken = paginationToken;
       const result = await index.listPaginated(params);
-      existingIds.push(...(result.vectors || []).map((v) => v.id));
+      candidateIds.push(...(result.vectors || []).map((v) => v.id));
       paginationToken = result.pagination?.next;
       if (!paginationToken) break;
+    }
+
+    // Le préfixe assaini n'est pas unique : deux filenames différents peuvent
+    // s'assainir vers la même chaîne (ex: "doc!.txt" et "doc?.txt" → "doc__txt").
+    // On confirme via les métadonnées (même pattern que api/list-docs.js) que
+    // le chunk trouvé appartient bien à CE filename avant de le supprimer.
+    let existingIds = [];
+    if (candidateIds.length > 0) {
+      const fetchResult = await index.fetch({ ids: candidateIds });
+      const records = fetchResult.records || {};
+      existingIds = candidateIds.filter((id) => records[id]?.metadata?.filename === filename);
     }
 
     if (existingIds.length > 0) {

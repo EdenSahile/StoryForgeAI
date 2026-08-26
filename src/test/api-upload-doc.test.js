@@ -59,6 +59,7 @@ const TEXTE_VALIDE = 'Ceci est un document métier suffisamment long pour être 
 let mockEmbeddingsCreate;
 let mockUpsert;
 let mockListPaginated;
+let mockFetch;
 let mockDeleteMany;
 let mockIndex;
 
@@ -104,10 +105,12 @@ beforeEach(() => {
 
   mockUpsert = vi.fn().mockResolvedValue({});
   mockListPaginated = vi.fn().mockResolvedValue({ vectors: [] });
+  mockFetch = vi.fn().mockResolvedValue({ records: {} });
   mockDeleteMany = vi.fn().mockResolvedValue({});
   mockIndex = vi.fn().mockReturnValue({
     upsert: mockUpsert,
     listPaginated: (...args) => mockListPaginated(...args),
+    fetch: (...args) => mockFetch(...args),
     deleteMany: (...args) => mockDeleteMany(...args),
   });
   mockEmbeddingsCreate = vi.fn().mockResolvedValue({
@@ -418,6 +421,12 @@ describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
       vectors: [{ id: 'doc_txt_chunk_0' }, { id: 'doc_txt_chunk_1' }],
       pagination: {},
     });
+    mockFetch = vi.fn().mockResolvedValue({
+      records: {
+        doc_txt_chunk_0: { metadata: { filename: 'doc.txt' } },
+        doc_txt_chunk_1: { metadata: { filename: 'doc.txt' } },
+      },
+    });
     const callOrder = [];
     mockDeleteMany = vi.fn().mockImplementation(async () => {
       callOrder.push('deleteMany');
@@ -430,6 +439,7 @@ describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
     mockIndex = vi.fn().mockReturnValue({
       upsert: mockUpsert,
       listPaginated: (...args) => mockListPaginated(...args),
+      fetch: (...args) => mockFetch(...args),
       deleteMany: (...args) => mockDeleteMany(...args),
     });
 
@@ -474,6 +484,13 @@ describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
       vectors: [{ id: 'doc_txt_chunk_0' }, { id: 'doc_txt_chunk_1' }, { id: 'doc_txt_chunk_2' }],
       pagination: {},
     });
+    mockFetch = vi.fn().mockResolvedValue({
+      records: {
+        doc_txt_chunk_0: { metadata: { filename: 'doc.txt' } },
+        doc_txt_chunk_1: { metadata: { filename: 'doc.txt' } },
+        doc_txt_chunk_2: { metadata: { filename: 'doc.txt' } },
+      },
+    });
     const handler = await freshHandler();
     // TEXTE_VALIDE ne produit qu'1 chunk (bien plus court que l'ancien contenu à 3 chunks).
     const req = createMockReq({ body: { filename: 'doc.txt', content: b64(TEXTE_VALIDE) } });
@@ -498,6 +515,12 @@ describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
         vectors: [{ id: 'doc_txt_chunk_1' }],
         pagination: {},
       });
+    mockFetch = vi.fn().mockResolvedValue({
+      records: {
+        doc_txt_chunk_0: { metadata: { filename: 'doc.txt' } },
+        doc_txt_chunk_1: { metadata: { filename: 'doc.txt' } },
+      },
+    });
     const handler = await freshHandler();
     const req = createMockReq({ body: { filename: 'doc.txt', content: b64(TEXTE_VALIDE) } });
     const res = createMockRes();
@@ -507,5 +530,49 @@ describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
     expect(mockListPaginated).toHaveBeenCalledTimes(2);
     expect(mockListPaginated).toHaveBeenNthCalledWith(2, expect.objectContaining({ paginationToken: 'token-page-2' }));
     expect(mockDeleteMany).toHaveBeenCalledWith({ ids: ['doc_txt_chunk_0', 'doc_txt_chunk_1'] });
+  });
+});
+
+describe('api/upload-doc — collision de préfixe assaini (deux filenames différents)', () => {
+  it("ne supprime pas les chunks d'un autre fichier dont le nom assaini est identique (collision de préfixe)", async () => {
+    // "doc!.txt" et "doc?.txt" s'assainissent tous les deux vers le préfixe "doc__txt_chunk_" :
+    // sans vérification de metadata.filename, uploader "doc?.txt" supprimerait les chunks de
+    // "doc!.txt" déjà indexé sous ce même préfixe.
+    mockListPaginated = vi.fn().mockResolvedValue({
+      vectors: [{ id: 'doc__txt_chunk_0' }],
+      pagination: {},
+    });
+    mockFetch = vi.fn().mockResolvedValue({
+      records: {
+        doc__txt_chunk_0: { metadata: { filename: 'doc!.txt' } },
+      },
+    });
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { filename: 'doc?.txt', content: b64(TEXTE_VALIDE) } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(mockDeleteMany).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('supprime bien les chunks quand metadata.filename correspond exactement au filename reçu, malgré un préfixe partagé', async () => {
+    mockListPaginated = vi.fn().mockResolvedValue({
+      vectors: [{ id: 'doc__txt_chunk_0' }],
+      pagination: {},
+    });
+    mockFetch = vi.fn().mockResolvedValue({
+      records: {
+        doc__txt_chunk_0: { metadata: { filename: 'doc?.txt' } },
+      },
+    });
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { filename: 'doc?.txt', content: b64(TEXTE_VALIDE) } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(mockDeleteMany).toHaveBeenCalledWith({ ids: ['doc__txt_chunk_0'] });
   });
 });
