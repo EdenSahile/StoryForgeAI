@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Forge from '../screens/Forge';
-import { retrieveContext } from '../components/services/ragService';
+import { retrieveContext, getConfig } from '../components/services/ragService';
 import { generateStories } from '../components/services/claudeService';
 
 vi.mock('../components/services/ragService', () => ({
   retrieveContext: vi.fn().mockResolvedValue({ chunks: [] }),
   uploadDocument: vi.fn(),
   deleteDocument: vi.fn(),
+  getConfig: vi.fn().mockResolvedValue({ demoMode: false }),
 }));
 
 vi.mock('../components/services/claudeService', () => ({
@@ -38,6 +39,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   retrieveContext.mockResolvedValue({ chunks: [] });
   generateStories.mockResolvedValue(undefined);
+  getConfig.mockResolvedValue({ demoMode: false });
 });
 
 describe('Forge — toggle Générer sans RAG', () => {

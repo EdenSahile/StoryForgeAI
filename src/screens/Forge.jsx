@@ -1,9 +1,14 @@
 // src/screens/Forge.jsx
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { theme } from "../theme";
 import { generateStories } from "../components/services/claudeService";
-import { retrieveContext } from "../components/services/ragService";
+import {
+  uploadDocument,
+  deleteDocument,
+  retrieveContext,
+  getConfig,
+} from "../components/services/ragService";
 
 // ─── Animations ───────────────────────────────────────────
 const fadeInUp = keyframes`
@@ -1053,6 +1058,27 @@ export default function Forge({
   const [ragDisabled, setRagDisabled] = useState(false);
   const [ragOpen, setRagOpen] = useState(true);
   const [uploadError, setUploadError] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [pendingReplaceFile, setPendingReplaceFile] = useState(null);
+  // Fail-closed : reste verrouillé tant que /api/config n'a pas répondu, pour ne
+  // jamais laisser l'UI d'upload s'afficher active à un visiteur de la démo
+  // publique pendant le chargement.
+  const [demoMode, setDemoMode] = useState(true);
+  const fileInputRef = useRef(null);
+  const documentsRef = useRef(documents);
+  useEffect(() => {
+    documentsRef.current = documents;
+  }, [documents]);
+
+  useEffect(() => {
+    getConfig()
+      .then(({ demoMode }) => setDemoMode(demoMode))
+      .catch((err) => {
+        console.warn("[config] Échec du chargement de la configuration, upload resté verrouillé :", err);
+      });
+  }, []);
 
   const charCount = brief.length;
   const MAX = 2000;
@@ -1103,6 +1129,85 @@ export default function Forge({
 
   const handleKeyDown = (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") handleSubmit();
+  };
+
+  const handleFileUpload = async (files) => {
+    for (const file of files) {
+      const alreadyIndexed = documentsRef.current.some(
+        (d) => d.name === file.name && d.status === "indexed",
+      );
+      if (alreadyIndexed) {
+        setPendingReplaceFile(file);
+        return;
+      }
+      await uploadSingleFile(file);
+    }
+  };
+
+  const uploadSingleFile = async (file) => {
+    try {
+      setUploadError(null);
+      const newDoc = {
+        id: Date.now(),
+        name: file.name,
+        size: file.size,
+        status: "loading",
+        pct: 0,
+        chunks: 0,
+      };
+      setDocuments((prev) => [...prev, newDoc]);
+      setUploadingFile(file.name);
+
+      const result = await uploadDocument(file, (pct) => {
+        setUploadProgress(pct);
+        setDocuments((prev) =>
+          prev.map((d) => (d.name === file.name ? { ...d, pct } : d)),
+        );
+      });
+
+      setDocuments((prev) =>
+        prev.map((d) =>
+          d.name === file.name
+            ? { ...d, status: "indexed", chunks: result.chunks, pct: 100 }
+            : d,
+        ),
+      );
+      setUploadingFile(null);
+    } catch (err) {
+      if (import.meta.env.DEV) console.error("uploadDocument failed:", err);
+      setDocuments((prev) =>
+        prev.map((d) => (d.name === file.name ? { ...d, status: "error" } : d)),
+      );
+      setUploadError(err.message);
+      setUploadingFile(null);
+    }
+  };
+
+  const handleConfirmReplace = async () => {
+    const file = pendingReplaceFile;
+    setPendingReplaceFile(null);
+    setDocuments((prev) => prev.filter((d) => d.name !== file.name));
+    await uploadSingleFile(file);
+  };
+
+  const handleCancelReplace = () => setPendingReplaceFile(null);
+
+  const handleDeleteDoc = async (doc) => {
+    if (!confirm(`Supprimer "${doc.name}" et ses ${doc.chunks || 0} chunks ?`))
+      return;
+    try {
+      await deleteDocument(doc.name);
+      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+    } catch (err) {
+      setUploadError(err.message);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    handleFileUpload(files);
   };
 
   return (
