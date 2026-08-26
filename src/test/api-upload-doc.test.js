@@ -58,6 +58,8 @@ const TEXTE_VALIDE = 'Ceci est un document métier suffisamment long pour être 
 
 let mockEmbeddingsCreate;
 let mockUpsert;
+let mockListPaginated;
+let mockDeleteMany;
 let mockIndex;
 
 vi.mock('openai', () => {
@@ -101,7 +103,13 @@ beforeEach(() => {
   delete process.env.DEMO_MODE;
 
   mockUpsert = vi.fn().mockResolvedValue({});
-  mockIndex = vi.fn().mockReturnValue({ upsert: mockUpsert });
+  mockListPaginated = vi.fn().mockResolvedValue({ vectors: [] });
+  mockDeleteMany = vi.fn().mockResolvedValue({});
+  mockIndex = vi.fn().mockReturnValue({
+    upsert: mockUpsert,
+    listPaginated: (...args) => mockListPaginated(...args),
+    deleteMany: (...args) => mockDeleteMany(...args),
+  });
   mockEmbeddingsCreate = vi.fn().mockResolvedValue({
     data: [{ embedding: new Array(512).fill(0) }],
   });
@@ -401,5 +409,103 @@ describe('api/upload-doc — appels externes (règle CLAUDE.md : jamais de error
     const payload = JSON.stringify(res.body);
     expect(payload).not.toContain('test-openai-key');
     expect(payload).not.toContain('test-pinecone-key');
+  });
+});
+
+describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
+  it("supprime les chunks existants du même filename avant l'upsert (deleteMany appelé avant upsert)", async () => {
+    mockListPaginated = vi.fn().mockResolvedValue({
+      vectors: [{ id: 'doc_txt_chunk_0' }, { id: 'doc_txt_chunk_1' }],
+      pagination: {},
+    });
+    const callOrder = [];
+    mockDeleteMany = vi.fn().mockImplementation(async () => {
+      callOrder.push('deleteMany');
+      return {};
+    });
+    mockUpsert = vi.fn().mockImplementation(async () => {
+      callOrder.push('upsert');
+      return {};
+    });
+    mockIndex = vi.fn().mockReturnValue({
+      upsert: mockUpsert,
+      listPaginated: (...args) => mockListPaginated(...args),
+      deleteMany: (...args) => mockDeleteMany(...args),
+    });
+
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { filename: 'doc.txt', content: b64(TEXTE_VALIDE) } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(mockDeleteMany).toHaveBeenCalledWith({ ids: ['doc_txt_chunk_0', 'doc_txt_chunk_1'] });
+    expect(callOrder).toEqual(['deleteMany', 'upsert']);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('utilise le même préfixe que api/delete-doc.js pour lister les chunks existants', async () => {
+    mockListPaginated = vi.fn().mockResolvedValue({ vectors: [], pagination: {} });
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { filename: 'doc rare!.txt', content: b64(TEXTE_VALIDE) } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(mockListPaginated).toHaveBeenCalledWith(
+      expect.objectContaining({ prefix: 'doc_rare__txt_chunk_' }),
+    );
+  });
+
+  it("n'appelle pas deleteMany si aucun chunk existant n'est trouvé pour ce filename (premier upload)", async () => {
+    mockListPaginated = vi.fn().mockResolvedValue({ vectors: [], pagination: {} });
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { filename: 'nouveau.txt', content: b64(TEXTE_VALIDE) } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(mockDeleteMany).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it("remplace proprement : totalChunks de la réponse reflète le nouveau contenu, pas l'ancien", async () => {
+    mockListPaginated = vi.fn().mockResolvedValue({
+      vectors: [{ id: 'doc_txt_chunk_0' }, { id: 'doc_txt_chunk_1' }, { id: 'doc_txt_chunk_2' }],
+      pagination: {},
+    });
+    const handler = await freshHandler();
+    // TEXTE_VALIDE ne produit qu'1 chunk (bien plus court que l'ancien contenu à 3 chunks).
+    const req = createMockReq({ body: { filename: 'doc.txt', content: b64(TEXTE_VALIDE) } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.body.chunks).toBe(1);
+    expect(mockDeleteMany).toHaveBeenCalledWith({
+      ids: ['doc_txt_chunk_0', 'doc_txt_chunk_1', 'doc_txt_chunk_2'],
+    });
+  });
+
+  it('parcourt toutes les pages via paginationToken avant de supprimer (même logique que api/delete-doc.js)', async () => {
+    mockListPaginated = vi
+      .fn()
+      .mockResolvedValueOnce({
+        vectors: [{ id: 'doc_txt_chunk_0' }],
+        pagination: { next: 'token-page-2' },
+      })
+      .mockResolvedValueOnce({
+        vectors: [{ id: 'doc_txt_chunk_1' }],
+        pagination: {},
+      });
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { filename: 'doc.txt', content: b64(TEXTE_VALIDE) } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(mockListPaginated).toHaveBeenCalledTimes(2);
+    expect(mockListPaginated).toHaveBeenNthCalledWith(2, expect.objectContaining({ paginationToken: 'token-page-2' }));
+    expect(mockDeleteMany).toHaveBeenCalledWith({ ids: ['doc_txt_chunk_0', 'doc_txt_chunk_1'] });
   });
 });

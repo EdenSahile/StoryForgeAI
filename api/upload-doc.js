@@ -135,13 +135,36 @@ export default async function handler(req, res) {
 
     const embeddings = embeddingResponse.data.map((d) => d.embedding);
 
-    // 4. Upsert into Pinecone
-    console.log(`[upload] Upserting into Pinecone...`);
+    // 4. Delete existing chunks for this filename (bug chunks orphelins : un
+    // remplacement qui génère moins de chunks que l'ancien laissait les chunks
+    // en trop de l'ancienne version dans Pinecone). Même logique de listing par
+    // préfixe que api/delete-doc.js.
+    console.log(`[upload] Checking for existing chunks of ${filename}...`);
     const pc = new Pinecone({ apiKey: PINECONE_API_KEY });
 
     // Extract host from URL
     const indexHost = PINECONE_INDEX_URL.replace("https://", "");
     const index = pc.index("storyforge", indexHost);
+
+    const prefix = `${filename.replace(/[^a-zA-Z0-9]/g, "_")}_chunk_`;
+    const existingIds = [];
+    let paginationToken;
+    while (true) {
+      const params = { prefix, limit: 100 };
+      if (paginationToken) params.paginationToken = paginationToken;
+      const result = await index.listPaginated(params);
+      existingIds.push(...(result.vectors || []).map((v) => v.id));
+      paginationToken = result.pagination?.next;
+      if (!paginationToken) break;
+    }
+
+    if (existingIds.length > 0) {
+      console.log(`[upload] Removing ${existingIds.length} existing chunk(s) for ${filename}`);
+      await index.deleteMany({ ids: existingIds });
+    }
+
+    // 5. Upsert into Pinecone
+    console.log(`[upload] Upserting into Pinecone...`);
 
     const vectors = chunks.map((chunk, i) => ({
       id: `${filename.replace(/[^a-zA-Z0-9]/g, "_")}_chunk_${i}`,
