@@ -1100,9 +1100,7 @@ export default function Forge({
   const [ragOpen, setRagOpen] = useState(true);
   const [uploadError, setUploadError] = useState(null);
   const [dragOver, setDragOver] = useState(false);
-  const [uploadingFile, setUploadingFile] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [pendingReplaceFile, setPendingReplaceFile] = useState(null);
+  const [pendingReplaceFiles, setPendingReplaceFiles] = useState([]);
   // Fail-closed : reste verrouillé tant que /api/config n'a pas répondu, pour ne
   // jamais laisser l'UI d'upload s'afficher active à un visiteur de la démo
   // publique pendant le chargement.
@@ -1178,8 +1176,8 @@ export default function Forge({
         (d) => d.name === file.name && d.status === "indexed",
       );
       if (alreadyIndexed) {
-        setPendingReplaceFile(file);
-        return;
+        setPendingReplaceFiles((prev) => [...prev, file]);
+        continue;
       }
       await uploadSingleFile(file);
     }
@@ -1197,10 +1195,8 @@ export default function Forge({
         chunks: 0,
       };
       setDocuments((prev) => [...prev, newDoc]);
-      setUploadingFile(file.name);
 
       const result = await uploadDocument(file, (pct) => {
-        setUploadProgress(pct);
         setDocuments((prev) =>
           prev.map((d) => (d.name === file.name ? { ...d, pct } : d)),
         );
@@ -1213,25 +1209,23 @@ export default function Forge({
             : d,
         ),
       );
-      setUploadingFile(null);
     } catch (err) {
       if (import.meta.env.DEV) console.error("uploadDocument failed:", err);
       setDocuments((prev) =>
         prev.map((d) => (d.name === file.name ? { ...d, status: "error" } : d)),
       );
       setUploadError(err.message);
-      setUploadingFile(null);
     }
   };
 
   const handleConfirmReplace = async () => {
-    const file = pendingReplaceFile;
-    setPendingReplaceFile(null);
+    const [file, ...rest] = pendingReplaceFiles;
+    setPendingReplaceFiles(rest);
     setDocuments((prev) => prev.filter((d) => d.name !== file.name));
     await uploadSingleFile(file);
   };
 
-  const handleCancelReplace = () => setPendingReplaceFile(null);
+  const handleCancelReplace = () => setPendingReplaceFiles((prev) => prev.slice(1));
 
   const handleDeleteDoc = async (doc) => {
     if (!confirm(`Supprimer "${doc.name}" et ses ${doc.chunks || 0} chunks ?`))
@@ -1528,10 +1522,10 @@ export default function Forge({
               ))}
             </DocList>
 
-            {pendingReplaceFile && (
+            {pendingReplaceFiles.length > 0 && (
               <ConfirmBanner>
                 <p className="message">
-                  <span className="filename">{pendingReplaceFile.name}</span>{" "}
+                  <span className="filename">{pendingReplaceFiles[0].name}</span>{" "}
                   est déjà indexé. Remplacer ?
                 </p>
                 <div className="actions">
@@ -1599,17 +1593,15 @@ export default function Forge({
               </UploadZone>
             )}
 
-            <IndexBtn
-              disabled={demoMode}
-              title={
-                demoMode
-                  ? "Indexation désactivée en mode démo — pour préserver l'expérience des autres visiteurs."
-                  : undefined
-              }
-              style={demoMode ? { opacity: 0.35, cursor: "not-allowed" } : undefined}
-            >
-              Indexer les documents
-            </IndexBtn>
+            {demoMode && (
+              <IndexBtn
+                disabled
+                title="Indexation désactivée en mode démo — pour préserver l'expérience des autres visiteurs."
+                style={{ opacity: 0.35, cursor: "not-allowed" }}
+              >
+                Indexer les documents
+              </IndexBtn>
+            )}
           </KBPanel>
         </RightColumn>
       </Content>
