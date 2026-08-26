@@ -4,6 +4,7 @@ import {
   retrieveContext,
   listDocuments,
   deleteDocument,
+  getConfig,
 } from '../components/services/ragService';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -267,5 +268,49 @@ describe('deleteDocument', () => {
     });
 
     await expect(deleteDocument('a.pdf')).rejects.toThrow('Erreur lors de la suppression.');
+  });
+});
+
+describe('getConfig', () => {
+  it('appelle GET sur /api/config sans body', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ demoMode: false }),
+    });
+
+    await getConfig();
+
+    expect(fetch).toHaveBeenCalledWith('/api/config');
+  });
+
+  it('résout avec { demoMode } en cas de succès', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ demoMode: true }),
+    });
+
+    const result = await getConfig();
+
+    expect(result).toEqual({ demoMode: true });
+  });
+
+  it("rejette avec le message de l'API quand la réponse est non-ok et contient un JSON avec error", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: 'Config indisponible' }),
+    });
+
+    await expect(getConfig()).rejects.toThrow('Config indisponible');
+  });
+
+  it("rejette avec le fallback quand la réponse non-ok n'a pas de JSON valide", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => { throw new Error('not json'); },
+    });
+
+    await expect(getConfig()).rejects.toThrow('Erreur lors de la récupération de la configuration.');
   });
 });
