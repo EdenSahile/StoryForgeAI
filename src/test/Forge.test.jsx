@@ -201,3 +201,40 @@ describe('Forge — restauration du brief précédent', () => {
     expect(screen.queryByText(/Brief précédent restauré/)).not.toBeInTheDocument();
   });
 });
+
+describe('Forge — zone d\'upload pilotée par getConfig (demoMode)', () => {
+  it('active la zone d\'upload et les actions (delete, index) quand demoMode=false', async () => {
+    getConfig.mockResolvedValue({ demoMode: false });
+    renderForge({
+      documents: [{ id: 1, name: 'doc.pdf', status: 'indexed', chunks: 3 }],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Glissez vos docs ici')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Upload désactivé en mode démo publique')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Indexer les documents' })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: 'delete' })).not.toBeDisabled();
+  });
+
+  it('désactive la zone d\'upload et les actions quand demoMode=true', async () => {
+    getConfig.mockResolvedValue({ demoMode: true });
+    renderForge({
+      documents: [{ id: 1, name: 'doc.pdf', status: 'indexed', chunks: 3 }],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Upload désactivé en mode démo publique')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Glissez vos docs ici')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Indexer les documents' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'delete' })).toBeDisabled();
+  });
+
+  it('reste verrouillée (fail-closed) tant que getConfig() n\'a pas résolu', () => {
+    getConfig.mockImplementation(() => new Promise(() => {}));
+    renderForge();
+
+    expect(screen.getByText('Upload désactivé en mode démo publique')).toBeInTheDocument();
+  });
+});
