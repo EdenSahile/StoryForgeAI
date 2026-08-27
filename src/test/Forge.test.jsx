@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import Forge from '../screens/Forge';
-import { retrieveContext, getConfig, uploadDocument } from '../components/services/ragService';
+import { retrieveContext, getConfig, uploadDocument, deleteDocument } from '../components/services/ragService';
 import { generateStories } from '../components/services/claudeService';
 
 vi.mock('../components/services/ragService', () => ({
@@ -347,5 +347,94 @@ describe('Forge — position du nouveau document dans la liste', () => {
 
     expect(result[0].name).toBe('nouveau.txt');
     expect(result[result.length - 1].name).toBe('existing.txt');
+  });
+});
+
+describe('Forge — pop-in de confirmation de suppression', () => {
+  beforeEach(() => {
+    // shouldAdvanceTime : évite que le mécanisme interne de waitFor (basé sur
+    // MutationObserver + un setTimeout de secours) ne reste bloqué une fois
+    // les timers truqués actifs.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('affiche la pop-in au clic sur supprimer, avec le nom du document, le nombre de chunks et le message de conséquence — sans rien supprimer', async () => {
+    renderForge({
+      documents: [{ id: 1, name: 'politique-retours.pdf', status: 'indexed', chunks: 5 }],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'delete' })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'delete' }));
+
+    const modal = screen.getByText('Supprimer ce document ?').parentElement;
+    expect(within(modal).getByText('politique-retours.pdf')).toBeInTheDocument();
+    expect(within(modal).getByText(/5 chunks/)).toBeInTheDocument();
+    expect(
+      within(modal).getByText('Ce document ne sera plus utilisé pour générer des user stories.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Annuler' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Supprimer' })).toBeInTheDocument();
+    expect(deleteDocument).not.toHaveBeenCalled();
+  });
+
+  it('"Annuler" ferme la pop-in sans rien supprimer', async () => {
+    renderForge({
+      documents: [{ id: 1, name: 'doc.pdf', status: 'indexed', chunks: 2 }],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'delete' })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'delete' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
+
+    expect(screen.queryByRole('button', { name: 'Supprimer' })).not.toBeInTheDocument();
+    expect(deleteDocument).not.toHaveBeenCalled();
+  });
+
+  it('"Supprimer" déclenche bien deleteDocument avec le filename du document', async () => {
+    deleteDocument.mockResolvedValue({ success: true });
+    renderForge({
+      documents: [{ id: 1, name: 'doc.pdf', status: 'indexed', chunks: 2 }],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'delete' })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'delete' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer' }));
+
+    await waitFor(() => {
+      expect(deleteDocument).toHaveBeenCalledWith('doc.pdf');
+    });
+  });
+
+  it('affiche le message de succès après suppression réussie, puis le fait disparaître automatiquement après le délai', async () => {
+    deleteDocument.mockResolvedValue({ success: true });
+    renderForge({
+      documents: [{ id: 1, name: 'doc.pdf', status: 'indexed', chunks: 2 }],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'delete' })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'delete' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Document supprimé de la base de connaissance.')).toBeInTheDocument();
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+
+    expect(screen.queryByText('Document supprimé de la base de connaissance.')).not.toBeInTheDocument();
   });
 });
