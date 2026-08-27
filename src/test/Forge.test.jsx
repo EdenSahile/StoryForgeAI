@@ -438,3 +438,65 @@ describe('Forge — pop-in de confirmation de suppression', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });
+
+describe('Forge — lisibilité de la carte document (DocCard)', () => {
+  it("n'affiche le nombre de chunks qu'une seule fois par document indexé (pas de duplication)", () => {
+    renderForge({
+      documents: [{ id: 1, name: 'doc.pdf', status: 'indexed', chunks: 4 }],
+    });
+
+    expect(screen.getAllByText('✓ 4 chunks')).toHaveLength(1);
+    expect(screen.getByText('Indexé')).toBeInTheDocument();
+  });
+
+  it("dérive l'icône du document de son extension réelle, pas de son statut de traitement", () => {
+    const { container } = renderForge({
+      documents: [
+        { id: 1, name: 'guide.pdf', status: 'indexed', chunks: 2 },
+        { id: 2, name: 'notes.docx', status: 'indexed', chunks: 1 },
+        // Avant ce correctif, un fichier "loading" affichait toujours l'icône
+        // picture_as_pdf (déterminée par le statut, pas l'extension) — un
+        // .txt en cours de traitement doit garder l'icône "article".
+        { id: 3, name: 'brouillon.txt', status: 'loading', pct: 40, chunks: 0 },
+      ],
+    });
+
+    const icons = container.querySelectorAll('.doc-icon');
+    expect(icons[0]).toHaveTextContent('picture_as_pdf');
+    expect(icons[1]).toHaveTextContent('description');
+    expect(icons[2]).toHaveTextContent('article');
+  });
+
+  it("affiche un message d'échec explicite avec la marche à suivre pour un document en erreur", () => {
+    renderForge({
+      documents: [{ id: 1, name: 'corrompu.pdf', status: 'error', chunks: 0 }],
+    });
+
+    expect(screen.getByText("Échec de l'indexation")).toBeInTheDocument();
+    expect(screen.getByText(/Supprimez ce document et réessayez/)).toBeInTheDocument();
+  });
+
+  it("affiche un état vide invitant à utiliser la zone d'upload quand aucun document n'est indexé (hors démo)", async () => {
+    getConfig.mockResolvedValue({ demoMode: false });
+    renderForge({ documents: [] });
+
+    await waitFor(() => {
+      expect(screen.getByText('Glissez vos docs ici')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/Aucun document/i)).toBeInTheDocument();
+    expect(screen.getByText(/Glissez un fichier ci-dessous/i)).toBeInTheDocument();
+  });
+
+  it("en mode démo, l'état vide n'invite pas à uploader (l'upload y est désactivé)", async () => {
+    getConfig.mockResolvedValue({ demoMode: true });
+    renderForge({ documents: [] });
+
+    await waitFor(() => {
+      expect(screen.getByText('Upload désactivé en mode démo publique')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/Aucun document/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Glissez un fichier ci-dessous/i)).not.toBeInTheDocument();
+  });
+});
