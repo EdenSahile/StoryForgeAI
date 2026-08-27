@@ -5,6 +5,8 @@ import { theme } from "../theme";
 import { getGenerations, deleteGeneration, updateGeneration, clearGenerations } from "../utils/libraryStorage";
 import { parseStories } from "../logic/storyParser";
 import StoryCard from "../components/StoryCard";
+import ConfirmModal from "../components/ConfirmModal";
+import SuccessToast from "../components/SuccessToast";
 
 const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(12px); }
@@ -491,6 +493,9 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [copied, setCopied] = useState(false);
+  // null | { type: 'single', id } | { type: 'all' }
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleteSuccessMessage, setDeleteSuccessMessage] = useState(null);
 
   useEffect(() => {
     setGenerations(getGenerations());
@@ -498,18 +503,29 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
 
   const handleDelete = (e, id) => {
     e.stopPropagation();
-    if (!confirm("Supprimer cette génération de l'historique ?")) return;
-    deleteGeneration(id);
-    const updated = getGenerations();
-    setGenerations(updated);
-    if (selected?.id === id) setSelected(null);
+    setPendingDelete({ type: "single", id });
   };
 
   const handleDeleteAll = () => {
-    if (!confirm("Supprimer tout l'historique ? Cette action est irréversible.")) return;
-    clearGenerations();
-    setGenerations([]);
-    setSelected(null);
+    setPendingDelete({ type: "all" });
+  };
+
+  const handleCancelDelete = () => setPendingDelete(null);
+
+  const handleConfirmDelete = () => {
+    if (pendingDelete.type === "single") {
+      const { id } = pendingDelete;
+      deleteGeneration(id);
+      setGenerations(getGenerations());
+      if (selected?.id === id) setSelected(null);
+      setDeleteSuccessMessage("Génération supprimée de l'historique.");
+    } else {
+      clearGenerations();
+      setGenerations([]);
+      setSelected(null);
+      setDeleteSuccessMessage("Historique vidé.");
+    }
+    setPendingDelete(null);
   };
 
   const startEditTitle = () => {
@@ -637,7 +653,10 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
                 <span className="icon">{copied ? "done" : "content_copy"}</span>
                 {copied ? "Copié ✓" : "Copier le texte"}
               </CopyBtn>
-              <DetailDeleteBtn onClick={(e) => handleDelete(e, selected.id)}>
+              <DetailDeleteBtn
+                title="Supprimer cette génération"
+                onClick={(e) => handleDelete(e, selected.id)}
+              >
                 <span className="icon">delete</span>
                 Supprimer
               </DetailDeleteBtn>
@@ -673,7 +692,11 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.spacing.sm, flexWrap: "wrap" }}>
                 <h2>Historique</h2>
                 {generations.length > 0 && (
-                  <DetailDeleteBtn onClick={handleDeleteAll} style={{ alignSelf: "auto" }}>
+                  <DetailDeleteBtn
+                    title="Supprimer tout l'historique"
+                    onClick={handleDeleteAll}
+                    style={{ alignSelf: "auto" }}
+                  >
                     <span className="icon">delete_sweep</span>
                     Supprimer tout
                   </DetailDeleteBtn>
@@ -731,6 +754,30 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
           </>
         )}
       </Content>
+
+      <SuccessToast
+        message={deleteSuccessMessage}
+        onDismiss={() => setDeleteSuccessMessage(null)}
+      />
+
+      {pendingDelete && (
+        <ConfirmModal
+          title={
+            pendingDelete.type === "all"
+              ? "Vider tout l'historique ?"
+              : "Supprimer cette génération de l'historique ?"
+          }
+          consequence={
+            pendingDelete.type === "all"
+              ? generations.length > 1
+                ? `Cette action est irréversible : les ${generations.length} générations sauvegardées seront définitivement perdues.`
+                : "Cette action est irréversible : la génération sauvegardée sera définitivement perdue."
+              : "Cette story ne sera plus accessible."
+          }
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+        />
+      )}
     </PageWrapper>
   );
 }
