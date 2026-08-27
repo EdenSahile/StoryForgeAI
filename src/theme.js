@@ -57,6 +57,9 @@ export const theme = {
     // Halos d'état actif/en cours (génération en cours, source RAG active)
     primaryGlow: "var(--color-primary-glow)",
     successGlow: "var(--color-success-glow)",
+
+    // Scrim de modale (assombrit le fond derrière une pop-in de confirmation)
+    scrim: "var(--color-scrim)",
   },
 
   // Zéro dégradé : fond plein, cohérent avec la palette Graphite & Émeraude.

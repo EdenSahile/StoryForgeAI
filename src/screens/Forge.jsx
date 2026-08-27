@@ -1004,6 +1004,111 @@ const ConfirmBanner = styled.div`
   }
 `;
 
+// ─── Suppression de document ────────────────────────────────
+const DeleteModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: ${theme.colors.scrim};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: ${theme.spacing.md};
+  z-index: 100;
+`;
+
+const DeleteModal = styled.div`
+  width: 100%;
+  max-width: 380px;
+  background: ${theme.colors.surfaceContainer};
+  border: 1px solid ${theme.colors.outlineVariant};
+  border-radius: ${theme.radii.xl};
+  padding: ${theme.spacing.xl};
+  box-shadow: ${theme.shadows.card};
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing.sm};
+
+  .title {
+    font-size: ${theme.fontSizes.lg};
+    font-weight: 700;
+    color: ${theme.colors.onSurface};
+  }
+
+  .doc-name {
+    font-size: ${theme.fontSizes.md};
+    font-weight: 600;
+    color: ${theme.colors.onSurface};
+    word-break: break-word;
+  }
+
+  .chunks {
+    font-size: ${theme.fontSizes.sm};
+    color: ${theme.colors.onSurfaceVariant};
+  }
+
+  .consequence {
+    font-size: ${theme.fontSizes.sm};
+    color: ${theme.colors.onSurfaceVariant};
+    margin-bottom: ${theme.spacing.sm};
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: ${theme.spacing.sm};
+  }
+
+  button {
+    padding: 8px 16px;
+    border-radius: ${theme.radii.md};
+    font-size: ${theme.fontSizes.sm};
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-cancel {
+    background: ${theme.colors.surfaceContainerHighest};
+    color: ${theme.colors.onSurfaceVariant};
+  }
+
+  .btn-delete {
+    background: ${theme.colors.error};
+    color: ${theme.colors.onPrimary};
+  }
+`;
+
+// Toast fixe (pas un bandeau inline dans le KBPanel) : la suppression se
+// confirme via une modale centrée plein écran, l'attention de l'utilisateur
+// est donc déjà au centre — un message de succès planqué dans la colonne de
+// droite (et repoussé sous le contenu principal en mobile, cf. RightColumn
+// `order: 2`) passait inaperçu. Réutilise fadeInUp (déjà utilisé sur
+// PageWrapper) plutôt que d'introduire une nouvelle animation.
+const DeleteSuccessToast = styled.div`
+  position: fixed;
+  top: ${theme.spacing.lg};
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
+  background: ${theme.colors.bgSuccess};
+  border: 1px solid color-mix(in srgb, ${theme.colors.success} 30%, transparent);
+  border-radius: ${theme.radii.lg};
+  padding: ${theme.spacing.sm} ${theme.spacing.lg};
+  color: ${theme.colors.textSuccess};
+  font-size: ${theme.fontSizes.sm};
+  font-weight: 700;
+  box-shadow: ${theme.shadows.card};
+  animation: ${fadeInUp} 0.3s ease;
+
+  .icon {
+    font-family: "Material Symbols Outlined";
+    font-size: 20px;
+  }
+`;
+
 const ErrorMsg = styled.div`
   background: ${theme.colors.bgError};
   border: 1px solid color-mix(in srgb, ${theme.colors.error} 30%, transparent);
@@ -1101,6 +1206,8 @@ export default function Forge({
   const [uploadError, setUploadError] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [pendingReplaceFiles, setPendingReplaceFiles] = useState([]);
+  const [pendingDeleteDoc, setPendingDeleteDoc] = useState(null);
+  const [deleteSuccessMessage, setDeleteSuccessMessage] = useState(null);
   // Fail-closed : reste verrouillé tant que /api/config n'a pas répondu, pour ne
   // jamais laisser l'UI d'upload s'afficher active à un visiteur de la démo
   // publique pendant le chargement.
@@ -1118,6 +1225,12 @@ export default function Forge({
         console.warn("[config] Échec du chargement de la configuration, upload resté verrouillé :", err);
       });
   }, []);
+
+  useEffect(() => {
+    if (!deleteSuccessMessage) return;
+    const timer = setTimeout(() => setDeleteSuccessMessage(null), 3500);
+    return () => clearTimeout(timer);
+  }, [deleteSuccessMessage]);
 
   const charCount = brief.length;
   const MAX = 2000;
@@ -1227,12 +1340,17 @@ export default function Forge({
 
   const handleCancelReplace = () => setPendingReplaceFiles((prev) => prev.slice(1));
 
-  const handleDeleteDoc = async (doc) => {
-    if (!confirm(`Supprimer "${doc.name}" et ses ${doc.chunks || 0} chunks ?`))
-      return;
+  const handleDeleteDoc = (doc) => setPendingDeleteDoc(doc);
+
+  const handleCancelDelete = () => setPendingDeleteDoc(null);
+
+  const handleConfirmDelete = async () => {
+    const doc = pendingDeleteDoc;
+    setPendingDeleteDoc(null);
     try {
       await deleteDocument(doc.name);
       setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+      setDeleteSuccessMessage("Document supprimé de la base de connaissance.");
     } catch (err) {
       setUploadError(err.message);
     }
@@ -1605,6 +1723,34 @@ export default function Forge({
           </KBPanel>
         </RightColumn>
       </Content>
+
+      {deleteSuccessMessage && (
+        <DeleteSuccessToast role="status">
+          <span className="icon">check_circle</span>
+          {deleteSuccessMessage}
+        </DeleteSuccessToast>
+      )}
+
+      {pendingDeleteDoc && (
+        <DeleteModalOverlay>
+          <DeleteModal>
+            <span className="title">Supprimer ce document ?</span>
+            <span className="doc-name">{pendingDeleteDoc.name}</span>
+            <span className="chunks">{pendingDeleteDoc.chunks || 0} chunks indexés</span>
+            <span className="consequence">
+              Ce document ne sera plus utilisé pour générer des user stories.
+            </span>
+            <div className="actions">
+              <button className="btn-cancel" onClick={handleCancelDelete}>
+                Annuler
+              </button>
+              <button className="btn-delete" onClick={handleConfirmDelete}>
+                Supprimer
+              </button>
+            </div>
+          </DeleteModal>
+        </DeleteModalOverlay>
+      )}
     </PageWrapper>
   );
 }

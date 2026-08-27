@@ -68,6 +68,10 @@ const GlobalStyle = createGlobalStyle`
        génération en cours, source RAG active) — jamais une teinte figée. */
     --color-primary-glow: rgba(79, 191, 139, 0.35);
     --color-success-glow: rgba(127, 219, 166, 0.6);
+
+    /* Scrim de modale — volontairement identique en clair/sombre (assombrit
+       ce qu'il y a derrière, indépendamment du thème, comme tout scrim). */
+    --color-scrim: rgba(0, 0, 0, 0.5);
   }
 
   [data-theme="light"] {
@@ -113,6 +117,8 @@ const GlobalStyle = createGlobalStyle`
 
     --color-primary-glow: rgba(31, 122, 82, 0.35);
     --color-success-glow: rgba(22, 101, 52, 0.5);
+
+    --color-scrim: rgba(0, 0, 0, 0.5);
   }
 
   *, *::before, *::after {
