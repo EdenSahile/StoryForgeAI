@@ -1434,12 +1434,9 @@ export default function Forge({
         <LeftColumn>
           <PromptSection>
             <ModeHint>
-              <strong>Démo Lumeo Boutique</strong> — e-commerce fictif de déco / luminaires.<br />
-              Les documents sont pré-chargés et utilisés automatiquement. Utilisez les suggestions ci-dessous ou décrivez un besoin lié aux commandes, retours, livraison ou SAV.
+              <strong>Démo Lumeo Boutique</strong> — e-commerce fictif de déco / luminaires. Les documents sont pré-chargés et utilisés automatiquement (en production, chaque entreprise importerait les siens). Utilisez les suggestions ci-dessous ou décrivez un besoin lié aux commandes, retours, livraison ou SAV.
               <br /><br />
-              <em>En production, chaque entreprise importe ses propres documents (politiques internes, catalogues, process métier) pour des stories ancrées dans son contexte réel.</em>
-              <br /><br />
-              <em>Si le brief s'éloigne du contexte Lumeo Boutique, la récupération ne trouve rien de pertinent et les stories sortent génériques automatiquement. Pour forcer ce comportement volontairement, même sur un brief pertinent (pour comparer), active le toggle "Générer sans RAG" ci-dessous.</em>
+              <em>Un brief hors du contexte Lumeo Boutique produit automatiquement des stories génériques. Active "Générer sans RAG" pour forcer ce mode manuellement.</em>
             </ModeHint>
 
             <ChipRow>
