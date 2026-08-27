@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { theme } from "../theme";
+import { getDocIcon } from "../logic/docIcon";
 import { generateStories } from "../components/services/claudeService";
 import {
   uploadDocument,
@@ -696,6 +697,32 @@ const DocList = styled.div`
   }
 `;
 
+const KBEmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: ${theme.spacing.lg} ${theme.spacing.md};
+  color: ${theme.colors.onSurfaceVariant};
+
+  .icon {
+    font-family: "Material Symbols Outlined";
+    font-size: 28px;
+    color: ${theme.colors.outline};
+    margin-bottom: ${theme.spacing.xs};
+  }
+
+  p {
+    font-size: ${theme.fontSizes.sm};
+    margin: 0;
+  }
+
+  .hint {
+    font-size: ${theme.fontSizes.xs};
+  }
+`;
+
 const DocCard = styled.div`
   display: flex;
   align-items: flex-start;
@@ -756,6 +783,13 @@ const DocCard = styled.div`
           : $status === "loading"
             ? theme.colors.primary
             : theme.colors.error};
+    }
+
+    .status-help {
+      font-size: 11px;
+      font-weight: 500;
+      color: ${theme.colors.onSurfaceVariant};
+      margin-top: 2px;
     }
   }
 
@@ -1579,66 +1613,73 @@ export default function Forge({
               génération.
             </KBSubtitle>
 
-            <DocList>
-              {documents.map((doc) => (
-                <DocCard key={doc.id} $status={doc.status}>
-                  <span className="doc-icon">
-                    {doc.status === "indexed"
-                      ? "description"
-                      : doc.status === "loading"
-                        ? "picture_as_pdf"
-                        : "article"}
-                  </span>
-                  <div className="doc-info">
-                    <p className="name">
-                      {doc.status === "indexed" ? (
-                        <a
-                          href={`/docs/${doc.name}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {doc.name}
-                        </a>
-                      ) : (
-                        doc.name
+            {documents.length === 0 ? (
+              <KBEmptyState>
+                <span className="icon">folder_open</span>
+                <p>Aucun document indexé pour l'instant.</p>
+                {!demoMode && <p className="hint">Glissez un fichier ci-dessous pour commencer.</p>}
+              </KBEmptyState>
+            ) : (
+              <DocList>
+                {documents.map((doc) => (
+                  <DocCard key={doc.id} $status={doc.status}>
+                    <span className="doc-icon">{getDocIcon(doc.name)}</span>
+                    <div className="doc-info">
+                      <p className="name">
+                        {doc.status === "indexed" ? (
+                          <a
+                            href={`/docs/${doc.name}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {doc.name}
+                          </a>
+                        ) : (
+                          doc.name
+                        )}
+                      </p>
+                      <p className="status">
+                        {doc.status === "indexed"
+                          ? "Indexé"
+                          : doc.status === "loading"
+                            ? "Chunking en cours..."
+                            : "Échec de l'indexation"}
+                      </p>
+                      {doc.status === "loading" && (
+                        <ProgressBar $pct={doc.pct}>
+                          <div className="fill" />
+                        </ProgressBar>
                       )}
-                    </p>
-                    <p className="status">
-                      {doc.status === "indexed"
-                        ? `✓ ${doc.chunks} chunks`
-                        : doc.status === "loading"
-                          ? "Chunking en cours..."
-                          : "NON INDEXÉ"}
-                    </p>
-                    {doc.status === "loading" && (
-                      <ProgressBar $pct={doc.pct}>
-                        <div className="fill" />
-                      </ProgressBar>
+                      {doc.status !== "indexed" && doc.status !== "loading" && (
+                        <p className="status-help">
+                          Supprimez ce document et réessayez.
+                        </p>
+                      )}
+                    </div>
+                    {doc.status === "indexed" && (
+                      <span className="chunks-badge">✓ {doc.chunks} chunks</span>
                     )}
-                  </div>
-                  {doc.status === "indexed" && (
-                    <span className="chunks-badge">✓ {doc.chunks} chunks</span>
-                  )}
-                  {doc.status === "loading" && (
-                    <span className="percent">{doc.pct}%</span>
-                  )}
-                  {doc.status !== "loading" && (
-                    <DeleteDocBtn
-                      disabled={demoMode}
-                      title={
-                        demoMode
-                          ? "Suppression désactivée en mode démo — pour préserver l'expérience des autres visiteurs."
-                          : `Supprimer ${doc.name}`
-                      }
-                      onClick={demoMode ? undefined : () => handleDeleteDoc(doc)}
-                      style={demoMode ? { opacity: 0.35, cursor: "not-allowed" } : undefined}
-                    >
-                      delete
-                    </DeleteDocBtn>
-                  )}
-                </DocCard>
-              ))}
-            </DocList>
+                    {doc.status === "loading" && (
+                      <span className="percent">{doc.pct}%</span>
+                    )}
+                    {doc.status !== "loading" && (
+                      <DeleteDocBtn
+                        disabled={demoMode}
+                        title={
+                          demoMode
+                            ? "Suppression désactivée en mode démo — pour préserver l'expérience des autres visiteurs."
+                            : `Supprimer ${doc.name}`
+                        }
+                        onClick={demoMode ? undefined : () => handleDeleteDoc(doc)}
+                        style={demoMode ? { opacity: 0.35, cursor: "not-allowed" } : undefined}
+                      >
+                        delete
+                      </DeleteDocBtn>
+                    )}
+                  </DocCard>
+                ))}
+              </DocList>
+            )}
 
             {pendingReplaceFiles.length > 0 && (
               <ConfirmBanner>
