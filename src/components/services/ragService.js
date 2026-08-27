@@ -109,3 +109,18 @@ export async function deleteDocument(filename) {
 
   return response.json();
 }
+
+/**
+ * Récupère la configuration serveur exposée au client (ex: mode démo)
+ * @returns {Promise<{demoMode: boolean}>}
+ */
+export async function getConfig() {
+  const response = await fetch("/api/config");
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || "Erreur lors de la récupération de la configuration.");
+  }
+
+  return response.json();
+}

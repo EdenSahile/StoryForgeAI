@@ -135,16 +135,48 @@ export default async function handler(req, res) {
 
     const embeddings = embeddingResponse.data.map((d) => d.embedding);
 
-    // 4. Upsert into Pinecone
-    console.log(`[upload] Upserting into Pinecone...`);
+    // 4. Find existing chunks for this filename — read-only, no risk. Kept
+    // before the upsert so we know which IDs *would* become orphaned (bug
+    // chunks orphelins : un remplacement qui génère moins de chunks que
+    // l'ancien laissait les chunks en trop de l'ancienne version dans
+    // Pinecone), but the actual deletion happens only after the upsert
+    // succeeds (step 6) — never before, to avoid a window where a failure
+    // between delete and upsert would leave the document with zero chunks.
+    console.log(`[upload] Checking for existing chunks of ${filename}...`);
     const pc = new Pinecone({ apiKey: PINECONE_API_KEY });
 
     // Extract host from URL
     const indexHost = PINECONE_INDEX_URL.replace("https://", "");
     const index = pc.index("storyforge", indexHost);
 
+    const prefix = `${filename.replace(/[^a-zA-Z0-9]/g, "_")}_chunk_`;
+    const candidateIds = [];
+    let paginationToken;
+    while (true) {
+      const params = { prefix, limit: 100 };
+      if (paginationToken) params.paginationToken = paginationToken;
+      const result = await index.listPaginated(params);
+      candidateIds.push(...(result.vectors || []).map((v) => v.id));
+      paginationToken = result.pagination?.next;
+      if (!paginationToken) break;
+    }
+
+    // Le préfixe assaini n'est pas unique : deux filenames différents peuvent
+    // s'assainir vers la même chaîne (ex: "doc!.txt" et "doc?.txt" → "doc__txt").
+    // On confirme via les métadonnées (même pattern que api/list-docs.js) que
+    // le chunk trouvé appartient bien à CE filename avant de le considérer.
+    let existingIds = [];
+    if (candidateIds.length > 0) {
+      const fetchResult = await index.fetch({ ids: candidateIds });
+      const records = fetchResult.records || {};
+      existingIds = candidateIds.filter((id) => records[id]?.metadata?.filename === filename);
+    }
+
+    // 5. Upsert the new chunks into Pinecone
+    console.log(`[upload] Upserting into Pinecone...`);
+
     const vectors = chunks.map((chunk, i) => ({
-      id: `${filename.replace(/[^a-zA-Z0-9]/g, "_")}_chunk_${i}`,
+      id: `${prefix}${i}`,
       values: embeddings[i],
       metadata: {
         text: chunk,
@@ -160,6 +192,17 @@ export default async function handler(req, res) {
     for (let i = 0; i < vectors.length; i += batchSize) {
       const batch = vectors.slice(i, i + batchSize);
       await index.upsert({ records: batch });
+    }
+
+    // 6. Delete orphaned chunks only now that the new content is safely
+    // upserted — an ID reused by the new content (same index) was just
+    // overwritten in place and must not be deleted.
+    const newIds = new Set(vectors.map((v) => v.id));
+    const orphanIds = existingIds.filter((id) => !newIds.has(id));
+
+    if (orphanIds.length > 0) {
+      console.log(`[upload] Removing ${orphanIds.length} orphaned chunk(s) for ${filename}`);
+      await index.deleteMany({ ids: orphanIds });
     }
 
     console.log(`[upload] ✅ ${chunks.length} chunks indexed for ${filename}`);

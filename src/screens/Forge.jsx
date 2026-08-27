@@ -1,9 +1,14 @@
 // src/screens/Forge.jsx
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { theme } from "../theme";
 import { generateStories } from "../components/services/claudeService";
-import { retrieveContext } from "../components/services/ragService";
+import {
+  uploadDocument,
+  deleteDocument,
+  retrieveContext,
+  getConfig,
+} from "../components/services/ragService";
 
 // ─── Animations ───────────────────────────────────────────
 const fadeInUp = keyframes`
@@ -958,6 +963,47 @@ const Chip = styled.button`
 `;
 
 // ─── Error / Copy ─────────────────────────────────────────
+const ConfirmBanner = styled.div`
+  background: ${theme.colors.bgWarning};
+  border: 1px solid color-mix(in srgb, ${theme.colors.amber} 30%, transparent);
+  border-radius: ${theme.radii.lg};
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  font-size: ${theme.fontSizes.sm};
+  color: ${theme.colors.onSurface};
+
+  .message {
+    margin-bottom: ${theme.spacing.sm};
+  }
+
+  .filename {
+    font-weight: 600;
+  }
+
+  .actions {
+    display: flex;
+    gap: ${theme.spacing.sm};
+  }
+
+  button {
+    padding: 4px 12px;
+    border-radius: ${theme.radii.md};
+    font-size: ${theme.fontSizes.xs};
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-replace {
+    background: ${theme.colors.primary};
+    color: ${theme.colors.onPrimary};
+  }
+
+  .btn-cancel {
+    background: ${theme.colors.surfaceContainerHighest};
+    color: ${theme.colors.onSurfaceVariant};
+  }
+`;
+
 const ErrorMsg = styled.div`
   background: ${theme.colors.bgError};
   border: 1px solid color-mix(in srgb, ${theme.colors.error} 30%, transparent);
@@ -1053,6 +1099,25 @@ export default function Forge({
   const [ragDisabled, setRagDisabled] = useState(false);
   const [ragOpen, setRagOpen] = useState(true);
   const [uploadError, setUploadError] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [pendingReplaceFiles, setPendingReplaceFiles] = useState([]);
+  // Fail-closed : reste verrouillé tant que /api/config n'a pas répondu, pour ne
+  // jamais laisser l'UI d'upload s'afficher active à un visiteur de la démo
+  // publique pendant le chargement.
+  const [demoMode, setDemoMode] = useState(true);
+  const fileInputRef = useRef(null);
+  const documentsRef = useRef(documents);
+  useEffect(() => {
+    documentsRef.current = documents;
+  }, [documents]);
+
+  useEffect(() => {
+    getConfig()
+      .then(({ demoMode }) => setDemoMode(demoMode))
+      .catch((err) => {
+        console.warn("[config] Échec du chargement de la configuration, upload resté verrouillé :", err);
+      });
+  }, []);
 
   const charCount = brief.length;
   const MAX = 2000;
@@ -1103,6 +1168,81 @@ export default function Forge({
 
   const handleKeyDown = (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") handleSubmit();
+  };
+
+  const handleFileUpload = async (files) => {
+    for (const file of files) {
+      const alreadyIndexed = documentsRef.current.some(
+        (d) => d.name === file.name && d.status === "indexed",
+      );
+      if (alreadyIndexed) {
+        setPendingReplaceFiles((prev) => [...prev, file]);
+        continue;
+      }
+      await uploadSingleFile(file);
+    }
+  };
+
+  const uploadSingleFile = async (file) => {
+    try {
+      setUploadError(null);
+      const newDoc = {
+        id: Date.now(),
+        name: file.name,
+        size: file.size,
+        status: "loading",
+        pct: 0,
+        chunks: 0,
+      };
+      setDocuments((prev) => [...prev, newDoc]);
+
+      const result = await uploadDocument(file, (pct) => {
+        setDocuments((prev) =>
+          prev.map((d) => (d.name === file.name ? { ...d, pct } : d)),
+        );
+      });
+
+      setDocuments((prev) =>
+        prev.map((d) =>
+          d.name === file.name
+            ? { ...d, status: "indexed", chunks: result.chunks, pct: 100 }
+            : d,
+        ),
+      );
+    } catch (err) {
+      if (import.meta.env.DEV) console.error("uploadDocument failed:", err);
+      setDocuments((prev) =>
+        prev.map((d) => (d.name === file.name ? { ...d, status: "error" } : d)),
+      );
+      setUploadError(err.message);
+    }
+  };
+
+  const handleConfirmReplace = async () => {
+    const [file, ...rest] = pendingReplaceFiles;
+    setPendingReplaceFiles(rest);
+    setDocuments((prev) => prev.filter((d) => d.name !== file.name));
+    await uploadSingleFile(file);
+  };
+
+  const handleCancelReplace = () => setPendingReplaceFiles((prev) => prev.slice(1));
+
+  const handleDeleteDoc = async (doc) => {
+    if (!confirm(`Supprimer "${doc.name}" et ses ${doc.chunks || 0} chunks ?`))
+      return;
+    try {
+      await deleteDocument(doc.name);
+      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+    } catch (err) {
+      setUploadError(err.message);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    handleFileUpload(files);
   };
 
   return (
@@ -1366,9 +1506,14 @@ export default function Forge({
                   )}
                   {doc.status !== "loading" && (
                     <DeleteDocBtn
-                      disabled
-                      title="Suppression désactivée en mode démo — pour préserver l'expérience des autres visiteurs."
-                      style={{ opacity: 0.35, cursor: "not-allowed" }}
+                      disabled={demoMode}
+                      title={
+                        demoMode
+                          ? "Suppression désactivée en mode démo — pour préserver l'expérience des autres visiteurs."
+                          : `Supprimer ${doc.name}`
+                      }
+                      onClick={demoMode ? undefined : () => handleDeleteDoc(doc)}
+                      style={demoMode ? { opacity: 0.35, cursor: "not-allowed" } : undefined}
                     >
                       delete
                     </DeleteDocBtn>
@@ -1377,6 +1522,26 @@ export default function Forge({
               ))}
             </DocList>
 
+            {pendingReplaceFiles.length > 0 && (
+              <ConfirmBanner>
+                <p className="message">
+                  <span className="filename">{pendingReplaceFiles[0].name}</span>{" "}
+                  est déjà indexé. Remplacer ?
+                </p>
+                <div className="actions">
+                  <button
+                    className="btn-replace"
+                    onClick={handleConfirmReplace}
+                  >
+                    Remplacer
+                  </button>
+                  <button className="btn-cancel" onClick={handleCancelReplace}>
+                    Annuler
+                  </button>
+                </div>
+              </ConfirmBanner>
+            )}
+
             {uploadError && (
               <ErrorMsg>
                 <span>{uploadError}</span>
@@ -1384,24 +1549,59 @@ export default function Forge({
               </ErrorMsg>
             )}
 
-            <UploadZone $disabled>
-              <span className="upload-icon">cloud_upload</span>
-              <p className="upload-title">
-                Upload désactivé en mode démo publique
-              </p>
-              <p className="upload-sub">
-                La base de connaissance (8 documents fictifs sur Lumeo Boutique)
-                est pré-configurée pour cette démo.
-              </p>
-            </UploadZone>
+            {demoMode ? (
+              <UploadZone $disabled>
+                <span className="upload-icon">cloud_upload</span>
+                <p className="upload-title">
+                  Upload désactivé en mode démo publique
+                </p>
+                <p className="upload-sub">
+                  La base de connaissance (8 documents fictifs sur Lumeo Boutique)
+                  est pré-configurée pour cette démo.
+                </p>
+              </UploadZone>
+            ) : (
+              <UploadZone
+                $dragOver={dragOver}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.docx,.txt"
+                  multiple
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    handleFileUpload(files);
+                  }}
+                />
+                <span className="upload-icon">cloud_upload</span>
+                <p className="upload-title">Glissez vos docs ici</p>
+                <p className="upload-sub">ou cliquez pour parcourir — Max 10 Mo</p>
+                <div className="format-badges">
+                  <span className="format-badge">PDF</span>
+                  <span className="format-badge">DOCX</span>
+                  <span className="format-badge">TXT</span>
+                </div>
+              </UploadZone>
+            )}
 
-            <IndexBtn
-              disabled
-              title="Indexation désactivée en mode démo — pour préserver l'expérience des autres visiteurs."
-              style={{ opacity: 0.35, cursor: "not-allowed" }}
-            >
-              Indexer les documents
-            </IndexBtn>
+            {demoMode && (
+              <IndexBtn
+                disabled
+                title="Indexation désactivée en mode démo — pour préserver l'expérience des autres visiteurs."
+                style={{ opacity: 0.35, cursor: "not-allowed" }}
+              >
+                Indexer les documents
+              </IndexBtn>
+            )}
           </KBPanel>
         </RightColumn>
       </Content>

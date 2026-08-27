@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Forge from '../screens/Forge';
-import { retrieveContext } from '../components/services/ragService';
+import { retrieveContext, getConfig, uploadDocument } from '../components/services/ragService';
 import { generateStories } from '../components/services/claudeService';
 
 vi.mock('../components/services/ragService', () => ({
   retrieveContext: vi.fn().mockResolvedValue({ chunks: [] }),
   uploadDocument: vi.fn(),
   deleteDocument: vi.fn(),
+  getConfig: vi.fn().mockResolvedValue({ demoMode: false }),
 }));
 
 vi.mock('../components/services/claudeService', () => ({
@@ -38,6 +39,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   retrieveContext.mockResolvedValue({ chunks: [] });
   generateStories.mockResolvedValue(undefined);
+  getConfig.mockResolvedValue({ demoMode: false });
 });
 
 describe('Forge — toggle Générer sans RAG', () => {
@@ -197,5 +199,120 @@ describe('Forge — restauration du brief précédent', () => {
     renderForge({ keepBrief: false });
 
     expect(screen.queryByText(/Brief précédent restauré/)).not.toBeInTheDocument();
+  });
+});
+
+describe('Forge — zone d\'upload pilotée par getConfig (demoMode)', () => {
+  it('active la zone d\'upload et les actions (delete, index) quand demoMode=false', async () => {
+    getConfig.mockResolvedValue({ demoMode: false });
+    renderForge({
+      documents: [{ id: 1, name: 'doc.pdf', status: 'indexed', chunks: 3 }],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Glissez vos docs ici')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Upload désactivé en mode démo publique')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Indexer les documents' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'delete' })).not.toBeDisabled();
+  });
+
+  it('désactive la zone d\'upload et les actions quand demoMode=true', async () => {
+    getConfig.mockResolvedValue({ demoMode: true });
+    renderForge({
+      documents: [{ id: 1, name: 'doc.pdf', status: 'indexed', chunks: 3 }],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Upload désactivé en mode démo publique')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Glissez vos docs ici')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Indexer les documents' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'delete' })).toBeDisabled();
+  });
+
+  it('reste verrouillée (fail-closed) tant que getConfig() n\'a pas résolu', () => {
+    getConfig.mockImplementation(() => new Promise(() => {}));
+    renderForge();
+
+    expect(screen.getByText('Upload désactivé en mode démo publique')).toBeInTheDocument();
+  });
+
+  it("cache le bouton \"Indexer les documents\" quand demoMode=false (l'indexation est automatique à l'upload)", async () => {
+    getConfig.mockResolvedValue({ demoMode: false });
+    renderForge();
+
+    await waitFor(() => {
+      expect(screen.getByText('Glissez vos docs ici')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('button', { name: 'Indexer les documents' })).not.toBeInTheDocument();
+  });
+});
+
+// Le texte du ConfirmBanner est réparti entre un <span> et un nœud de texte
+// frère ("<span>{name}</span> est déjà indexé. Remplacer ?") : getByText avec
+// une simple chaîne ne le retrouve pas (texte cassé par un élément), d'où ce
+// matcher basé sur le textContent complet du <p>.
+const confirmBannerText = (name) => (_content, element) =>
+  element?.tagName === 'P' &&
+  element.textContent.replace(/\s+/g, ' ').trim() === `${name} est déjà indexé. Remplacer ?`;
+
+describe('Forge — upload de plusieurs fichiers avec doublon (file de confirmation)', () => {
+  it('continue à uploader les autres fichiers du batch au lieu de les abandonner quand un fichier nécessite confirmation', async () => {
+    uploadDocument.mockResolvedValue({ chunks: 2 });
+    const { container } = renderForge({
+      documents: [{ id: 1, name: 'existing.txt', status: 'indexed', chunks: 3 }],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Glissez vos docs ici')).toBeInTheDocument();
+    });
+
+    const fileExisting = new File(['ancien contenu'], 'existing.txt', { type: 'text/plain' });
+    const fileNew = new File(['nouveau contenu'], 'nouveau.txt', { type: 'text/plain' });
+    const input = container.querySelector('input[type="file"]');
+
+    fireEvent.change(input, { target: { files: [fileExisting, fileNew] } });
+
+    await waitFor(() => {
+      expect(uploadDocument).toHaveBeenCalledTimes(1);
+    });
+    // Comparer les File par identité de nom plutôt que via toHaveBeenCalledWith :
+    // les instances File n'exposent pas leurs propriétés (name, size...) comme
+    // énumérables propres, ce qui rend l'égalité structurelle de Vitest peu fiable.
+    expect(uploadDocument.mock.calls[0][0].name).toBe('nouveau.txt');
+    expect(screen.getByText(confirmBannerText('existing.txt'))).toBeInTheDocument();
+  });
+
+  it('met en file plusieurs remplacements en attente et les traite un par un (le suivant apparaît après confirmation du premier)', async () => {
+    uploadDocument.mockResolvedValue({ chunks: 1 });
+    const { container } = renderForge({
+      documents: [
+        { id: 1, name: 'premier.txt', status: 'indexed', chunks: 1 },
+        { id: 2, name: 'second.txt', status: 'indexed', chunks: 1 },
+      ],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Glissez vos docs ici')).toBeInTheDocument();
+    });
+
+    const filePremier = new File(['a'], 'premier.txt', { type: 'text/plain' });
+    const fileSecond = new File(['b'], 'second.txt', { type: 'text/plain' });
+    const input = container.querySelector('input[type="file"]');
+
+    fireEvent.change(input, { target: { files: [filePremier, fileSecond] } });
+
+    await waitFor(() => {
+      expect(screen.getByText(confirmBannerText('premier.txt'))).toBeInTheDocument();
+    });
+    expect(screen.queryByText(confirmBannerText('second.txt'))).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remplacer' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(confirmBannerText('second.txt'))).toBeInTheDocument();
+    });
+    expect(screen.queryByText(confirmBannerText('premier.txt'))).not.toBeInTheDocument();
   });
 });
