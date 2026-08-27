@@ -17,8 +17,8 @@
     "calibrate-threshold": "node --env-file=.env scripts/calibrate-threshold.mjs"
   },
   "engines": {
-    "node": ">=20 <21",
-    "npm": ">=10 <11"
+    "node": ">=24 <25",
+    "npm": ">=11 <12"
   },
   "dependencies": {
     "@langchain/textsplitters": "^1.0.1",
