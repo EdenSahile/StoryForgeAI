@@ -319,7 +319,7 @@ export default function Settings({ themeMode, onThemeChange }) {
             </AppIdentity>
             <AboutDesc>
               Générateur de user stories à partir d'un brief métier, avec récupération
-              augmentée sur une base de connaissance (RAG) et streaming temps réel via
+              augmentée sur une base de connaissances (RAG) et streaming temps réel via
               l'API Claude.
             </AboutDesc>
           </AboutBlock>
