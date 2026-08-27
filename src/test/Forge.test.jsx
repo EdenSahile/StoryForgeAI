@@ -428,13 +428,13 @@ describe('Forge — pop-in de confirmation de suppression', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Supprimer' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Document supprimé de la base de connaissance.')).toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent('Document supprimé de la base de connaissance.');
     });
 
     act(() => {
       vi.advanceTimersByTime(4000);
     });
 
-    expect(screen.queryByText('Document supprimé de la base de connaissance.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });

@@ -1078,13 +1078,35 @@ const DeleteModal = styled.div`
   }
 `;
 
-const DeleteSuccessMsg = styled.div`
+// Toast fixe (pas un bandeau inline dans le KBPanel) : la suppression se
+// confirme via une modale centrée plein écran, l'attention de l'utilisateur
+// est donc déjà au centre — un message de succès planqué dans la colonne de
+// droite (et repoussé sous le contenu principal en mobile, cf. RightColumn
+// `order: 2`) passait inaperçu. Réutilise fadeInUp (déjà utilisé sur
+// PageWrapper) plutôt que d'introduire une nouvelle animation.
+const DeleteSuccessToast = styled.div`
+  position: fixed;
+  top: ${theme.spacing.lg};
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
   background: ${theme.colors.bgSuccess};
   border: 1px solid color-mix(in srgb, ${theme.colors.success} 30%, transparent);
   border-radius: ${theme.radii.lg};
-  padding: ${theme.spacing.md};
+  padding: ${theme.spacing.sm} ${theme.spacing.lg};
   color: ${theme.colors.textSuccess};
   font-size: ${theme.fontSizes.sm};
+  font-weight: 700;
+  box-shadow: ${theme.shadows.card};
+  animation: ${fadeInUp} 0.3s ease;
+
+  .icon {
+    font-family: "Material Symbols Outlined";
+    font-size: 20px;
+  }
 `;
 
 const ErrorMsg = styled.div`
@@ -1618,10 +1640,6 @@ export default function Forge({
               ))}
             </DocList>
 
-            {deleteSuccessMessage && (
-              <DeleteSuccessMsg>{deleteSuccessMessage}</DeleteSuccessMsg>
-            )}
-
             {pendingReplaceFiles.length > 0 && (
               <ConfirmBanner>
                 <p className="message">
@@ -1705,6 +1723,13 @@ export default function Forge({
           </KBPanel>
         </RightColumn>
       </Content>
+
+      {deleteSuccessMessage && (
+        <DeleteSuccessToast role="status">
+          <span className="icon">check_circle</span>
+          {deleteSuccessMessage}
+        </DeleteSuccessToast>
+      )}
 
       {pendingDeleteDoc && (
         <DeleteModalOverlay>
