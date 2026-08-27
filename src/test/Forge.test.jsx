@@ -316,3 +316,36 @@ describe('Forge — upload de plusieurs fichiers avec doublon (file de confirmat
     expect(screen.queryByText(confirmBannerText('premier.txt'))).not.toBeInTheDocument();
   });
 });
+
+describe('Forge — position du nouveau document dans la liste', () => {
+  it('ajoute le nouveau document en première position de la liste, pas en dernière (visible sans scroller)', async () => {
+    uploadDocument.mockResolvedValue({ chunks: 1 });
+    const setDocuments = vi.fn();
+    const existingDoc = { id: 1, name: 'existing.txt', status: 'indexed', chunks: 1 };
+    const { container } = renderForge({
+      documents: [existingDoc],
+      setDocuments,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Glissez vos docs ici')).toBeInTheDocument();
+    });
+
+    const fileNew = new File(['contenu'], 'nouveau.txt', { type: 'text/plain' });
+    const input = container.querySelector('input[type="file"]');
+    fireEvent.change(input, { target: { files: [fileNew] } });
+
+    await waitFor(() => {
+      expect(setDocuments).toHaveBeenCalled();
+    });
+
+    // setDocuments/documents sont des props stubées dans ce test (pas un vrai state
+    // remonté, cf. commentaires plus haut dans ce fichier) : on vérifie donc le
+    // comportement du updater passé au premier appel plutôt que le DOM re-rendu.
+    const firstUpdater = setDocuments.mock.calls[0][0];
+    const result = firstUpdater([existingDoc]);
+
+    expect(result[0].name).toBe('nouveau.txt');
+    expect(result[result.length - 1].name).toBe('existing.txt');
+  });
+});
