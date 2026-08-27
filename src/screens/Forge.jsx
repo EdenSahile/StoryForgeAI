@@ -1276,7 +1276,7 @@ export default function Forge({
     try {
       await deleteDocument(doc.name);
       setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
-      setDeleteSuccessMessage("Document supprimé de la base de connaissance.");
+      setDeleteSuccessMessage("Document supprimé de la base de connaissances.");
     } catch (err) {
       setUploadError(err.message);
     }
@@ -1483,7 +1483,7 @@ export default function Forge({
           <KBPanel>
             <KBHeader>
               <div className="left">
-                <span>🗂️ Base de connaissance</span>
+                <span>🗂️ Base de connaissances</span>
               </div>
               {documents.filter((d) => d.status === "indexed").length > 0 && (
                 <span className="indexed-badge">
@@ -1604,7 +1604,7 @@ export default function Forge({
                   Upload désactivé en mode démo publique
                 </p>
                 <p className="upload-sub">
-                  La base de connaissance (8 documents fictifs sur Lumeo Boutique)
+                  La base de connaissances (8 documents fictifs sur Lumeo Boutique)
                   est pré-configurée pour cette démo.
                 </p>
               </UploadZone>

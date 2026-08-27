@@ -2,7 +2,7 @@
 
 **Générateur de user stories contextualisé par IA — pour les Product Owners qui veulent des specs précises, pas des généricités.**
 
-StoryPilot transforme un brief métier en user stories structurées avec critères d'acceptation, estimation de complexité et scénarios Gherkin multi-cas — le tout généré par Claude en streaming temps réel, optionnellement enrichi par une base de connaissance documentaire (RAG).
+StoryPilot transforme un brief métier en user stories structurées avec critères d'acceptation, estimation de complexité et scénarios Gherkin multi-cas — le tout généré par Claude en streaming temps réel, optionnellement enrichi par une base de connaissances documentaire (RAG).
 
 🔗 **[Démo live](https://storypilot-ai.vercel.app)**
 
@@ -20,7 +20,7 @@ Un PO écrit un brief en langage naturel. StoryPilot génère instantanément de
 
 Le tout arrive en streaming — l'utilisateur voit la génération en temps réel.
 
-Si des documents métier ont été indexés dans la base de connaissance, StoryPilot récupère automatiquement les passages pertinents (RAG) et les injecte dans le prompt : les stories générées réutilisent alors le vocabulaire, les règles de gestion et les contraintes réelles du client, plutôt que des généralités. Un toggle permet de désactiver ce comportement pour une génération donnée et forcer une sortie générique — utile pour comparer, ou pour tester rapidement sans dépendre de la base de connaissance.
+Si des documents métier ont été indexés dans la base de connaissances, StoryPilot récupère automatiquement les passages pertinents (RAG) et les injecte dans le prompt : les stories générées réutilisent alors le vocabulaire, les règles de gestion et les contraintes réelles du client, plutôt que des généralités. Un toggle permet de désactiver ce comportement pour une génération donnée et forcer une sortie générique — utile pour comparer, ou pour tester rapidement sans dépendre de la base de connaissances.
 
 ---
 
@@ -30,11 +30,11 @@ Si des documents métier ont été indexés dans la base de connaissance, StoryP
 Vue d'ensemble avec statistiques de génération (calculées depuis l'historique local), générations récentes et accès rapide à la Forge.
 
 ### Forge
-L'écran principal. Deux colonnes : le brief à gauche, la base de connaissance à droite.
+L'écran principal. Deux colonnes : le brief à gauche, la base de connaissances à droite.
 - Chips de briefs pré-remplis (mode démo : contexte fictif "Lumeo Boutique", e-commerce déco/luminaires)
 - Toggle **"Générer sans RAG (US génériques)"** en haut à droite du textarea — désactive la récupération de contexte pour cette génération
 - Pendant la génération : les chunks RAG récupérés s'affichent avec leur document source, et le résultat arrive en streaming
-- Panel base de connaissance : upload de documents (PDF, DOCX, TXT), liste des documents indexés — désactivé en mode démo publique pour préserver l'expérience des autres visiteurs (la base de connaissance y est pré-chargée)
+- Panel base de connaissances : upload de documents (PDF, DOCX, TXT), liste des documents indexés — désactivé en mode démo publique pour préserver l'expérience des autres visiteurs (la base de connaissances y est pré-chargée)
 
 ### Results
 Les user stories parsées et structurées en cards visuelles (composant `StoryCard`). Chaque card affiche le statement colorisé, la description, les critères avec checkmarks, et les scénarios Gherkin colorés. Badge **"RAG actif"** ou **"RAG non utilisé — US Générique"** selon qu'un contexte documentaire ait été utilisé, avec un panel "Sources utilisées" listant les documents mobilisés.
@@ -83,7 +83,7 @@ src/
 │   └── Footer.jsx
 ├── screens/
 │   ├── Dashboard.jsx                 # Stats + générations récentes
-│   ├── Forge.jsx                     # Brief + base de connaissance + streaming
+│   ├── Forge.jsx                     # Brief + base de connaissances + streaming
 │   ├── Results.jsx                   # Stories structurées + Gherkin + export CSV/Trello
 │   ├── Library.jsx                   # Historique des générations (localStorage)
 │   └── Settings.jsx                  # Apparence (thème), données locales, à propos
@@ -110,7 +110,7 @@ api/
 ```
 [Dashboard] → clic "New Story"
      ↓
-[Forge] → brief + base de connaissance (toggle "sans RAG" optionnel)
+[Forge] → brief + base de connaissances (toggle "sans RAG" optionnel)
      ↓  clic "Générer"
 [Forge loading] → retrieveContext() si RAG actif → chunks affichés
                 → generateStories() en streaming (contexte injecté ou non)
@@ -132,7 +132,7 @@ api/
 
 ## Mode démo
 
-Le déploiement public désactive l'upload, l'indexation et la suppression de documents (frontend + garde-fou serveur via `DEMO_MODE=true`, réponses 403 dans `upload-doc.js`/`delete-doc.js`) pour préserver l'expérience des autres visiteurs. La base de connaissance est pré-chargée avec 8 documents fictifs sur un contexte "Lumeo Boutique" (e-commerce déco/luminaires), et des briefs suggérés sont proposés en un clic. Le budget de génération est plafonné (~$5/mois, ~660 générations) ; au-delà, une erreur explicite s'affiche.
+Le déploiement public désactive l'upload, l'indexation et la suppression de documents (frontend + garde-fou serveur via `DEMO_MODE=true`, réponses 403 dans `upload-doc.js`/`delete-doc.js`) pour préserver l'expérience des autres visiteurs. La base de connaissances est pré-chargée avec 8 documents fictifs sur un contexte "Lumeo Boutique" (e-commerce déco/luminaires), et des briefs suggérés sont proposés en un clic. Le budget de génération est plafonné (~$5/mois, ~660 générations) ; au-delà, une erreur explicite s'affiche.
 
 ---
 
@@ -208,7 +208,7 @@ Le rate limiting (`api/generate-stories.js`) utilise une `Map` en mémoire, qui 
 
 ### v2 — UI complète ✅
 - [x] Dashboard avec stats et historique
-- [x] Forge : brief + base de connaissance + streaming
+- [x] Forge : brief + base de connaissances + streaming
 - [x] Results : cards structurées + Gherkin multi-scénarios
 - [x] Navigation sidebar desktop + bottom nav mobile
 - [x] Design tokens centralisés (theme.js)
@@ -222,7 +222,7 @@ Le rate limiting (`api/generate-stories.js`) utilise une `Map` en mémoire, qui 
 - [x] Stories ancrées dans le vocabulaire et les contraintes du client
 - [x] Historique des générations en local (Library) — persistance `localStorage`, pas de backend
 - [x] Toggle manuel pour désactiver le RAG sur une génération donnée
-- [x] Mode démo publique (upload désactivé, base de connaissance pré-chargée)
+- [x] Mode démo publique (upload désactivé, base de connaissances pré-chargée)
 - [x] Thème sombre / clair avec bascule utilisateur (chip Réglages + icône header)
 - [x] Export CSV compatible import Jira, par story ou en masse, avec neutralisation d'injection de formule
 - [x] Historique avec la même mise en forme riche que Results (composant `StoryCard` partagé)
