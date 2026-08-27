@@ -46,16 +46,28 @@ export default async function handler(req, res) {
     // Sur Serverless Pinecone, la suppression par filtre metadata n'est pas supportée.
     // On liste les IDs par préfixe (même pattern que l'upload) puis on supprime par IDs.
     const prefix = `${filename.replace(/[^a-zA-Z0-9]/g, "_")}_chunk_`;
-    const idsToDelete = [];
+    const candidateIds = [];
     let paginationToken = undefined;
     while (true) {
       const params = { prefix, limit: 100 };
       if (paginationToken) params.paginationToken = paginationToken;
       const result = await index.listPaginated(params);
       console.log(`[delete] listPaginated result:`, JSON.stringify(result).substring(0, 200));
-      idsToDelete.push(...(result.vectors || []).map((v) => v.id));
+      candidateIds.push(...(result.vectors || []).map((v) => v.id));
       paginationToken = result.pagination?.next;
       if (!paginationToken) break;
+    }
+
+    // Le préfixe assaini n'est pas unique : deux filenames différents peuvent
+    // s'assainir vers la même chaîne (ex: "doc!.txt" et "doc?.txt" → "doc__txt").
+    // On confirme via les métadonnées (même pattern que api/list-docs.js et
+    // api/upload-doc.js) que le chunk trouvé appartient bien à CE filename
+    // avant de le supprimer.
+    let idsToDelete = [];
+    if (candidateIds.length > 0) {
+      const fetchResult = await index.fetch({ ids: candidateIds });
+      const records = fetchResult.records || {};
+      idsToDelete = candidateIds.filter((id) => records[id]?.metadata?.filename === filename);
     }
 
     if (idsToDelete.length === 0) {

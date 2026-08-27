@@ -51,6 +51,7 @@ async function freshHandler() {
 }
 
 let mockListPaginated;
+let mockFetch;
 let mockDeleteMany;
 let mockIndex;
 
@@ -70,9 +71,11 @@ beforeEach(() => {
   delete process.env.DEMO_MODE;
 
   mockListPaginated = vi.fn().mockResolvedValue({ vectors: [] });
+  mockFetch = vi.fn().mockResolvedValue({ records: {} });
   mockDeleteMany = vi.fn().mockResolvedValue({});
   mockIndex = vi.fn().mockReturnValue({
     listPaginated: (...args) => mockListPaginated(...args),
+    fetch: (...args) => mockFetch(...args),
     deleteMany: (...args) => mockDeleteMany(...args),
   });
 });
@@ -223,6 +226,13 @@ describe('api/delete-doc — pagination', () => {
         vectors: [{ id: 'doc_txt_chunk_2' }],
         pagination: {},
       });
+    mockFetch = vi.fn().mockResolvedValue({
+      records: {
+        doc_txt_chunk_0: { metadata: { filename: 'doc.txt' } },
+        doc_txt_chunk_1: { metadata: { filename: 'doc.txt' } },
+        doc_txt_chunk_2: { metadata: { filename: 'doc.txt' } },
+      },
+    });
     const handler = await freshHandler();
     const req = createMockReq({ body: { filename: 'doc.txt' } });
     const res = createMockRes();
@@ -245,6 +255,9 @@ describe('api/delete-doc — succès simple', () => {
       vectors: [{ id: 'doc_txt_chunk_0' }],
       pagination: {},
     });
+    mockFetch = vi.fn().mockResolvedValue({
+      records: { doc_txt_chunk_0: { metadata: { filename: 'doc.txt' } } },
+    });
     const handler = await freshHandler();
     const req = createMockReq({ body: { filename: 'doc.txt' } });
     const res = createMockRes();
@@ -260,6 +273,9 @@ describe('api/delete-doc — succès simple', () => {
       vectors: [{ id: 'doc_txt_chunk_0' }],
       pagination: {},
     });
+    mockFetch = vi.fn().mockResolvedValue({
+      records: { doc_txt_chunk_0: { metadata: { filename: 'doc.txt' } } },
+    });
     const handler = await freshHandler();
     const req = createMockReq({ body: { filename: 'doc.txt' } });
     const res = createMockRes();
@@ -267,6 +283,52 @@ describe('api/delete-doc — succès simple', () => {
     await handler(req, res);
 
     expect(JSON.stringify(res.body)).not.toContain('test-pinecone-key');
+  });
+});
+
+describe('api/delete-doc — collision de préfixe assaini (deux filenames différents)', () => {
+  it("ne supprime pas les chunks d'un autre fichier dont le nom assaini est identique (collision de préfixe)", async () => {
+    // "doc!.txt" et "doc?.txt" s'assainissent tous les deux vers le préfixe "doc__txt_chunk_" :
+    // sans vérification de metadata.filename, supprimer "doc?.txt" effacerait les chunks de
+    // "doc!.txt" déjà indexé sous ce même préfixe.
+    mockListPaginated = vi.fn().mockResolvedValue({
+      vectors: [{ id: 'doc__txt_chunk_0' }],
+      pagination: {},
+    });
+    mockFetch = vi.fn().mockResolvedValue({
+      records: {
+        doc__txt_chunk_0: { metadata: { filename: 'doc!.txt' } },
+      },
+    });
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { filename: 'doc?.txt' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(mockDeleteMany).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.body).toEqual({ success: true, filename: 'doc?.txt', chunksDeleted: 0 });
+  });
+
+  it('supprime bien les chunks quand metadata.filename correspond exactement au filename reçu, malgré un préfixe partagé', async () => {
+    mockListPaginated = vi.fn().mockResolvedValue({
+      vectors: [{ id: 'doc__txt_chunk_0' }],
+      pagination: {},
+    });
+    mockFetch = vi.fn().mockResolvedValue({
+      records: {
+        doc__txt_chunk_0: { metadata: { filename: 'doc?.txt' } },
+      },
+    });
+    const handler = await freshHandler();
+    const req = createMockReq({ body: { filename: 'doc?.txt' } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(mockDeleteMany).toHaveBeenCalledWith({ ids: ['doc__txt_chunk_0'] });
+    expect(res.body).toEqual({ success: true, filename: 'doc?.txt', chunksDeleted: 1 });
   });
 });
 
@@ -293,6 +355,9 @@ describe('api/delete-doc — appels externes (règle CLAUDE.md : jamais de error
     mockListPaginated = vi.fn().mockResolvedValue({
       vectors: [{ id: 'doc_txt_chunk_0' }],
       pagination: {},
+    });
+    mockFetch = vi.fn().mockResolvedValue({
+      records: { doc_txt_chunk_0: { metadata: { filename: 'doc.txt' } } },
     });
     mockDeleteMany = vi.fn().mockRejectedValue(
       new Error('Pinecone 403 — clé invalide sk-pine-XXXXXXXX ne doit jamais être exposée')
