@@ -91,15 +91,19 @@ describe('Settings — flux de confirmation', () => {
 });
 
 describe('Settings — bloc "À propos"', () => {
-  it('affiche le nom, la version, la description et les 6 tags de stack', () => {
+  it('affiche le nom, la version et la description de l\'app', () => {
     render(<Settings />);
 
     expect(screen.getByText('StoryPilot AI')).toBeInTheDocument();
     expect(screen.getByText('v2.0 — juin 2026')).toBeInTheDocument();
     expect(screen.getByText(/Générateur de user stories à partir d'un brief métier/)).toBeInTheDocument();
+  });
+
+  it("n'affiche aucun badge de stack technique (infrastructure non pertinente pour l'utilisateur final)", () => {
+    render(<Settings />);
 
     for (const tag of ['React 18', 'Vite 5', 'styled-components', 'Claude API', 'Pinecone', 'Vercel']) {
-      expect(screen.getByText(tag)).toBeInTheDocument();
+      expect(screen.queryByText(tag)).not.toBeInTheDocument();
     }
   });
 });

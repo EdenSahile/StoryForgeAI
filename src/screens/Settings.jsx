@@ -299,23 +299,6 @@ const AboutDesc = styled.p`
   line-height: 1.6;
 `;
 
-const StackTags = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-`;
-
-const Tag = styled.span`
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  padding: 4px 10px;
-  border-radius: 20px;
-  background: ${theme.colors.surfaceContainerHigh};
-  color: ${theme.colors.onSurfaceVariant};
-  border: 1px solid ${theme.colors.outlineVariant};
-`;
-
 // ─── Component ─────────────────────────────────────────────
 
 export default function Settings({ themeMode, onThemeChange }) {
@@ -441,14 +424,6 @@ export default function Settings({ themeMode, onThemeChange }) {
               augmentée sur une base de connaissance (RAG) et streaming temps réel via
               l'API Claude.
             </AboutDesc>
-            <StackTags>
-              <Tag>React 18</Tag>
-              <Tag>Vite 5</Tag>
-              <Tag>styled-components</Tag>
-              <Tag>Claude API</Tag>
-              <Tag>Pinecone</Tag>
-              <Tag>Vercel</Tag>
-            </StackTags>
           </AboutBlock>
         </Section>
       </Content>
