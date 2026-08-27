@@ -56,6 +56,10 @@ const b64 = (str) => Buffer.from(str, 'utf-8').toString('base64');
 // la validation de longueur minimale.
 const TEXTE_VALIDE = 'Ceci est un document métier suffisamment long pour être indexé correctement.';
 
+// Produit exactement 2 chunks avec la config du splitter de api/upload-doc.js
+// (chunkSize: 500, chunkOverlap: 50) — vérifié empiriquement, pas une estimation.
+const TEXTE_2_CHUNKS = 'Ceci est une phrase de test suffisamment longue pour remplir les chunks de maniere previsible. '.repeat(6);
+
 let mockEmbeddingsCreate;
 let mockUpsert;
 let mockListPaginated;
@@ -416,7 +420,7 @@ describe('api/upload-doc — appels externes (règle CLAUDE.md : jamais de error
 });
 
 describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
-  it("supprime les chunks existants du même filename avant l'upsert (deleteMany appelé avant upsert)", async () => {
+  it("upsert d'abord, puis supprime les chunks orphelins seulement après coup (deleteMany appelé après upsert, jamais avant — pas de fenêtre de perte de données)", async () => {
     mockListPaginated = vi.fn().mockResolvedValue({
       vectors: [{ id: 'doc_txt_chunk_0' }, { id: 'doc_txt_chunk_1' }],
       pagination: {},
@@ -444,13 +448,14 @@ describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
     });
 
     const handler = await freshHandler();
+    // TEXTE_VALIDE ne produit qu'1 chunk (doc_txt_chunk_0) : doc_txt_chunk_1 est orphelin.
     const req = createMockReq({ body: { filename: 'doc.txt', content: b64(TEXTE_VALIDE) } });
     const res = createMockRes();
 
     await handler(req, res);
 
-    expect(mockDeleteMany).toHaveBeenCalledWith({ ids: ['doc_txt_chunk_0', 'doc_txt_chunk_1'] });
-    expect(callOrder).toEqual(['deleteMany', 'upsert']);
+    expect(callOrder).toEqual(['upsert', 'deleteMany']);
+    expect(mockDeleteMany).toHaveBeenCalledWith({ ids: ['doc_txt_chunk_1'] });
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
@@ -479,7 +484,31 @@ describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  it("remplace proprement : totalChunks de la réponse reflète le nouveau contenu, pas l'ancien", async () => {
+  it("n'appelle pas deleteMany si aucun ID orphelin n'est trouvé (le nouveau contenu couvre exactement les mêmes IDs que l'ancien)", async () => {
+    mockListPaginated = vi.fn().mockResolvedValue({
+      vectors: [{ id: 'doc_txt_chunk_0' }, { id: 'doc_txt_chunk_1' }],
+      pagination: {},
+    });
+    mockFetch = vi.fn().mockResolvedValue({
+      records: {
+        doc_txt_chunk_0: { metadata: { filename: 'doc.txt' } },
+        doc_txt_chunk_1: { metadata: { filename: 'doc.txt' } },
+      },
+    });
+    const handler = await freshHandler();
+    // TEXTE_2_CHUNKS produit exactement 2 chunks (doc_txt_chunk_0 et _1) : aucun orphelin,
+    // l'upsert réécrit les deux IDs existants en place.
+    const req = createMockReq({ body: { filename: 'doc.txt', content: b64(TEXTE_2_CHUNKS) } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.body.chunks).toBe(2);
+    expect(mockDeleteMany).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it("remplace proprement : totalChunks de la réponse reflète le nouveau contenu, et seuls les IDs orphelins (au-delà du nouveau compte) sont supprimés", async () => {
     mockListPaginated = vi.fn().mockResolvedValue({
       vectors: [{ id: 'doc_txt_chunk_0' }, { id: 'doc_txt_chunk_1' }, { id: 'doc_txt_chunk_2' }],
       pagination: {},
@@ -492,7 +521,8 @@ describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
       },
     });
     const handler = await freshHandler();
-    // TEXTE_VALIDE ne produit qu'1 chunk (bien plus court que l'ancien contenu à 3 chunks).
+    // TEXTE_VALIDE ne produit qu'1 chunk (bien plus court que l'ancien contenu à 3 chunks) :
+    // doc_txt_chunk_0 est réutilisé par l'upsert, seuls _1 et _2 sont orphelins.
     const req = createMockReq({ body: { filename: 'doc.txt', content: b64(TEXTE_VALIDE) } });
     const res = createMockRes();
 
@@ -500,11 +530,11 @@ describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
 
     expect(res.body.chunks).toBe(1);
     expect(mockDeleteMany).toHaveBeenCalledWith({
-      ids: ['doc_txt_chunk_0', 'doc_txt_chunk_1', 'doc_txt_chunk_2'],
+      ids: ['doc_txt_chunk_1', 'doc_txt_chunk_2'],
     });
   });
 
-  it('parcourt toutes les pages via paginationToken avant de supprimer (même logique que api/delete-doc.js)', async () => {
+  it('parcourt toutes les pages via paginationToken pour établir la liste des chunks existants confirmés', async () => {
     mockListPaginated = vi
       .fn()
       .mockResolvedValueOnce({
@@ -522,6 +552,7 @@ describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
       },
     });
     const handler = await freshHandler();
+    // TEXTE_VALIDE ne produit qu'1 chunk (doc_txt_chunk_0) : doc_txt_chunk_1 est orphelin.
     const req = createMockReq({ body: { filename: 'doc.txt', content: b64(TEXTE_VALIDE) } });
     const res = createMockRes();
 
@@ -529,7 +560,7 @@ describe('api/upload-doc — remplacement (bug chunks orphelins)', () => {
 
     expect(mockListPaginated).toHaveBeenCalledTimes(2);
     expect(mockListPaginated).toHaveBeenNthCalledWith(2, expect.objectContaining({ paginationToken: 'token-page-2' }));
-    expect(mockDeleteMany).toHaveBeenCalledWith({ ids: ['doc_txt_chunk_0', 'doc_txt_chunk_1'] });
+    expect(mockDeleteMany).toHaveBeenCalledWith({ ids: ['doc_txt_chunk_1'] });
   });
 });
 
@@ -557,7 +588,7 @@ describe('api/upload-doc — collision de préfixe assaini (deux filenames diff�
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  it('supprime bien les chunks quand metadata.filename correspond exactement au filename reçu, malgré un préfixe partagé', async () => {
+  it("ne supprime rien quand le seul chunk existant confirmé pour ce filename est réutilisé en place par l'upsert (même ID, pas d'orphelin)", async () => {
     mockListPaginated = vi.fn().mockResolvedValue({
       vectors: [{ id: 'doc__txt_chunk_0' }],
       pagination: {},
@@ -568,11 +599,14 @@ describe('api/upload-doc — collision de préfixe assaini (deux filenames diff�
       },
     });
     const handler = await freshHandler();
+    // TEXTE_VALIDE produit 1 chunk (doc__txt_chunk_0), identique au seul ID existant
+    // confirmé : l'upsert le réécrit en place, aucun orphelin à supprimer.
     const req = createMockReq({ body: { filename: 'doc?.txt', content: b64(TEXTE_VALIDE) } });
     const res = createMockRes();
 
     await handler(req, res);
 
-    expect(mockDeleteMany).toHaveBeenCalledWith({ ids: ['doc__txt_chunk_0'] });
+    expect(mockDeleteMany).not.toHaveBeenCalled();
+    expect(res.body.success).toBe(true);
   });
 });
