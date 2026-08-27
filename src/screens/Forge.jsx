@@ -1194,7 +1194,7 @@ export default function Forge({
         pct: 0,
         chunks: 0,
       };
-      setDocuments((prev) => [...prev, newDoc]);
+      setDocuments((prev) => [newDoc, ...prev]);
 
       const result = await uploadDocument(file, (pct) => {
         setDocuments((prev) =>
