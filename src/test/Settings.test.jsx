@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import Settings from '../screens/Settings';
-import { saveGeneration, getGenerations } from '../utils/libraryStorage';
+import { saveGeneration } from '../utils/libraryStorage';
 
 function seed(n) {
   for (let i = 0; i < n; i++) {
@@ -32,61 +32,22 @@ describe('Settings — compteur de générations au montage', () => {
   });
 });
 
-describe('Settings — bouton "Effacer l\'historique"', () => {
-  it('est désactivé quand il n\'y a aucune génération', () => {
-    render(<Settings />);
-    expect(screen.getByRole('button', { name: "Effacer l'historique" })).toBeDisabled();
-  });
-
-  it('est activé dès qu\'il y a au moins une génération', () => {
-    seed(1);
-    render(<Settings />);
-    expect(screen.getByRole('button', { name: "Effacer l'historique" })).not.toBeDisabled();
-  });
-});
-
-describe('Settings — flux de confirmation', () => {
-  beforeEach(() => {
-    seed(1);
-  });
-
-  it('affiche "Confirmer ?" avec Oui/Annuler au clic, et fait disparaître le bouton initial', () => {
+describe('Settings — "Effacer l\'historique" retiré (redondant avec "Supprimer tout" sur l\'écran Historique)', () => {
+  it('n\'affiche pas le bouton "Effacer l\'historique", quel que soit le nombre de générations', () => {
+    seed(2);
     render(<Settings />);
 
-    fireEvent.click(screen.getByRole('button', { name: "Effacer l'historique" }));
-
-    expect(screen.getByText('Confirmer ?')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Oui, effacer' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Annuler' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: "Effacer l'historique" })).not.toBeInTheDocument();
+    expect(screen.queryByText('Confirmer ?')).not.toBeInTheDocument();
+    expect(screen.queryByText('Effacé')).not.toBeInTheDocument();
   });
 
-  it('"Annuler" revient à l\'état initial, bouton toujours activé (rien supprimé)', () => {
+  it('garde uniquement la ligne d\'information, sans action de suppression associée', () => {
     render(<Settings />);
 
-    fireEvent.click(screen.getByRole('button', { name: "Effacer l'historique" }));
-    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
-
-    expect(screen.queryByText('Confirmer ?')).not.toBeInTheDocument();
-    const dangerBtn = screen.getByRole('button', { name: "Effacer l'historique" });
-    expect(dangerBtn).toBeInTheDocument();
-    expect(dangerBtn).not.toBeDisabled();
-  });
-
-  it('"Oui, effacer" affiche le chip "Effacé", remet le compteur à 0, et vide réellement le storage', () => {
-    render(<Settings />);
-
-    fireEvent.click(screen.getByRole('button', { name: "Effacer l'historique" }));
-    fireEvent.click(screen.getByRole('button', { name: 'Oui, effacer' }));
-
-    expect(screen.getByText('Effacé')).toBeInTheDocument();
-    expect(screen.queryByText('Confirmer ?')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: "Effacer l'historique" })).not.toBeInTheDocument();
+    expect(screen.getByText('Historique des générations')).toBeInTheDocument();
     expect(screen.getByText('Aucune génération sauvegardée dans ce navigateur.')).toBeInTheDocument();
-
-    // Pas seulement l'UI : le storage réel doit être vidé.
-    expect(getGenerations()).toEqual([]);
-    expect(localStorage.getItem('storyforge_library')).toBeNull();
+    expect(screen.queryByRole('button', { name: /effacer/i })).not.toBeInTheDocument();
   });
 });
 

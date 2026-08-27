@@ -179,79 +179,6 @@ const ThemeChip = styled.button`
   }
 `;
 
-// ── Données locales ─────────────────────────────────────────
-
-const DangerBtn = styled.button`
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid ${theme.colors.error};
-  background: transparent;
-  color: ${theme.colors.error};
-  font-size: ${theme.fontSizes.xs};
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition: background 0.15s;
-
-  &:hover:not(:disabled) {
-    background: ${theme.colors.bgError};
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-`;
-
-const ConfirmRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  @media (max-width: ${theme.breakpoints.mobile}) {
-    flex-wrap: wrap;
-  }
-
-  .msg {
-    font-size: ${theme.fontSizes.xs};
-    color: ${theme.colors.error};
-    font-weight: 600;
-  }
-
-  button {
-    padding: 6px 12px;
-    border-radius: 6px;
-    border: none;
-    font-size: ${theme.fontSizes.xs};
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .btn-confirm {
-    background: ${theme.colors.error};
-    color: ${theme.colors.onPrimary};
-  }
-
-  .btn-cancel {
-    background: ${theme.colors.surfaceContainerHighest};
-    color: ${theme.colors.onSurface};
-  }
-`;
-
-const SuccessChip = styled.span`
-  font-size: ${theme.fontSizes.xs};
-  font-weight: 700;
-  color: ${theme.colors.success};
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  .icon {
-    font-family: "Material Symbols Outlined";
-    font-size: 15px;
-  }
-`;
-
 // ── À propos ────────────────────────────────────────────────
 
 const AboutBlock = styled.div`
@@ -303,19 +230,10 @@ const AboutDesc = styled.p`
 
 export default function Settings({ themeMode, onThemeChange }) {
   const [genCount, setGenCount] = useState(0);
-  const [resetConfirm, setResetConfirm] = useState(false);
-  const [resetDone, setResetDone] = useState(false);
 
   useEffect(() => {
     setGenCount(getGenerations().length);
   }, []);
-
-  const handleReset = () => {
-    localStorage.removeItem("storyforge_library");
-    setGenCount(0);
-    setResetConfirm(false);
-    setResetDone(true);
-  };
 
   return (
     <PageWrapper>
@@ -382,26 +300,6 @@ export default function Settings({ themeMode, onThemeChange }) {
                   : `${genCount} génération${genCount > 1 ? "s" : ""} sauvegardée${genCount > 1 ? "s" : ""} dans ce navigateur.`}
               </span>
             </RowLabel>
-
-            {resetDone ? (
-              <SuccessChip>
-                <span className="icon">check_circle</span>
-                Effacé
-              </SuccessChip>
-            ) : resetConfirm ? (
-              <ConfirmRow>
-                <span className="msg">Confirmer ?</span>
-                <button className="btn-confirm" onClick={handleReset}>Oui, effacer</button>
-                <button className="btn-cancel" onClick={() => setResetConfirm(false)}>Annuler</button>
-              </ConfirmRow>
-            ) : (
-              <DangerBtn
-                onClick={() => setResetConfirm(true)}
-                disabled={genCount === 0}
-              >
-                Effacer l'historique
-              </DangerBtn>
-            )}
           </Row>
         </Section>
 
