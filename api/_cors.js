@@ -3,6 +3,13 @@
 // à l'identique dans les 6 handlers api/*.js. Le préfixe "_" garantit que Vercel
 // n'en génère pas un endpoint (les fichiers api/_* sont exclus du routing).
 
+// Exception volontaire à la règle CLAUDE.md « origins CORS jamais hardcodées ».
+// Ce fallback ne sert QUE si `process.env.ALLOWED_ORIGINS` est absent — c.-à-d.
+// en dev local sans `.env` (ex. `npm test`, premier `vercel dev` avant config).
+// En preview et en production, `ALLOWED_ORIGINS` est toujours défini et prend
+// systématiquement le pas : ces deux valeurs ne sont jamais consultées là-bas.
+// Garder cette liste minimale (localhost + domaine de la démo publique) ; toute
+// nouvelle origine autorisée passe par `ALLOWED_ORIGINS`, pas par ici.
 const FALLBACK_ORIGINS = ['http://localhost:5173', 'https://storypilot-ai.vercel.app'];
 
 /**

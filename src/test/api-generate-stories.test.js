@@ -406,3 +406,92 @@ describe('api/generate-stories — rate limiting (10 requêtes / 15 min / IP)', 
     expect(resPost11.status).toHaveBeenCalledWith(429);
   });
 });
+
+describe('api/generate-stories — modèle Claude (constante / ANTHROPIC_MODEL)', () => {
+  const briefValide = { brief: 'Un brief métier suffisamment long pour passer la validation' };
+
+  function bodyOf(fetchMock) {
+    return JSON.parse(fetchMock.mock.calls[0][1].body);
+  }
+
+  beforeEach(() => {
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    delete process.env.ANTHROPIC_MODEL;
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    // Réponse d'erreur bénigne : on ne s'intéresse qu'au corps envoyé à l'API.
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 502,
+      json: async () => ({ error: {} }),
+    });
+  });
+
+  afterEach(() => {
+    vi.mocked(console.error).mockRestore();
+    delete process.env.ANTHROPIC_MODEL;
+  });
+
+  it('utilise claude-sonnet-4-5 par défaut', async () => {
+    const handler = await freshHandler();
+    await handler(createMockReq({ body: briefValide }), createMockRes());
+
+    expect(bodyOf(global.fetch).model).toBe('claude-sonnet-4-5');
+  });
+
+  it('respecte ANTHROPIC_MODEL quand la variable est définie', async () => {
+    process.env.ANTHROPIC_MODEL = 'claude-opus-5';
+    const handler = await freshHandler();
+    await handler(createMockReq({ body: briefValide }), createMockRes());
+
+    expect(bodyOf(global.fetch).model).toBe('claude-opus-5');
+  });
+});
+
+describe('api/generate-stories — erreur survenant APRÈS le début du streaming', () => {
+  const briefValide = { brief: 'Un brief métier suffisamment long pour passer la validation' };
+
+  beforeEach(() => {
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.mocked(console.error).mockRestore();
+  });
+
+  it('ferme le flux sans tenter de repasser en JSON quand reader.read() rejette en cours de route', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: {
+        getReader: () => ({
+          read: () => Promise.reject(new Error('socket hang up — détail interne à ne jamais exposer')),
+        }),
+      },
+    });
+    const handler = await freshHandler();
+    const res = createMockRes();
+
+    await expect(handler(createMockReq({ body: briefValide }), res)).resolves.toBeUndefined();
+
+    // Les en-têtes SSE sont bien partis…
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/event-stream');
+    // …donc pas de nouvelle réponse JSON derrière (ERR_HTTP_HEADERS_SENT évité).
+    expect(res.status).not.toHaveBeenCalledWith(500);
+    expect(res.json).not.toHaveBeenCalled();
+    expect(res.ended).toBe(true);
+    expect(JSON.stringify(res.written)).not.toContain('détail interne');
+  });
+
+  it('ferme le flux si response.body est null (getReader lève après envoi des en-têtes)', async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200, body: null });
+    const handler = await freshHandler();
+    const res = createMockRes();
+
+    await expect(handler(createMockReq({ body: briefValide }), res)).resolves.toBeUndefined();
+
+    expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/event-stream');
+    expect(res.status).not.toHaveBeenCalledWith(500);
+    expect(res.ended).toBe(true);
+  });
+});

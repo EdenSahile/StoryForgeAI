@@ -219,9 +219,22 @@ describe('generateStories — troncature (onTruncated)', () => {
     expect(onError).not.toHaveBeenCalled();
     expect(onTruncated).toHaveBeenCalledOnce();
   });
+
+  it('appelle onError (pas onTruncated) quand le stream se ferme totalement vide, sans contenu ni stop', async () => {
+    // Cas d'une erreur serveur survenue APRÈS l'envoi des en-têtes SSE : le
+    // handler fait `res.end()` sans rien écrire. Sans ce onError, Forge passe
+    // en statut "success" et affiche un écran Résultats vide (faux succès).
+    mockFetchWithStream([]);
+
+    await generateStories('Un brief métier valide pour test', onChunk, onError, [], onTruncated);
+
+    expect(onChunk).not.toHaveBeenCalled();
+    expect(onTruncated).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledWith('Aucune réponse reçue. Réessaie.');
+  });
 });
 
-describe('generateStories — timeout (90s)', () => {
+describe('generateStories — timeout (75s)', () => {
   let onChunk, onError, onTruncated;
 
   beforeEach(() => {
@@ -236,7 +249,7 @@ describe('generateStories — timeout (90s)', () => {
     vi.useRealTimers();
   });
 
-  it('appelle onError avec le message de timeout si aucun contenu n\'a été reçu avant l\'abort à 90s', async () => {
+  it('appelle onError avec le message de timeout si aucun contenu n\'a été reçu avant l\'abort à 75s', async () => {
     // Le fetch ne se résout jamais tout seul : seul l'abort (déclenché par
     // le setTimeout interne de generateStories) fait rejeter sa promesse,
     // exactement comme un vrai fetch annulé par un AbortController.
@@ -251,15 +264,15 @@ describe('generateStories — timeout (90s)', () => {
     });
 
     const promise = generateStories('Un brief métier valide pour test', onChunk, onError, [], onTruncated);
-    await vi.advanceTimersByTimeAsync(90000);
+    await vi.advanceTimersByTimeAsync(75000);
     await promise;
 
-    expect(onError).toHaveBeenCalledWith('Requête timeout (90s). Le serveur met trop de temps.');
+    expect(onError).toHaveBeenCalledWith('Requête timeout (75s). Le serveur met trop de temps.');
     expect(onTruncated).not.toHaveBeenCalled();
     expect(onChunk).not.toHaveBeenCalled();
   });
 
-  it('traite l\'abort à 90s comme une troncature (onTruncated) quand du contenu a déjà été reçu, pas comme une erreur', async () => {
+  it('traite l\'abort à 75s comme une troncature (onTruncated) quand du contenu a déjà été reçu, pas comme une erreur', async () => {
     // Le fetch se résout normalement (headers reçus), mais la lecture du
     // body reste ouverte : un premier chunk arrive, puis plus rien avant
     // l'abort. Le controller du ReadableStream simule ce que ferait un
@@ -286,7 +299,7 @@ describe('generateStories — timeout (90s)', () => {
     });
 
     const promise = generateStories('Un brief métier valide pour test', onChunk, onError, [], onTruncated);
-    await vi.advanceTimersByTimeAsync(90000);
+    await vi.advanceTimersByTimeAsync(75000);
     await promise;
 
     expect(onChunk).toHaveBeenCalledWith('Début de réponse');

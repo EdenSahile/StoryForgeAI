@@ -1,5 +1,11 @@
 import { applyCors } from './_cors.js';
 
+// Modèle Claude utilisé pour la génération. Surchargeable via la variable
+// d'environnement serveur ANTHROPIC_MODEL (jamais préfixée VITE_, cf. CLAUDE.md)
+// pour tester un autre modèle sans redéploiement de code ; défaut = le modèle
+// validé en production.
+const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5';
+
 const requestCounts = new Map();
 
 function checkRateLimit(ip) {
@@ -53,6 +59,11 @@ if (!checkRateLimit(clientIp)) {
   }
 
   let claudeTimeout;
+  // Passe à true dès que les en-têtes SSE sont envoyés : à partir de là on ne
+  // peut plus repasser en réponse JSON (ERR_HTTP_HEADERS_SENT). Le catch s'en
+  // sert pour distinguer erreur pré-streaming (→ JSON) et erreur post-streaming
+  // (→ on ferme juste le flux).
+  let streamStarted = false;
 
   try {
     const briefLength = brief.trim().length;
@@ -84,7 +95,7 @@ if (!checkRateLimit(clientIp)) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: CLAUDE_MODEL,
         max_tokens: 8000, // 3-4 stories (storyInstruction) × 3 scénarios Gherkin ≈ 3 000-4 000 tokens (mesuré via js-tiktoken/cl100k_base comme proxy sur un exemple réel de 3 stories à 2 scénarios : ~644 tokens/story, +~98 tokens pour un 3e scénario de 4 lignes) — 8000 garde une marge large, pas d'augmentation nécessaire malgré le passage de 2 à 3 scénarios (CLAUDE.md: justification requise)
         stream: true, // On utilise le streaming!
         system: `Tu es un expert Product Owner Scrum.
@@ -190,8 +201,12 @@ Sépare chaque story par ---${contextBlock}`,
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    streamStarted = true;
 
-    // Stream la réponse de Claude directement au frontend
+    // Stream la réponse de Claude directement au frontend.
+    // `response.body` peut être null et `reader.read()` peut rejeter en cours de
+    // route (coupure réseau côté Anthropic) : dans les deux cas on tombe dans le
+    // catch avec streamStarted === true, donc sans tenter de renvoyer du JSON.
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -247,7 +262,10 @@ Sépare chaque story par ---${contextBlock}`,
     // Timeout de 30 s dépassé pendant l'établissement de l'appel à Claude
     // (AbortController). Le timeout est désarmé dès la réponse reçue, donc ce
     // cas se produit toujours avant le début du streaming : aucun header envoyé.
-    if (error?.name === 'AbortError') {
+    // Le `&& !streamStarted` est une ceinture de sécurité : si une AbortError
+    // survenait malgré tout après les en-têtes SSE, on la traite comme une
+    // erreur post-streaming juste en dessous (fermeture du flux, pas de JSON).
+    if (error?.name === 'AbortError' && !streamStarted) {
       console.error('[generate-stories] Timeout 30 s dépassé sur l\'appel à Claude');
       return res.status(504).json({
         error: 'Le serveur a mis trop de temps à répondre. Réessaie dans un instant.',
@@ -255,6 +273,19 @@ Sépare chaque story par ---${contextBlock}`,
     }
 
     console.error('Erreur serveur:', error);
+
+    if (streamStarted || res.headersSent) {
+      // En-têtes SSE déjà partis : impossible de repasser en JSON. On ferme
+      // proprement le flux ; côté client, l'absence de `[DONE]`/`stop` est
+      // déjà interprétée comme une génération tronquée (cf. claudeService.js).
+      try {
+        res.end();
+      } catch {
+        // socket déjà fermée
+      }
+      return;
+    }
+
     res.status(500).json({ error: 'Une erreur est survenue. Veuillez réessayer.' });
   }
 }

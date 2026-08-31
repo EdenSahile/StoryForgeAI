@@ -1122,6 +1122,7 @@ export default function Forge({
   setStories,
   ragChunks,
   setRagChunks,
+  setRagError,
   documents,
   setDocuments,
   setTruncated,
@@ -1176,6 +1177,7 @@ export default function Forge({
     setError(null);
     setStatus("loading");
     setRagChunks([]);
+    setRagError?.(false);
     setTruncated?.(false);
 
     let contextChunks = [];
@@ -1186,9 +1188,12 @@ export default function Forge({
         contextChunks = ragResult.chunks || [];
         setRagChunks(contextChunks);
       } catch (err) {
+        // La génération continue sans contexte, mais on le signale : l'utilisateur
+        // s'attendait à des stories nourries par ses documents (bandeau dans Results).
         if (import.meta.env.DEV) {
           console.warn("RAG retrieval failed, generating without context:", err);
         }
+        setRagError?.(true);
       }
     }
 
@@ -1230,7 +1235,10 @@ export default function Forge({
     try {
       setUploadError(null);
       const newDoc = {
-        id: Date.now(),
+        // Identifiant d'affichage uniquement (clé React + filtre de suppression).
+        // Même schéma que App.jsx et libraryStorage.js. Date.now() pouvait
+        // collisionner sur deux uploads dans la même milliseconde.
+        id: crypto.randomUUID(),
         name: file.name,
         size: file.size,
         status: "loading",

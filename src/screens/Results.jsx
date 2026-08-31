@@ -469,6 +469,27 @@ const TruncationWarning = styled.div`
   font-weight: 500;
 `;
 
+const RagFailureWarning = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  margin-bottom: ${theme.spacing.md};
+  background: ${theme.colors.bgWarning};
+  border: 1px solid color-mix(in srgb, ${theme.colors.amber} 30%, transparent);
+  border-radius: ${theme.radii.sm};
+  color: ${theme.colors.textWarning};
+  font-size: ${theme.fontSizes.sm};
+  font-weight: 500;
+  line-height: 1.6;
+
+  .icon {
+    font-family: "Material Symbols Outlined";
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+`;
+
 const TrelloMsgBanner = styled.div`
   display: flex;
   align-items: center;
@@ -553,7 +574,7 @@ function TrelloUnavailableMsg() {
 }
 
 // ─── Component ────────────────────────────────────────────
-export default function Results({ brief = "", stories, ragChunks = [], onNewGeneration, onRegenerate, onNavigate, truncated = false, autoSaved = false, themeMode, onThemeChange }) {
+export default function Results({ brief = "", stories, ragChunks = [], ragError = false, onNewGeneration, onRegenerate, onNavigate, truncated = false, autoSaved = false, themeMode, onThemeChange }) {
   const [copied, setCopied] = useState(false);
   const [copiedStoryId, setCopiedStoryId] = useState(null);
   const [trelloMsgFor, setTrelloMsgFor] = useState(null);
@@ -642,6 +663,16 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
             <p>Stories prêtes pour l'exportation vers Trello ou Jira.</p>
           </PageHeader>
 
+          {ragError && (
+            <RagFailureWarning>
+              <span className="icon">cloud_off</span>
+              <span>
+                Le contexte documentaire n'a pas pu être récupéré — ces user stories ont été
+                générées sans vos documents. Relancez la génération pour réessayer.
+              </span>
+            </RagFailureWarning>
+          )}
+
           {truncated && (
             <TruncationWarning>
               <span>⚠️ Génération possiblement incomplète — la dernière user story est à vérifier.</span>
@@ -660,7 +691,11 @@ export default function Results({ brief = "", stories, ragChunks = [], onNewGene
               </StatusBadge>
               <RagBadge $active={ragChunks.length > 0}>
                 <span className="dot" />
-                {ragChunks.length > 0 ? "RAG actif" : "RAG non utilisé — US Générique"}
+                {ragChunks.length > 0
+                  ? "RAG actif"
+                  : ragError
+                  ? "RAG indisponible"
+                  : "RAG non utilisé — US Générique"}
               </RagBadge>
             </div>
             <ActionBtns>
