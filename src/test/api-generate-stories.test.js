@@ -500,9 +500,13 @@ describe('api/generate-stories — validation de contextChunks (sécurité + co�
   const brief = 'Un brief métier suffisamment long pour passer la validation';
   const GENERIC = { error: 'Contexte documentaire invalide.' };
 
-  // Chunk « légitime » : filename + text de taille réaliste (le splitter de
-  // api/upload-doc.js ne produit jamais > 500 caractères, mesuré).
-  const chunk = (chars = 400, filename = 'politique-livraison.pdf') => ({
+  // Chunk « légitime ». Tailles calées sur la VRAIE distribution des chunks
+  // indexés dans Pinecone (mesurée le 2026-08-31 en interrogeant l'index :
+  // min 68 / moyenne 1135 / p90 1568 / max 1597), PAS sur le `chunkSize: 500`
+  // déclaré dans api/upload-doc.js — c'est cette confusion qui a cassé le RAG
+  // en prod au LOT 3 (chunk réel le plus court d'une requête : 1403 caractères,
+  // rejeté par l'ancien plafond de 1000). Défaut = ~1400 (chunk FAQ réel).
+  const chunk = (chars = 1400, filename = 'politique-livraison.pdf') => ({
     filename,
     text: 'x'.repeat(chars),
     score: 52,
@@ -546,21 +550,21 @@ describe('api/generate-stories — validation de contextChunks (sécurité + co�
   });
 
   it('rejette si le nombre de chunks dépasse 20 (max topK)', async () => {
-    const res = await run(Array.from({ length: 21 }, () => chunk(100)));
+    const res = await run(Array.from({ length: 21 }, () => chunk(200)));
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.body).toEqual(GENERIC);
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it('rejette un chunk dont text dépasse 1000 caractères', async () => {
-    const res = await run([chunk(400), chunk(1001)]);
+  it('rejette un chunk dont text dépasse 2500 caractères', async () => {
+    const res = await run([chunk(1400), chunk(2501)]);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.body).toEqual(GENERIC);
   });
 
-  it('rejette si la somme des text dépasse 12000 caractères (chunks individuellement valides)', async () => {
-    // 20 chunks × 700 = 14000 > 12000, chacun < 1000 et count = 20 (limite OK).
-    const res = await run(Array.from({ length: 20 }, () => chunk(700)));
+  it('rejette si la somme des text dépasse 28000 caractères (chunks individuellement valides)', async () => {
+    // 20 chunks × 1500 = 30000 > 28000, chacun ≤ 2500 et count = 20 (limites OK).
+    const res = await run(Array.from({ length: 20 }, () => chunk(1500)));
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.body).toEqual(GENERIC);
   });
@@ -590,19 +594,22 @@ describe('api/generate-stories — validation de contextChunks (sécurité + co�
   });
 
   // ── Acceptations (comportement inchangé) ──────────────────────────────────
-  it('accepte un cas valide typique (5 chunks ~400 caractères) et injecte leur texte dans le prompt système', async () => {
+  it('accepte le cas exact de l\'incident prod : 5 chunks issus de Pinecone, le plus court à 1403 caractères', async () => {
+    // Reproduction de la régression LOT 3 : retrieveContext() renvoie 5 chunks
+    // réels (scores 52-55 %), le plus court mesuré à 1403 caractères — rejeté
+    // par l'ancien MAX_CHUNK_CHARS = 1000.
     const res = await run([
-      chunk(420, 'politique-livraison.pdf'),
-      chunk(380, 'faq-service-client.pdf'),
-      chunk(410, 'catalogue-produits.pdf'),
-      chunk(360, 'charte-qualite.pdf'),
-      chunk(440, 'presentation-entreprise.pdf'),
+      chunk(1403, '06_faq_service_client.pdf'),
+      chunk(1296, '02_politique_livraison_retours.pdf'),
+      chunk(1243, '03_catalogue_produits.pdf'),
+      chunk(1268, '04_archive_commandes.pdf'),
+      chunk(1597, '07_guide_complet_long.pdf'),
     ]);
     expect(res.status).not.toHaveBeenCalledWith(400);
     expect(global.fetch).toHaveBeenCalled();
     const sentBody = JSON.parse(global.fetch.mock.calls[0][1].body);
     expect(sentBody.system).toContain('CONTEXTE DOCUMENTAIRE OBLIGATOIRE');
-    expect(sentBody.system).toContain('politique-livraison.pdf');
+    expect(sentBody.system).toContain('06_faq_service_client.pdf');
   });
 
   it('accepte contextChunks = [] sans injecter de bloc contexte (comportement inchangé)', async () => {
@@ -613,8 +620,10 @@ describe('api/generate-stories — validation de contextChunks (sécurité + co�
     expect(sentBody.system).not.toContain('CONTEXTE DOCUMENTAIRE OBLIGATOIRE');
   });
 
-  it('accepte 20 chunks de 500 caractères (pire cas légitime : 20 × topK, total 10000 < 12000)', async () => {
-    const res = await run(Array.from({ length: 20 }, () => chunk(500)));
+  it('accepte 20 chunks à la moyenne réelle (~1187 chars, total ~23740 < 28000)', async () => {
+    // Pire cas légitime pour topK=20 : la somme des 20 plus longs chunks de
+    // l'index mesurée à 23 759 — sous le plafond de 28000.
+    const res = await run(Array.from({ length: 20 }, () => chunk(1187)));
     expect(res.status).not.toHaveBeenCalledWith(400);
     expect(global.fetch).toHaveBeenCalled();
   });
