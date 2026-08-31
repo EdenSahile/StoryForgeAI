@@ -205,7 +205,9 @@ function App() {
           }))
         )
       )
-      .catch((err) => console.warn("[list-docs] Failed to load documents:", err));
+      .catch((err) => {
+        if (import.meta.env.DEV) console.warn("[list-docs] Failed to load documents:", err);
+      });
   }, []);
 
   const handleNavigate = (screen) => {

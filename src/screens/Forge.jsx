@@ -1153,7 +1153,9 @@ export default function Forge({
     getConfig()
       .then(({ demoMode }) => setDemoMode(demoMode))
       .catch((err) => {
-        console.warn("[config] Échec du chargement de la configuration, upload resté verrouillé :", err);
+        if (import.meta.env.DEV) {
+          console.warn("[config] Échec du chargement de la configuration, upload resté verrouillé :", err);
+        }
       });
   }, []);
 
@@ -1184,7 +1186,9 @@ export default function Forge({
         contextChunks = ragResult.chunks || [];
         setRagChunks(contextChunks);
       } catch (err) {
-        console.warn("RAG retrieval failed, generating without context:", err);
+        if (import.meta.env.DEV) {
+          console.warn("RAG retrieval failed, generating without context:", err);
+        }
       }
     }
 
