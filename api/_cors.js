@@ -8,9 +8,12 @@ const FALLBACK_ORIGINS = ['http://localhost:5173', 'https://storypilot-ai.vercel
 /**
  * Pose les en-têtes CORS sur la réponse et court-circuite le préflight OPTIONS.
  *
- * Reprend exactement le comportement historique de chaque route :
- * - lit `process.env.ALLOWED_ORIGINS` (liste CSV) avec le même fallback qu'avant ;
+ * Comportement :
+ * - lit `process.env.ALLOWED_ORIGINS` (liste CSV, chaque entrée `.trim()`) avec
+ *   le même fallback qu'avant ;
  * - ne pose `Access-Control-Allow-Origin` que si `req.headers.origin` est dans la liste ;
+ * - pose toujours `Vary: Origin` (la réponse dépend de l'origine — nécessaire pour
+ *   que tout cache intermédiaire ne serve pas une réponse d'une autre origine) ;
  * - pose toujours `Access-Control-Allow-Methods` (défaut `"POST, OPTIONS"`) et
  *   `Access-Control-Allow-Headers: "Content-Type"` ;
  * - sur une requête `OPTIONS`, répond `200` + `end()` et retourne `true`.
@@ -22,11 +25,14 @@ const FALLBACK_ORIGINS = ['http://localhost:5173', 'https://storypilot-ai.vercel
  *                     que l'appelant doit `return` immédiatement ; `false` sinon.
  */
 export function applyCors(req, res, { methods = 'POST, OPTIONS' } = {}) {
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || FALLBACK_ORIGINS;
+  const allowedOrigins =
+    process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean) ||
+    FALLBACK_ORIGINS;
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', methods);
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 

@@ -2,6 +2,12 @@
 // Pas de synchronisation entre appareils ou visiteurs différents.
 const STORAGE_KEY = "storyforge_library";
 
+// Plafond du nombre d'entrées conservées. Les générations (brief + texte complet
+// des stories) pèsent lourd et le quota localStorage est de ~5 Mo : sans plafond,
+// un usage prolongé finit par lever QuotaExceededError. On garde les 200 plus
+// récentes (les entrées sont stockées les plus récentes en tête).
+const MAX_ENTRIES = 200;
+
 function load() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -11,7 +17,17 @@ function load() {
 }
 
 function save(entries) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  const capped = entries.slice(0, MAX_ENTRIES);
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(capped));
+  } catch (err) {
+    // Quota dépassé, mode navigation privée, storage désactivé… : on échoue en
+    // silence pour ne jamais faire planter l'appelant (le flux de génération
+    // sauvegarde l'historique de façon best-effort). Détail en dev uniquement.
+    if (import.meta.env.DEV) {
+      console.error("[libraryStorage] Échec de l'écriture dans localStorage :", err);
+    }
+  }
 }
 
 /**

@@ -260,6 +260,71 @@ describe('api/generate-stories — erreurs upstream Anthropic (budget vs génér
   });
 });
 
+describe('api/generate-stories — timeout 30 s sur l\'appel à Claude (règle CLAUDE.md)', () => {
+  beforeEach(() => {
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.mocked(console.error).mockRestore();
+  });
+
+  it('abandonne l\'appel après 30 s et renvoie un 504 générique (pas de error.message brut)', async () => {
+    // fetch qui ne répond jamais, mais rejette avec une AbortError quand le signal est abort.
+    global.fetch = vi.fn(
+      (url, opts) =>
+        new Promise((_resolve, reject) => {
+          opts.signal.addEventListener('abort', () => {
+            reject(Object.assign(new Error('The operation was aborted'), { name: 'AbortError' }));
+          });
+        }),
+    );
+    const handler = await freshHandler();
+    const res = createMockRes();
+
+    const pending = handler(
+      createMockReq({ body: { brief: 'Un brief métier suffisamment long pour passer la validation' } }),
+      res,
+    );
+
+    // Rien avant l'échéance.
+    await vi.advanceTimersByTimeAsync(29_000);
+    expect(res.status).not.toHaveBeenCalledWith(504);
+
+    // Au-delà de 30 s, l'AbortController coupe l'appel.
+    await vi.advanceTimersByTimeAsync(2_000);
+    await pending;
+
+    expect(res.status).toHaveBeenCalledWith(504);
+    expect(res.body).toEqual({
+      error: 'Le serveur a mis trop de temps à répondre. Réessaie dans un instant.',
+    });
+  });
+
+  it('ne déclenche pas le timeout quand Claude répond avant 30 s', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({ error: { type: 'authentication_error', message: 'x' } }),
+    });
+    const handler = await freshHandler();
+    const res = createMockRes();
+
+    await handler(
+      createMockReq({ body: { brief: 'Un brief métier suffisamment long pour passer la validation' } }),
+      res,
+    );
+    // Laisser filer un hypothétique timer résiduel : il ne doit rien faire.
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).not.toHaveBeenCalledWith(504);
+  });
+});
+
 describe('api/generate-stories — rate limiting (10 requêtes / 15 min / IP)', () => {
   beforeEach(() => {
     process.env.ANTHROPIC_API_KEY = 'test-key';

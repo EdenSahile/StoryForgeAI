@@ -195,3 +195,40 @@ describe('clearGenerations', () => {
     expect(getGenerations()).toEqual([]);
   });
 });
+
+describe('save — robustesse quota et plafond', () => {
+  it("n'échoue pas et ne propage pas l'erreur quand localStorage.setItem lève (QuotaExceededError)", () => {
+    const spy = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw Object.assign(new Error('quota'), { name: 'QuotaExceededError' });
+    });
+
+    // Ne doit pas lever — l'appelant (flux de génération) ne doit jamais planter là-dessus.
+    expect(() =>
+      saveGeneration({ brief: 'Un brief', stories: 'des stories', storiesCount: 2 }),
+    ).not.toThrow();
+
+    spy.mockRestore();
+  });
+
+  it("plafonne l'historique à 200 entrées en retirant les plus anciennes", () => {
+    // 205 entrées déjà présentes, stockées les plus récentes en tête (index 0 =
+    // la plus récente), comme le fait saveGeneration qui préfixe toujours.
+    const existing = Array.from({ length: 205 }, (_, i) => ({
+      id: `pos-${i}`, // pos-0 = plus récente existante, pos-204 = plus ancienne
+      title: `Entrée ${i}`,
+      brief: 'b',
+      stories: 's',
+      createdAt: new Date(2020, 0, 1, 0, 0, 205 - i).toISOString(),
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+
+    const entry = saveGeneration({ brief: 'Toute nouvelle', stories: 's', storiesCount: 1 });
+
+    const raw = readRaw();
+    expect(raw).toHaveLength(200);
+    expect(raw[0].id).toBe(entry.id); // la nouvelle passe en tête
+    expect(raw.some((e) => e.id === 'pos-0')).toBe(true); // récente : conservée
+    expect(raw.some((e) => e.id === 'pos-198')).toBe(true); // dernière conservée (new + pos-0..pos-198 = 200)
+    expect(raw.some((e) => e.id === 'pos-204')).toBe(false); // les plus anciennes ont sauté
+  });
+});

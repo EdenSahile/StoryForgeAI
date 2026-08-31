@@ -52,6 +52,8 @@ if (!checkRateLimit(clientIp)) {
     return res.status(500).json({ error: 'Clé API manquante sur le serveur.' });
   }
 
+  let claudeTimeout;
+
   try {
     const briefLength = brief.trim().length;
     const storyInstruction = briefLength < 300
@@ -65,9 +67,17 @@ if (!checkRateLimit(clientIp)) {
 - Si une information n'est pas présente dans les sources fournies (délais exacts, noms de transporteurs, formats techniques, etc.), ne l'invente pas — utilise une formulation générique (ex: "le système envoie une confirmation" plutôt qu'un délai précis non vérifié)`
       : "";
 
+    // Timeout de 30 s sur l'appel à Claude (règle CLAUDE.md + .claude/rules/storypilot-api.md).
+    // Borne le temps d'établissement de la réponse ; le streaming qui suit est
+    // borné séparément par `export const config = { maxDuration: 60 }`. Sur abort,
+    // fetch lève une AbortError, rattrapée dans le catch du handler (→ 504 générique).
+    const claudeAbort = new AbortController();
+    claudeTimeout = setTimeout(() => claudeAbort.abort(), 30_000);
+
     // Appel à Claude API avec streaming
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
+      signal: claudeAbort.signal,
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
@@ -128,6 +138,10 @@ Sépare chaque story par ---${contextBlock}`,
         ]
       })
     });
+
+    // Réponse reçue : le timeout ne concerne que l'établissement de l'appel,
+    // pas la durée du streaming (bornée par maxDuration).
+    clearTimeout(claudeTimeout);
 
     // Gère les erreurs HTTP
     if (!response.ok) {
@@ -228,6 +242,18 @@ Sépare chaque story par ---${contextBlock}`,
 
     res.end();
   } catch (error) {
+    clearTimeout(claudeTimeout);
+
+    // Timeout de 30 s dépassé pendant l'établissement de l'appel à Claude
+    // (AbortController). Le timeout est désarmé dès la réponse reçue, donc ce
+    // cas se produit toujours avant le début du streaming : aucun header envoyé.
+    if (error?.name === 'AbortError') {
+      console.error('[generate-stories] Timeout 30 s dépassé sur l\'appel à Claude');
+      return res.status(504).json({
+        error: 'Le serveur a mis trop de temps à répondre. Réessaie dans un instant.',
+      });
+    }
+
     console.error('Erreur serveur:', error);
     res.status(500).json({ error: 'Une erreur est survenue. Veuillez réessayer.' });
   }

@@ -65,9 +65,10 @@ jobs:
             Review this pull request against the conventions in CLAUDE.md
             (never expose the Anthropic API key client-side, never return raw
             error.message to the client per SEC-001, brief validated server-side
-            at 2000 chars, 30s timeout on Claude calls, max_tokens capped at 1000,
-            French system prompt/response). Check for correctness bugs, security
-            issues, and consistency with existing patterns in the codebase.
+            at 2000 chars, 30s AbortController timeout on the Claude fetch,
+            max_tokens 8000, French system prompt/response). Check for correctness
+            bugs, security issues, and consistency with existing patterns in the
+            codebase.
 
             The `test` and `e2e` jobs already ran `npx vitest run` and
             `npx playwright test` in CI before this step — treat that as
