@@ -61,21 +61,36 @@ if (!checkRateLimit(clientIp)) {
   // limiting borne la *fréquence* des requêtes, pas leur *poids*), et contournement
   // complet de la calibration RAG (seuil 0.45, clause d'exception anti-hallucination).
   //
-  // Plafonds dérivés des valeurs réelles du pipeline, pas inventés :
+  // Plafonds dérivés de la VRAIE distribution des chunks indexés dans Pinecone
+  // (index "storyforge", 8 documents, 21 vecteurs), mesurée en interrogeant
+  // directement l'index — PAS du `chunkSize` déclaré dans le code du splitter.
+  // Le LOT 3 avait dérivé MAX_CHUNK_CHARS du `chunkSize: 500` de api/upload-doc.js
+  // et cassé le RAG en prod : les chunks stockés reflètent un `chunkSize` d'environ
+  // 1600 (max mesuré 1597), pas les 500 du code actuel — cf. context.md, session
+  // RAG-3, qui a posé `chunkSize: 1600` puis dont l'étape « Re-indexer » n'a jamais
+  // été faite. Le code du splitter est donc désynchronisé des données stockées.
+  //
+  // Distribution réelle mesurée (2026-08-31, tous chunks confondus) :
+  //   min 68 · moyenne 1135 · p90 1568 · max 1597 caractères.
+  //   Somme des 20 chunks les plus longs (pire cas pour topK=20) : 23 759.
+  //
   //  - MAX_CONTEXT_CHUNKS = 20 : maximum exact de `topK` validé dans
-  //    api/retrieve-context.js (entier 1–20). `retrieveContext` ne peut pas en
-  //    renvoyer davantage ; le filtre de score ne fait que réduire ce nombre.
-  //  - MAX_CHUNK_CHARS = 1000 : 2× le `chunkSize` (500) du splitter de
-  //    api/upload-doc.js. Mesuré : ce splitter (séparateur terminal "") ne produit
-  //    jamais de chunk > 500 caractères (prose FR réelle ≤ 477 ; entrée pathologique
-  //    sans séparateur = 500 pile). 1000 laisse une marge large sans jamais rejeter
-  //    un chunk légitime.
-  //  - MAX_CONTEXT_TOTAL_CHARS = 12000 : pire cas légitime = 20 chunks × ~500 =
-  //    10000 caractères, + ~20 % de marge.
+  //    api/retrieve-context.js (entier 1–20), indépendant de la taille des chunks.
+  //    `retrieveContext` ne peut pas en renvoyer davantage ; le filtre de score ne
+  //    fait que réduire ce nombre. Inchangé.
+  //  - MAX_CHUNK_CHARS = 2500 : max réel observé 1597 + ~56 % de marge (variance de
+  //    ré-indexation, ajout d'un document à public/docs/). Rejette quand même tout
+  //    chunk manifestement anormal (> 4× la moyenne réelle).
+  //  - MAX_CONTEXT_TOTAL_CHARS = 28000 : somme des 20 plus longs chunks indexés
+  //    (23 759, ≈ la somme de TOUT l'index) + ~18 % de marge.
+  //
+  // Toute ré-indexation de public/docs/ (ou ajout de documents) impose de
+  // re-mesurer cette distribution et d'ajuster ces plafonds — ne jamais les
+  // re-dériver du `chunkSize` déclaré dans api/upload-doc.js.
   if (contextChunks !== undefined && contextChunks !== null) {
     const MAX_CONTEXT_CHUNKS = 20;
-    const MAX_CHUNK_CHARS = 1000;
-    const MAX_CONTEXT_TOTAL_CHARS = 12000;
+    const MAX_CHUNK_CHARS = 2500;
+    const MAX_CONTEXT_TOTAL_CHARS = 28000;
 
     const badContext = (reason) => {
       // Détail loggé côté serveur uniquement (SEC-001) ; message client générique.
