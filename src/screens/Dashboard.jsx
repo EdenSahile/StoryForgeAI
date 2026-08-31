@@ -339,6 +339,14 @@ const DashDeleteBtn = styled.button`
     opacity: 1;
   }
 
+  /* A11y : le bouton n'apparaît qu'au survol souris ; sans ça, un utilisateur
+     au clavier atteint au Tab un bouton fonctionnel jamais visible. :focus-visible
+     (pas :focus) → on ne le révèle qu'à la navigation clavier, pas sur un clic
+     souris qui laisse déjà le survol de la carte actif. */
+  &:focus-visible {
+    opacity: 1;
+  }
+
   &:hover {
     color: ${theme.colors.error};
   }

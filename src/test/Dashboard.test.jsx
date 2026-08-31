@@ -136,6 +136,32 @@ describe('Dashboard — suppression d\'une génération', () => {
   });
 });
 
+describe('Dashboard — accessibilité du bouton supprimer (Générations récentes)', () => {
+  it('le bouton est caché au premier rendu et une règle :focus-visible le révèle au clavier', () => {
+    saveGeneration({ brief: 'Génération avec bouton supprimer', stories: 's', storiesCount: 1 });
+    renderDashboard();
+
+    const btn = within(getRecentSection()).getByTitle('Supprimer cette génération');
+
+    // Caché au premier rendu, sans aucune interaction (règle de base opacity:0,
+    // que jsdom applique bien au style calculé).
+    expect(getComputedStyle(btn).opacity).toBe('0');
+
+    // jsdom n'applique pas les pseudo-classes (:hover/:focus-visible) dans
+    // getComputedStyle — on vérifie donc la feuille styled-components elle-même :
+    // le bouton doit être révélé au focus clavier (:focus-visible, pas :focus,
+    // pour ne pas se déclencher sur un clic souris), au même titre qu'au survol.
+    const hash = [...btn.classList].find((c) => !c.startsWith('sc-'));
+    const css = Array.from(document.querySelectorAll('style'), (s) => s.textContent).join('');
+    expect(css).toMatch(new RegExp(`\\.${hash}\\{[^}]*opacity:0`));
+    expect(css).toMatch(new RegExp(`\\.${hash}:focus-visible\\{[^}]*opacity:1`));
+
+    // Et le bouton est bien dans l'ordre de tabulation (élément <button>).
+    btn.focus();
+    expect(btn).toHaveFocus();
+  });
+});
+
 describe('Dashboard — CTA "Nouvelle génération"', () => {
   it('appelle onNavigate("forge") une seule fois au clic sur la carte (hors du bouton Générer)', () => {
     const { onNavigate } = renderDashboard();
