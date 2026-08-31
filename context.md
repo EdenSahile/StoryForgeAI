@@ -539,7 +539,6 @@ Clé localStorage : `storyforge_library`
 |---|---|
 | Bouton "Copier" → coller dans éditeur | ⬜ À tester |
 | Test sur vrai mobile | ⬜ À tester |
-| Lien feedback Google Form | ⬜ À tester |
 
 ### Accessibilité
 | Test | Statut |
