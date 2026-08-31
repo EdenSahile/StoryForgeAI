@@ -79,8 +79,7 @@ src/
 │   │   ├── claudeService.js          # Client API Claude (streaming SSE)
 │   │   └── ragService.js             # Client upload/retrieval/suppression documents
 │   ├── StoryCard.jsx                 # Card story — partagée entre Results et Library
-│   ├── ErrorBoundary.jsx             # Catch erreurs React
-│   └── Footer.jsx
+│   └── ErrorBoundary.jsx             # Catch erreurs React
 ├── screens/
 │   ├── Dashboard.jsx                 # Stats + générations récentes
 │   ├── Forge.jsx                     # Brief + base de connaissances + streaming
