@@ -132,7 +132,7 @@ api/
 
 ## Mode démo
 
-Le déploiement public désactive l'upload, l'indexation et la suppression de documents (frontend + garde-fou serveur via `DEMO_MODE=true`, réponses 403 dans `upload-doc.js`/`delete-doc.js`) pour préserver l'expérience des autres visiteurs. La base de connaissances est pré-chargée avec 8 documents fictifs sur un contexte "Lumeo Boutique" (e-commerce déco/luminaires), et des briefs suggérés sont proposés en un clic. Le budget de génération est plafonné (~$5/mois, ~660 générations) ; au-delà, une erreur explicite s'affiche.
+Le déploiement public désactive l'upload, l'indexation et la suppression de documents (frontend + garde-fou serveur via `DEMO_MODE=true`, réponses 403 dans `upload-doc.js`/`delete-doc.js`) pour préserver l'expérience des autres visiteurs. La base de connaissances est pré-chargée avec 8 documents fictifs sur un contexte "Lumeo Boutique" (e-commerce déco/luminaires), et des briefs suggérés sont proposés en un clic. Le budget de génération est plafonné ; en fin de mois, la génération peut devenir temporairement indisponible, avec un message explicite (« La démo a atteint son budget mensuel — réessaie le mois prochain »).
 
 ---
 

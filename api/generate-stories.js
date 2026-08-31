@@ -131,18 +131,45 @@ Sépare chaque story par ---${contextBlock}`,
 
     // Gère les erreurs HTTP
     if (!response.ok) {
-      const errorData = await response.json();
-      const errorMessage = errorData?.error?.message || `Erreur API (${response.status})`;
+      const errorData = await response.json().catch(() => null);
+      const anthropicType = errorData?.error?.type;
+      const anthropicMessage = errorData?.error?.message || '';
+
+      // SEC-001 : le détail réel de l'erreur upstream est loggé côté serveur
+      // uniquement, jamais renvoyé au client (aucun errorMessage brut).
+      console.error(
+        `[generate-stories] Erreur API Claude ${response.status} ` +
+        `(${anthropicType || 'type inconnu'}) : ${anthropicMessage || '(pas de message)'}`
+      );
+
+      // Budget de la démo épuisé. Formes réelles renvoyées par Anthropic
+      // (cf. https://platform.claude.com/docs/en/api/errors) :
+      //   - 402 error.type "billing_error"       : crédit / moyen de paiement épuisé
+      //   - 400 error.type "invalid_request_error": plafond de dépense org/workspace atteint
+      //   - 429 error.type "rate_limit_error"    : plafond de dépense mensuel du palier d'usage
+      // Les deux derniers codes HTTP sont partagés avec des erreurs sans rapport,
+      // d'où le test complémentaire sur le libellé du message ("credit balance",
+      // "spend limit/cap") en plus du type "billing_error".
+      const budgetEpuise =
+        anthropicType === 'billing_error' ||
+        /credit balance|spend (?:limit|cap)/i.test(anthropicMessage);
+
+      if (budgetEpuise) {
+        return res.status(response.status).json({
+          error: 'La démo a atteint son budget mensuel — réessaie le mois prochain.',
+        });
+      }
 
       if (response.status === 401) {
         return res.status(401).json({ error: 'Clé API invalide ou expirée.' });
-      } else if (response.status === 429) {
-        return res.status(429).json({ error: 'Trop de requêtes. Réessayez dans quelques secondes.' });
-      } else if (response.status === 500) {
-        return res.status(500).json({ error: 'Serveur Claude indisponible. Réessayez plus tard.' });
-      } else {
-        return res.status(response.status).json({ error: `Erreur API : ${errorMessage}` });
       }
+      if (response.status === 429) {
+        return res.status(429).json({ error: 'Trop de requêtes. Réessayez dans quelques secondes.' });
+      }
+      if (response.status === 500) {
+        return res.status(500).json({ error: 'Serveur Claude indisponible. Réessayez plus tard.' });
+      }
+      return res.status(response.status).json({ error: 'Erreur lors de la génération. Réessaie plus tard.' });
     }
 
     // Configure les headers pour le streaming

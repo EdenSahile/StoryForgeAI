@@ -175,6 +175,91 @@ describe('api/generate-stories — jamais de error.message brut au client (règl
   });
 });
 
+describe('api/generate-stories — erreurs upstream Anthropic (budget vs générique)', () => {
+  beforeEach(() => {
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    // Silence le console.error de diagnostic serveur (SEC-001 : le détail y est loggé, pas renvoyé).
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.mocked(console.error).mockRestore();
+  });
+
+  const briefValide = { brief: 'Un brief métier suffisamment long pour passer la validation' };
+
+  it('402 billing_error → message budget clair et distinct (crédit / paiement épuisé)', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 402,
+      json: async () => ({
+        type: 'error',
+        error: { type: 'billing_error', message: 'Your credit balance is too low to access the Anthropic API.' },
+      }),
+    });
+    const handler = await freshHandler();
+    const res = createMockRes();
+
+    await handler(createMockReq({ body: briefValide }), res);
+
+    expect(res.body).toEqual({ error: 'La démo a atteint son budget mensuel — réessaie le mois prochain.' });
+  });
+
+  it('429 avec "spend cap" dans le message → message budget, pas "Trop de requêtes"', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+      json: async () => ({
+        type: 'error',
+        error: { type: 'rate_limit_error', message: "You have reached your usage tier's monthly spend cap." },
+      }),
+    });
+    const handler = await freshHandler();
+    const res = createMockRes();
+
+    await handler(createMockReq({ body: briefValide }), res);
+
+    expect(res.body).toEqual({ error: 'La démo a atteint son budget mensuel — réessaie le mois prochain.' });
+  });
+
+  it('429 rate limit standard (RPM/TPM, sans mot-clé budget) → toujours "Trop de requêtes"', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+      json: async () => ({
+        type: 'error',
+        error: { type: 'rate_limit_error', message: 'Number of requests has exceeded your rate limit for this model.' },
+      }),
+    });
+    const handler = await freshHandler();
+    const res = createMockRes();
+
+    await handler(createMockReq({ body: briefValide }), res);
+
+    expect(res.status).toHaveBeenCalledWith(429);
+    expect(res.body).toEqual({ error: 'Trop de requêtes. Réessayez dans quelques secondes.' });
+  });
+
+  it("erreur upstream inattendue → message générique, jamais le error.message brut d'Anthropic (SEC-001)", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({
+        type: 'error',
+        error: { type: 'invalid_request_error', message: 'internal-host-42: prompt rejected — détail sensible à ne pas exposer' },
+      }),
+    });
+    const handler = await freshHandler();
+    const res = createMockRes();
+
+    await handler(createMockReq({ body: briefValide }), res);
+
+    expect(res.body).toEqual({ error: 'Erreur lors de la génération. Réessaie plus tard.' });
+    expect(JSON.stringify(res.body)).not.toContain('détail sensible');
+    expect(JSON.stringify(res.body)).not.toContain('internal-host-42');
+  });
+});
+
 describe('api/generate-stories — rate limiting (10 requêtes / 15 min / IP)', () => {
   beforeEach(() => {
     process.env.ANTHROPIC_API_KEY = 'test-key';

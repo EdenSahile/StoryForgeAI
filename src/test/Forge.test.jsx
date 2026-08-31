@@ -249,6 +249,41 @@ describe('Forge — zone d\'upload pilotée par getConfig (demoMode)', () => {
   });
 });
 
+describe('Forge — bannière "Budget limité" conditionnée à demoMode', () => {
+  const banniereBudget = /la génération peut être indisponible en fin de mois/i;
+
+  it('affiche la bannière budget en mode démo (demoMode=true)', async () => {
+    getConfig.mockResolvedValue({ demoMode: true });
+    renderForge();
+
+    await waitFor(() => {
+      expect(screen.getByText(banniereBudget)).toBeInTheDocument();
+    });
+  });
+
+  it("n'affiche pas la bannière budget hors mode démo (demoMode=false)", async () => {
+    getConfig.mockResolvedValue({ demoMode: false });
+    renderForge();
+
+    // On attend que getConfig ait résolu (la zone d'upload active en est le signal)
+    await waitFor(() => {
+      expect(screen.getByText('Glissez vos docs ici')).toBeInTheDocument();
+    });
+    expect(screen.queryByText(banniereBudget)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Budget limité/i)).not.toBeInTheDocument();
+  });
+
+  it('ne mentionne plus de chiffre de budget inventé ($5/mois, ~660 générations)', async () => {
+    getConfig.mockResolvedValue({ demoMode: true });
+    const { container } = renderForge();
+
+    await waitFor(() => {
+      expect(screen.getByText(banniereBudget)).toBeInTheDocument();
+    });
+    expect(container.textContent).not.toMatch(/660|\$5\s*\/\s*mois/i);
+  });
+});
+
 // Le texte du ConfirmBanner est réparti entre un <span> et un nœud de texte
 // frère ("<span>{name}</span> est déjà indexé. Remplacer ?") : getByText avec
 // une simple chaîne ne le retrouve pas (texte cassé par un élément), d'où ce

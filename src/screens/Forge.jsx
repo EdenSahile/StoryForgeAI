@@ -1397,13 +1397,16 @@ export default function Forge({
                 : "Générer les user stories"}
             </GenerateBtn>
 
-            <InfoBanner>
-              <span className="icon">info</span>
-              <span>
-                <strong>Budget limité :</strong> démo $5/mois (~660
-                générations). Si la limite est atteinte, une erreur s'affichera.
-              </span>
-            </InfoBanner>
+            {demoMode && (
+              <InfoBanner>
+                <span className="icon">info</span>
+                <span>
+                  <strong>Budget limité :</strong> cette démo publique tourne
+                  sur un budget limité ; la génération peut être indisponible en
+                  fin de mois.
+                </span>
+              </InfoBanner>
+            )}
           </PromptSection>
 
           {/* Error */}
