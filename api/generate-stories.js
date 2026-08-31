@@ -1,3 +1,4 @@
+import { applyCors } from './_cors.js';
 
 const requestCounts = new Map();
 
@@ -16,14 +17,7 @@ export const config = { maxDuration: 60 }; // Streaming 3-5 stories peut dépass
 
 export default async function handler(req, res) {
   // ✅ CORS
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173', 'https://storypilot-ai.vercel.app'];
-const origin = req.headers.origin;
-if (allowedOrigins.includes(origin)) {
-  res.setHeader('Access-Control-Allow-Origin', origin);
-}
-res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-if (req.method === 'OPTIONS') return res.status(200).end();
+  if (applyCors(req, res, { methods: 'POST, OPTIONS' })) return;
 
   // Seulement POST
   if (req.method !== 'POST') {
