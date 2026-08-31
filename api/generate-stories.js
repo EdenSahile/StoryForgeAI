@@ -51,6 +51,60 @@ if (!checkRateLimit(clientIp)) {
     return res.status(400).json({ error: 'Le brief ne peut pas dépasser 2000 caractères.' });
   }
 
+  // ── Validation de contextChunks (sécurité + coût) ────────────────────────────
+  // `contextChunks` vient du corps de requête, entièrement contrôlé par l'appelant
+  // HTTP : `retrieveContext()` côté client (qui interroge Pinecone avec le seuil de
+  // pertinence 0.45 calibré, cf. api/retrieve-context.js) et cet endpoint sont deux
+  // appels réseau *indépendants*. Sans ce garde-fou, un appel direct à
+  // /api/generate-stories hors UI peut fournir un `contextChunks` fabriqué de toutes
+  // pièces : injection de prompt via un faux chunk, explosion du coût (le rate
+  // limiting borne la *fréquence* des requêtes, pas leur *poids*), et contournement
+  // complet de la calibration RAG (seuil 0.45, clause d'exception anti-hallucination).
+  //
+  // Plafonds dérivés des valeurs réelles du pipeline, pas inventés :
+  //  - MAX_CONTEXT_CHUNKS = 20 : maximum exact de `topK` validé dans
+  //    api/retrieve-context.js (entier 1–20). `retrieveContext` ne peut pas en
+  //    renvoyer davantage ; le filtre de score ne fait que réduire ce nombre.
+  //  - MAX_CHUNK_CHARS = 1000 : 2× le `chunkSize` (500) du splitter de
+  //    api/upload-doc.js. Mesuré : ce splitter (séparateur terminal "") ne produit
+  //    jamais de chunk > 500 caractères (prose FR réelle ≤ 477 ; entrée pathologique
+  //    sans séparateur = 500 pile). 1000 laisse une marge large sans jamais rejeter
+  //    un chunk légitime.
+  //  - MAX_CONTEXT_TOTAL_CHARS = 12000 : pire cas légitime = 20 chunks × ~500 =
+  //    10000 caractères, + ~20 % de marge.
+  if (contextChunks !== undefined && contextChunks !== null) {
+    const MAX_CONTEXT_CHUNKS = 20;
+    const MAX_CHUNK_CHARS = 1000;
+    const MAX_CONTEXT_TOTAL_CHARS = 12000;
+
+    const badContext = (reason) => {
+      // Détail loggé côté serveur uniquement (SEC-001) ; message client générique.
+      console.error(`[generate-stories] contextChunks rejeté : ${reason}`);
+      return res.status(400).json({ error: 'Contexte documentaire invalide.' });
+    };
+
+    if (!Array.isArray(contextChunks)) {
+      return badContext('type invalide (pas un tableau)');
+    }
+    if (contextChunks.length > MAX_CONTEXT_CHUNKS) {
+      return badContext(`${contextChunks.length} chunks (max ${MAX_CONTEXT_CHUNKS})`);
+    }
+
+    let totalChars = 0;
+    for (const chunk of contextChunks) {
+      if (!chunk || typeof chunk.filename !== 'string' || typeof chunk.text !== 'string') {
+        return badContext('chunk sans filename/text de type string');
+      }
+      if (chunk.text.length > MAX_CHUNK_CHARS) {
+        return badContext(`chunk de ${chunk.text.length} caractères (max ${MAX_CHUNK_CHARS})`);
+      }
+      totalChars += chunk.text.length;
+    }
+    if (totalChars > MAX_CONTEXT_TOTAL_CHARS) {
+      return badContext(`total ${totalChars} caractères (max ${MAX_CONTEXT_TOTAL_CHARS})`);
+    }
+  }
+
   // Vérifie la clé API côté serveur
   const apiKey = process.env.ANTHROPIC_API_KEY; 
 
