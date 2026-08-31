@@ -67,6 +67,39 @@ describe('Forge — toggle Générer sans RAG', () => {
   });
 });
 
+describe('Forge — échec de la récupération RAG', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    generateStories.mockResolvedValue(undefined);
+    getConfig.mockResolvedValue({ demoMode: false });
+  });
+
+  it('signale l\'échec via setRagError(true) mais lance quand même la génération sans contexte', async () => {
+    retrieveContext.mockRejectedValue(new Error('Pinecone indisponible'));
+    const setRagError = vi.fn();
+    renderForge({ setRagError });
+
+    fireEvent.click(screen.getByRole('button', { name: /Générer les user stories/i }));
+
+    await waitFor(() => expect(generateStories).toHaveBeenCalled());
+    expect(setRagError).toHaveBeenCalledWith(true);
+    // La génération part sans chunks de contexte (5e argument = tableau vide).
+    expect(generateStories.mock.calls[0][3]).toEqual([]);
+  });
+
+  it('remet setRagError(false) au début de chaque soumission', async () => {
+    retrieveContext.mockResolvedValue({ chunks: [] });
+    const setRagError = vi.fn();
+    renderForge({ setRagError });
+
+    fireEvent.click(screen.getByRole('button', { name: /Générer les user stories/i }));
+
+    await waitFor(() => expect(generateStories).toHaveBeenCalled());
+    expect(setRagError).toHaveBeenCalledWith(false);
+    expect(setRagError).not.toHaveBeenCalledWith(true);
+  });
+});
+
 describe('Forge — soumission bloquée', () => {
   it('désactive "Générer les user stories" si le brief est vide ou uniquement des espaces', () => {
     renderForge({ brief: '   ' });

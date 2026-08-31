@@ -16,6 +16,9 @@ export async function uploadDocument(file, onProgress) {
     throw new Error(`Format non supporté : .${ext}. Utilisez PDF, DOCX ou TXT.`);
   }
 
+  // Limite sur le fichier brut (10 Mo), pas sur le corps de requête : le contenu
+  // part encodé en base64 (+33 %), et `api/upload-doc.js` dimensionne son
+  // `bodyParser.sizeLimit` en conséquence pour qu'un fichier de 10 Mo pile passe.
   if (file.size > 10 * 1024 * 1024) {
     throw new Error("Fichier trop volumineux. Maximum 10 Mo.");
   }

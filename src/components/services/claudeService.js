@@ -1,11 +1,16 @@
-const TIMEOUT_MS = 90000; // 90s — le streaming de 3-5 stories peut dépasser 30s
+// 75s — garde-fou client aligné sur le budget serveur : la fonction Vercel est
+// tuée à 60s (`config.maxDuration` dans api/generate-stories.js), 75s laisse une
+// marge réseau au-dessus sans jamais attendre au-delà de ce que le serveur peut
+// tenir. (Le timeout de 30s côté serveur ne borne que l'établissement de l'appel
+// à Claude ; le streaming qui suit est borné par maxDuration.)
+const TIMEOUT_MS = 75000;
 const MAX_OUTPUT_LENGTH = 40000; // Garde-fou client : ~25 % au-dessus du max API (8 000 tokens ≈ 32 000 chars en français)
 
 /**
  * Génère des user stories via l'API Claude avec streaming SSE.
  * @param {string} brief - Le brief métier (10–2000 caractères)
  * @param {(chunk: string) => void} onChunk - Appelé à chaque fragment de texte reçu
- * @param {(message: string) => void} onError - Appelé en cas d'erreur (validation, réseau, timeout)
+ * @param {(message: string) => void} onError - Appelé en cas d'erreur (validation, réseau, timeout, réponse vide)
  * @returns {Promise<void>} Se résout quand le stream est terminé ou interrompu
  */
 export async function generateStories(brief, onChunk, onError, contextChunks = [], onTruncated = null) {
@@ -109,9 +114,18 @@ export async function generateStories(brief, onChunk, onError, contextChunks = [
       }
     }
 
-    // Stream terminé — si contenu reçu mais pas de signal stop, coupure anormale
-    if (charCount > 0 && !receivedStop) {
-      onTruncated?.();
+    // Stream terminé sans signal `stop`/`[DONE]` : anormal.
+    if (!receivedStop) {
+      if (charCount > 0) {
+        // Du contenu est arrivé puis la connexion a coupé → troncature.
+        onTruncated?.();
+      } else {
+        // Flux fermé totalement vide (ex. erreur serveur survenue APRÈS l'envoi
+        // des en-têtes SSE : le handler fait `res.end()` sans rien écrire).
+        // Sans ce `onError`, Forge ne voit aucune erreur, passe en statut
+        // "success" et affiche un écran Résultats vide — un faux succès.
+        onError('Aucune réponse reçue. Réessaie.');
+      }
     }
 
     clearTimeout(timeoutId);
@@ -123,7 +137,7 @@ export async function generateStories(brief, onChunk, onError, contextChunks = [
         // Contenu partiel reçu avant le timeout — traiter comme troncature
         onTruncated?.();
       } else {
-        onError('Requête timeout (90s). Le serveur met trop de temps.');
+        onError('Requête timeout (75s). Le serveur met trop de temps.');
       }
     } else if (
       error instanceof TypeError ||

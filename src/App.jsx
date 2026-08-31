@@ -6,6 +6,7 @@ import { saveGeneration, getGenerations } from "./utils/libraryStorage";
 import { listDocuments } from "./components/services/ragService";
 import { getStoredTheme, saveTheme } from "./logic/themeStorage";
 import { getInitialScreen } from "./logic/initialScreen";
+import { countStories } from "./logic/storyCount";
 import styled, { createGlobalStyle } from "styled-components";
 import { theme } from "./theme";
 import Sidebar from "./components/layout/Sidebar";
@@ -171,6 +172,10 @@ function App() {
   const [ragChunks, setRagChunks] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [truncated, setTruncated] = useState(false);
+  // true quand la récupération du contexte RAG a échoué pour la dernière
+  // génération : les stories ont été produites sans les documents. Signalé
+  // explicitement dans Results (l'utilisateur s'attendait à du contexte métier).
+  const [ragError, setRagError] = useState(false);
   const [autoSaved, setAutoSaved] = useState(false);
   const [keepBrief, setKeepBrief] = useState(false);
   const [themeMode, setThemeMode] = useState(getStoredTheme);
@@ -186,7 +191,7 @@ function App() {
       if (savedFingerprintRef.current === stories) return;
       savedFingerprintRef.current = stories;
       const sources = [...new Set(ragChunks.map((c) => c.filename))];
-      const storiesCount = (stories.match(/\*\*User Story \d+\*\*/g) || []).length;
+      const storiesCount = countStories(stories);
       saveGeneration({ brief, stories, sourcesUsed: sources, storiesCount });
       setAutoSaved(true);
     }
@@ -197,7 +202,11 @@ function App() {
       .then((docs) =>
         setDocuments(
           docs.map((d) => ({
-            id: d.filename,
+            // Identifiant d'affichage uniquement (clé React + filtre de suppression
+            // local). Rien côté backend ne s'appuie dessus : upload/delete/retrieval
+            // travaillent tous par `filename`. Même schéma que Forge.jsx et
+            // libraryStorage.js → crypto.randomUUID().
+            id: crypto.randomUUID(),
             name: d.filename,
             chunks: d.totalChunks,
             uploadedAt: d.uploadedAt,
@@ -216,6 +225,7 @@ function App() {
       setStories("");
       setRagChunks([]);
       setTruncated(false);
+      setRagError(false);
       setAutoSaved(false);
       savedFingerprintRef.current = null;
     }
@@ -227,17 +237,18 @@ function App() {
       case "dashboard":
         return <Dashboard onNavigate={handleNavigate} themeMode={themeMode} onThemeChange={setThemeMode} />;
       case "forge":
-        return <Forge onNavigate={setCurrentScreen} brief={brief} setBrief={setBrief} stories={stories} setStories={setStories} ragChunks={ragChunks} setRagChunks={setRagChunks} documents={documents} setDocuments={setDocuments} setTruncated={setTruncated} keepBrief={keepBrief} onClearKeepBrief={() => setKeepBrief(false)} themeMode={themeMode} onThemeChange={setThemeMode} />;
+        return <Forge onNavigate={setCurrentScreen} brief={brief} setBrief={setBrief} stories={stories} setStories={setStories} ragChunks={ragChunks} setRagChunks={setRagChunks} setRagError={setRagError} documents={documents} setDocuments={setDocuments} setTruncated={setTruncated} keepBrief={keepBrief} onClearKeepBrief={() => setKeepBrief(false)} themeMode={themeMode} onThemeChange={setThemeMode} />;
       case "results":
         return (
           <Results
             brief={brief}
             stories={stories}
             ragChunks={ragChunks}
+            ragError={ragError}
             truncated={truncated}
             autoSaved={autoSaved}
-            onNewGeneration={() => { setBrief(""); setStories(""); setRagChunks([]); setTruncated(false); setAutoSaved(false); setKeepBrief(false); savedFingerprintRef.current = null; setCurrentScreen("forge"); }}
-            onRegenerate={() => { setStories(""); setRagChunks([]); setTruncated(false); setAutoSaved(false); setKeepBrief(true); savedFingerprintRef.current = null; setCurrentScreen("forge"); }}
+            onNewGeneration={() => { setBrief(""); setStories(""); setRagChunks([]); setTruncated(false); setRagError(false); setAutoSaved(false); setKeepBrief(false); savedFingerprintRef.current = null; setCurrentScreen("forge"); }}
+            onRegenerate={() => { setStories(""); setRagChunks([]); setTruncated(false); setRagError(false); setAutoSaved(false); setKeepBrief(true); savedFingerprintRef.current = null; setCurrentScreen("forge"); }}
             onNavigate={setCurrentScreen}
             themeMode={themeMode}
             onThemeChange={setThemeMode}
@@ -257,7 +268,7 @@ function App() {
       <GlobalStyle />
       <Sidebar activeItem={currentScreen} onNavigate={handleNavigate} />
       {renderScreen()}
-      <BottomNav activeItem={currentScreen} onNavigate={setCurrentScreen} />
+      <BottomNav activeItem={currentScreen} onNavigate={handleNavigate} />
     </ErrorBoundary>
   );
 }

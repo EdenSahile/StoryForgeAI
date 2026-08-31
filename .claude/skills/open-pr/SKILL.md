@@ -25,7 +25,7 @@ Le skill s'arrête là. Il ne merge pas — le merge sur `main` reste une décis
 ## Règles
 
 - **Le verrou est bloquant.** Au premier rouge : on s'arrête, on montre la sortie réelle de la commande, et **rien n'est poussé**. Ne jamais contourner un test qui échoue ni le désactiver pour pouvoir pousser.
-- **Le verrou = build + tests unitaires, rien d'autre.** Ce repo a un script `lint` (`npm run lint`), volontairement **exclu** du verrou pour l'instant — à ajouter explicitement si l'utilisateur le décide un jour, pas une hypothèse à faire ici.
+- **Le verrou = build + tests unitaires, rien d'autre.** Ce repo n'a pas de lint (le script `npm run lint` et son `eslint.config.js` orphelins — jamais installés, jamais fonctionnels — ont été retirés dans `fix/hardening-lot2`). Réintroduire un lint = une PR dédiée qui ajoute les dépendances au `package-lock.json` proprement ; ce n'est pas une hypothèse à faire ici.
 - **⛔ Ne jamais merger.** Ouvrir la PR ne vaut pas autorisation de merger, même si la CI (`claude-pr-review.yml`) approuve automatiquement et que l'auto-merge est activé sur le repo.
 - **Ne jamais ouvrir de PR sans invocation explicite de ce skill.** L'utilisateur donne le feu vert en déclenchant le skill (raccourci "p", "Ouvre PR" ou phrase équivalente, cf. description) — c'est cette invocation elle-même qui vaut autorisation, jamais une initiative prise seule en cours de session.
 - **Un seul repo à la fois** : celui de la branche courante. Attention à ne pas confondre deux noms qui coexistent légitimement : `storyforge-ai` est le nom du dossier local (jamais renommé), `StoryPilot-ai` est le nom du repo sur GitHub et du produit (renommé, voir `context.md`). Ne pas pousser ni ouvrir de PR pour un autre repo.

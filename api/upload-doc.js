@@ -10,7 +10,15 @@ import { applyCors } from "./_cors.js";
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: "10mb",
+      // La limite produit est de 10 Mo sur le FICHIER BRUT (cf. contrôle client
+      // `file.size` dans ragService.js et le libellé « Max 10 Mo » de l'UI).
+      // Ici on borne le CORPS JSON, qui contient le fichier encodé en base64
+      // (+33 % : 4 octets pour 3) plus l'enveloppe `{ "filename", "content" }`.
+      // 10 Mo bruts → ~13,33 Mo de base64 : "14mb" laisse passer un fichier de
+      // 10 Mo pile sans rejet réseau prématuré, tout en restant loin du plafond
+      // Vercel (100 Mo). Ne pas redescendre à "10mb" : ça rognerait la limite
+      // réelle à ~7,5 Mo de fichier brut, en contradiction avec l'UI.
+      sizeLimit: "14mb",
     },
   },
 };

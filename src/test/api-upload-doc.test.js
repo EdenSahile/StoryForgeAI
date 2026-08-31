@@ -610,3 +610,28 @@ describe('api/upload-doc — collision de préfixe assaini (deux filenames diff�
     expect(res.body.success).toBe(true);
   });
 });
+
+describe('api/upload-doc — limite de taille du corps de requête', () => {
+  // Le contrôle client (ragService.js) rejette un fichier BRUT > 10 Mo. Le corps
+  // JSON envoyé ici contient ce fichier encodé en base64 (+33 %) : le
+  // `bodyParser.sizeLimit` doit couvrir cet overhead, sinon un fichier proche de
+  // 10 Mo est rejeté au niveau réseau alors que le client l'a laissé passer.
+  const RAW_FILE_LIMIT = 10 * 1024 * 1024;
+  const BASE64_OVERHEAD = 4 / 3; // 4 caractères base64 pour 3 octets
+
+  function sizeLimitToBytes(limit) {
+    const match = /^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/i.exec(limit.trim());
+    if (!match) throw new Error(`Format de sizeLimit non reconnu : ${limit}`);
+    const value = parseFloat(match[1]);
+    const unit = (match[2] || 'b').toLowerCase();
+    const factor = { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3 }[unit];
+    return value * factor;
+  }
+
+  it('le sizeLimit du bodyParser couvre 10 Mo de fichier brut une fois encodé en base64', async () => {
+    const mod = await import('../../api/upload-doc.js');
+    const sizeLimit = mod.config.api.bodyParser.sizeLimit;
+
+    expect(sizeLimitToBytes(sizeLimit)).toBeGreaterThanOrEqual(RAW_FILE_LIMIT * BASE64_OVERHEAD);
+  });
+});
