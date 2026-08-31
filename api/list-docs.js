@@ -2,17 +2,11 @@
 // Retourne la liste des documents indexés dans Pinecone
 
 import { Pinecone } from "@pinecone-database/pinecone";
+import { applyCors } from "./_cors.js";
 
 export default async function handler(req, res) {
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173', 'https://storypilot-ai.vercel.app'];
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (applyCors(req, res, { methods: "GET, OPTIONS" })) return;
 
-  if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "GET") return res.status(405).json({ error: "Méthode non autorisée" });
 
   const { PINECONE_API_KEY, PINECONE_INDEX_URL } = process.env;
