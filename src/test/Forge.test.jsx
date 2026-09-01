@@ -342,6 +342,29 @@ describe('Forge — zone d\'upload pilotée par getConfig (demoMode)', () => {
     expect(screen.getByRole('button', { name: 'delete' })).toBeDisabled();
   });
 
+  it('la zone d\'upload et le bouton d\'indexation désactivés n\'ont pas d\'opacité diluante (WCAG AA)', async () => {
+    // L'état "désactivé" (démo) reste signalé par cursor/pointer-events et le
+    // texte, mais sans opacity qui ferait passer .upload-title (onSurface) et
+    // .upload-sub (onSurfaceVariant) sous 4.5:1. On teste la propriété qui
+    // portait le bug, pas une couleur de palette (cf. test EmptyState).
+    getConfig.mockResolvedValue({ demoMode: true });
+    renderForge({
+      documents: [{ id: 1, name: 'doc.pdf', status: 'indexed', chunks: 3 }],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Upload désactivé en mode démo publique')).toBeInTheDocument();
+    });
+
+    const uploadZone = screen
+      .getByText('Upload désactivé en mode démo publique')
+      .closest('div');
+    expect(getComputedStyle(uploadZone).opacity).toBe('1');
+
+    const indexBtn = screen.getByRole('button', { name: 'Indexer les documents' });
+    expect(getComputedStyle(indexBtn).opacity).toBe('1');
+  });
+
   it('reste verrouillée (fail-closed) tant que getConfig() n\'a pas résolu', () => {
     getConfig.mockImplementation(() => new Promise(() => {}));
     renderForge();
