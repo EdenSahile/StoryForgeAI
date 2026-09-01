@@ -56,7 +56,7 @@ describe('Settings — bloc "À propos"', () => {
     render(<Settings />);
 
     expect(screen.getByText('StoryPilot AI')).toBeInTheDocument();
-    expect(screen.getByText('v2.0 — juin 2026')).toBeInTheDocument();
+    expect(screen.getByText('v2.0 (juin 2026)')).toBeInTheDocument();
     expect(screen.getByText(/Générateur de user stories à partir d'un brief métier/)).toBeInTheDocument();
   });
 

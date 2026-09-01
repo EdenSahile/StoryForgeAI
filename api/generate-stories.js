@@ -250,7 +250,7 @@ Sépare chaque story par ---${contextBlock}`,
 
       if (budgetEpuise) {
         return res.status(response.status).json({
-          error: 'La démo a atteint son budget mensuel — réessaie le mois prochain.',
+          error: 'La démo a atteint son budget mensuel, réessaie le mois prochain.',
         });
       }
 

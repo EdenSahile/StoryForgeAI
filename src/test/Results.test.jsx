@@ -33,7 +33,7 @@ function declaredColor(el) {
 describe('Results — badge RAG (3 états)', () => {
   it('état "neutral" : "RAG non utilisé" quand aucun chunk, sans bandeau d\'erreur', () => {
     render(<Results stories={STORIES} ragChunks={[]} />);
-    expect(screen.getByText('RAG non utilisé — US Générique')).toBeInTheDocument();
+    expect(screen.getByText('RAG non utilisé (US Générique)')).toBeInTheDocument();
     expect(screen.queryByText('Sources utilisées')).not.toBeInTheDocument();
     expect(
       screen.queryByText(/La base de connaissances n'a pas pu être consultée/i)
@@ -67,7 +67,7 @@ describe('Results — badge RAG (3 états)', () => {
       screen.getByText(/La base de connaissances n'a pas pu être consultée/i)
     ).toBeInTheDocument();
     expect(screen.getByText('RAG indisponible')).toBeInTheDocument();
-    expect(screen.queryByText('RAG non utilisé — US Générique')).not.toBeInTheDocument();
+    expect(screen.queryByText('RAG non utilisé (US Générique)')).not.toBeInTheDocument();
   });
 
   it('l\'état "error" est visuellement distinct de l\'état "neutral" (couleur d\'avertissement, pas le gris neutre)', () => {
@@ -76,7 +76,7 @@ describe('Results — badge RAG (3 états)', () => {
     unmount();
 
     render(<Results stories={STORIES} ragChunks={[]} />);
-    const neutralColor = declaredColor(screen.getByText('RAG non utilisé — US Générique'));
+    const neutralColor = declaredColor(screen.getByText('RAG non utilisé (US Générique)'));
 
     expect(errorColor).toBeTruthy();
     expect(neutralColor).toBeTruthy();

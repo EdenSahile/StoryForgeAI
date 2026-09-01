@@ -698,7 +698,7 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
 
           {truncated && (
             <TruncationWarning>
-              <span>⚠️ Génération possiblement incomplète — la dernière user story est à vérifier.</span>
+              <span>⚠️ Génération possiblement incomplète, la dernière user story est à vérifier.</span>
               {onRegenerate && (
                 <RegenerateBtn onClick={onRegenerate}>🔄 Régénérer</RegenerateBtn>
               )}
@@ -722,7 +722,7 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
                   ? "RAG actif"
                   : ragError
                   ? "RAG indisponible"
-                  : "RAG non utilisé — US Générique"}
+                  : "RAG non utilisé (US Générique)"}
               </RagBadge>
             </div>
             <ActionBtns>

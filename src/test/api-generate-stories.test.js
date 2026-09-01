@@ -202,7 +202,7 @@ describe('api/generate-stories — erreurs upstream Anthropic (budget vs génér
 
     await handler(createMockReq({ body: briefValide }), res);
 
-    expect(res.body).toEqual({ error: 'La démo a atteint son budget mensuel — réessaie le mois prochain.' });
+    expect(res.body).toEqual({ error: 'La démo a atteint son budget mensuel, réessaie le mois prochain.' });
   });
 
   it('429 avec "spend cap" dans le message → message budget, pas "Trop de requêtes"', async () => {
@@ -219,7 +219,7 @@ describe('api/generate-stories — erreurs upstream Anthropic (budget vs génér
 
     await handler(createMockReq({ body: briefValide }), res);
 
-    expect(res.body).toEqual({ error: 'La démo a atteint son budget mensuel — réessaie le mois prochain.' });
+    expect(res.body).toEqual({ error: 'La démo a atteint son budget mensuel, réessaie le mois prochain.' });
   });
 
   it('429 rate limit standard (RPM/TPM, sans mot-clé budget) → toujours "Trop de requêtes"', async () => {

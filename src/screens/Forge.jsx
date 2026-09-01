@@ -1372,7 +1372,7 @@ export default function Forge({
         <LeftColumn>
           <PromptSection>
             <ModeHint>
-              <strong>Démo Lumeo Boutique</strong> — e-commerce fictif de déco / luminaires. Les documents sont pré-chargés et utilisés automatiquement (en production, chaque entreprise importerait les siens). Utilisez les suggestions ci-dessous ou décrivez un besoin lié aux commandes, retours, livraison ou SAV.
+              <strong>Démo Lumeo Boutique</strong> : e-commerce fictif de déco / luminaires. Les documents sont pré-chargés et utilisés automatiquement (en production, chaque entreprise importerait les siens). Utilisez les suggestions ci-dessous ou décrivez un besoin lié aux commandes, retours, livraison ou SAV.
               <br /><br />
               <em>Un brief hors du contexte Lumeo Boutique produit automatiquement des stories génériques. Active "Générer sans RAG" pour forcer ce mode manuellement.</em>
             </ModeHint>
@@ -1421,7 +1421,7 @@ export default function Forge({
             {keepBrief && status === "idle" && (
               <RestoreHint>
                 <span className="material-symbols-outlined">info</span>
-                Brief précédent restauré — cliquez sur Générer pour relancer.
+                Brief précédent restauré, cliquez sur Générer pour relancer.
               </RestoreHint>
             )}
 
@@ -1470,7 +1470,7 @@ export default function Forge({
             <RagUnavailableNotice>
               <span className="icon" aria-hidden="true">cloud_off</span>
               <span>
-                Base de connaissances indisponible — les documents ne seront pas utilisés pour cette génération.
+                Base de connaissances indisponible : les documents ne seront pas utilisés pour cette génération.
               </span>
             </RagUnavailableNotice>
           )}
@@ -1622,7 +1622,7 @@ export default function Forge({
                         disabled={demoMode}
                         title={
                           demoMode
-                            ? "Suppression désactivée en mode démo — pour préserver l'expérience des autres visiteurs."
+                            ? "Suppression désactivée en mode démo, pour préserver l'expérience des autres visiteurs."
                             : `Supprimer ${doc.name}`
                         }
                         onClick={demoMode ? undefined : () => handleDeleteDoc(doc)}
@@ -1698,7 +1698,7 @@ export default function Forge({
                 />
                 <span className="upload-icon">cloud_upload</span>
                 <p className="upload-title">Glissez vos docs ici</p>
-                <p className="upload-sub">ou cliquez pour parcourir — Max 10 Mo</p>
+                <p className="upload-sub">ou cliquez pour parcourir (Max 10 Mo)</p>
                 <div className="format-badges">
                   <span className="format-badge">PDF</span>
                   <span className="format-badge">DOCX</span>
@@ -1710,7 +1710,7 @@ export default function Forge({
             {demoMode && (
               <IndexBtn
                 disabled
-                title="Indexation désactivée en mode démo — pour préserver l'expérience des autres visiteurs."
+                title="Indexation désactivée en mode démo, pour préserver l'expérience des autres visiteurs."
                 style={{ opacity: 0.35, cursor: "not-allowed" }}
               >
                 Indexer les documents

@@ -480,21 +480,21 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
   const stats = [
     {
       label: "Stories sauvegardées ce mois",
-      value: storiesThisMonth || "—",
+      value: storiesThisMonth || "·",
       sub: `via ${generationsThisMonth} génération(s)`,
       color: theme.colors.primary,
       icon: "description",
     },
     {
       label: "Générations totales",
-      value: generations.length || "—",
+      value: generations.length || "·",
       sub: "Sauvegardées en local",
       color: theme.colors.secondary,
       icon: "folder_zip",
     },
     {
       label: "Dernière génération",
-      value: lastGen ? formatRelativeDate(lastGen.createdAt) : "—",
+      value: lastGen ? formatRelativeDate(lastGen.createdAt) : "·",
       sub: lastGen ? lastGen.title : null,
       color: theme.colors.success,
       icon: "schedule",

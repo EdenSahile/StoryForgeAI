@@ -319,7 +319,7 @@ export default function Settings({ themeMode, onThemeChange }) {
               <div className="logo">auto_stories</div>
               <div className="meta">
                 <div className="name">StoryPilot AI</div>
-                <div className="version">v2.0 — juin 2026</div>
+                <div className="version">v2.0 (juin 2026)</div>
               </div>
             </AppIdentity>
             <AboutDesc>
