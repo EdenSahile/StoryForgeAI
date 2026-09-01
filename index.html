@@ -6,7 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!--
+      Police d'icônes sous-ensemblée (icon_names) : le site n'utilise que 38
+      glyphes fixes et une seule graisse (wght 400 partout, seul FILL varie
+      0↔1 pour l'état actif de la nav). La version complète (plage 100..700,
+      tous les glyphes) transférait ~1,1 Mo ; ce sous-ensemble ~6,8 Ko.
+      Ajouter tout nouveau glyphe à la liste icon_names sinon il s'affichera
+      en carré vide. Liste tenue à jour par grep exhaustif (cf. commit).
+      Piège : le sous-ensemble ne contient QUE la ligature minuscule ; un
+      span d'icône sous un parent text-transform: uppercase doit forcer
+      text-transform: none (le reset global le fait déjà pour class="icon"
+      et .material-symbols-outlined ; les autres classes d'icône doivent le
+      déclarer — cf. .spin-icon dans Forge.jsx).
+    -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL,wght@0..1,400&icon_names=add,arrow_back,article,auto_awesome,auto_stories,bolt,bookmark,check_circle,chevron_right,cloud_off,cloud_upload,content_copy,dark_mode,dashboard,delete,delete_sweep,description,done,download,edit,edit_note,expand_more,folder_open,folder_zip,history,info,insert_drive_file,light_mode,palette,picture_as_pdf,restart_alt,schedule,search,settings,storage,sync,sync_saved_locally,view_kanban&display=swap" rel="stylesheet" />
     <meta name="description" content="StoryPilot AI - Générateur de user stories avec Claude API et streaming en temps réel" />
     <meta name="theme-color" content="#f4f6f4" />
     <title>StoryPilot AI</title>
