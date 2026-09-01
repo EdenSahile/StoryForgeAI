@@ -1,5 +1,19 @@
 # StoryPilot AI — Contexte actif
-*Mis à jour le 2026-08-25*
+*Mis à jour le 2026-09-01*
+
+---
+
+## Session INCIDENT-PINECONE (2026-09-01) — 500 sur /api/retrieve-context pendant les tests recruteur : incident Pinecone, pas un bug
+
+**Contexte :** pendant les tests recruteur en conditions réelles sur `storypilot-ai.vercel.app` (double-clic sur "Générer", rechargement de la page pendant une génération en cours), 4 appels consécutifs à `/api/retrieve-context` ont renvoyé une erreur 500.
+
+**Diagnostic — OpenAI écarté :** le dashboard Usage OpenAI a été vérifié sur la période concernée. Les appels à `text-embedding-3-small` apparaissent normaux (88 requêtes réussies sur 7 jours, 5,096K tokens, aucun signal de quota dépassé ni de throttling, tier et spend limit largement dans les clous). OpenAI n'est pas la cause.
+
+**Cause confirmée — incident Pinecone :** incident actif côté Pinecone, visible sur leur page de statut officielle : "5xx errors on some control plane operations", ouvert le 2026-09-01 à 15:04 UTC, mis à jour à 15:39 UTC avec la précision "likely related to ongoing issues in GCP. Affected services include Console, Index management, Assistant management, and APIs served at api.pinecone.io" — soit exactement l'endpoint utilisé par `index.query()` dans `api/retrieve-context.js`.
+
+**Comportement de l'app pendant l'incident — validé correct :** le fallback prévu (bandeau "RAG indisponible", génération qui continue sans contexte documentaire) a fonctionné comme attendu. Aucun bug de code, aucune correction nécessaire.
+
+**Action de suivi :** retester le flux RAG une fois l'incident Pinecone résolu, avant de cocher définitivement la partie RAG de la checklist "Tests recruteur — À valider" (ligne ~528 de ce fichier).
 
 ---
 
@@ -533,6 +547,7 @@ Clé localStorage : `storyforge_library`
 | Recharger page pendant génération | ⬜ À tester |
 | Clic rapide multiple sur "Générer" | ⬜ À tester |
 | Génération successive (2x) | ⬜ À tester |
+| Flux RAG / `retrieve-context` (bandeau sources, scores) | ⬜ Bloqué — incident Pinecone 2026-09-01 (cf. session INCIDENT-PINECONE), retester une fois résolu |
 
 ### UX / Interface
 | Test | Statut |
