@@ -13,6 +13,10 @@ import {
   getConfig,
 } from "../components/services/ragService";
 
+// Accord singulier/pluriel simple : 0 et 1 restent au singulier (comme le
+// badge "N indexé(s)" du panneau KB), s à partir de 2.
+const plural = (n, word) => `${word}${n > 1 ? "s" : ""}`;
+
 // ─── Animations ───────────────────────────────────────────
 const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(12px); }
@@ -1341,6 +1345,9 @@ export default function Forge({
     handleFileUpload(files);
   };
 
+  // Nombre de chunks du document en cours de suppression (0 si aucune modale).
+  const pendingDeleteChunks = pendingDeleteDoc?.chunks || 0;
+
   const themeToggleLabel =
     themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre";
 
@@ -1620,7 +1627,7 @@ export default function Forge({
                       )}
                     </div>
                     {doc.status === "indexed" && (
-                      <span className="chunks-badge">✓ {doc.chunks} chunks</span>
+                      <span className="chunks-badge">✓ {doc.chunks} {plural(doc.chunks, "chunk")}</span>
                     )}
                     {doc.status === "loading" && (
                       <span className="percent">{doc.pct}%</span>
@@ -1737,7 +1744,7 @@ export default function Forge({
         <ConfirmModal
           title="Supprimer ce document ?"
           itemLabel={pendingDeleteDoc.name}
-          detail={`${pendingDeleteDoc.chunks || 0} chunks indexés`}
+          detail={`${pendingDeleteChunks} ${plural(pendingDeleteChunks, "chunk")} ${plural(pendingDeleteChunks, "indexé")}`}
           consequence="Ce document ne sera plus utilisé pour générer des user stories."
           onConfirm={handleConfirmDelete}
           onCancel={handleCancelDelete}

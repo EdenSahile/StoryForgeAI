@@ -543,13 +543,31 @@ describe('Forge — pop-in de confirmation de suppression', () => {
 
     const modal = screen.getByText('Supprimer ce document ?').parentElement;
     expect(within(modal).getByText('politique-retours.pdf')).toBeInTheDocument();
-    expect(within(modal).getByText(/5 chunks/)).toBeInTheDocument();
+    expect(within(modal).getByText('5 chunks indexés')).toBeInTheDocument();
     expect(
       within(modal).getByText('Ce document ne sera plus utilisé pour générer des user stories.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Annuler' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Supprimer' })).toBeInTheDocument();
     expect(deleteDocument).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [1, '1 chunk indexé'],
+    [3, '3 chunks indexés'],
+    [0, '0 chunk indexé'],
+  ])('accorde le détail de la pop-in : %i chunk(s) → "%s"', async (chunks, expected) => {
+    renderForge({
+      documents: [{ id: 1, name: 'doc.pdf', status: 'indexed', chunks }],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'delete' })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'delete' }));
+
+    const modal = screen.getByText('Supprimer ce document ?').parentElement;
+    expect(within(modal).getByText(expected)).toBeInTheDocument();
   });
 
   it('"Annuler" ferme la pop-in sans rien supprimer', async () => {
@@ -616,6 +634,19 @@ describe('Forge — lisibilité de la carte document (DocCard)', () => {
 
     expect(screen.getAllByText('✓ 4 chunks')).toHaveLength(1);
     expect(screen.getByText('Indexé')).toBeInTheDocument();
+  });
+
+  it("accorde le badge en nombre : « chunk » au singulier pour 1, « chunks » au pluriel sinon", () => {
+    renderForge({
+      documents: [
+        { id: 1, name: 'un-seul.pdf', status: 'indexed', chunks: 1 },
+        { id: 2, name: 'plusieurs.pdf', status: 'indexed', chunks: 3 },
+      ],
+    });
+
+    expect(screen.getByText('✓ 1 chunk')).toBeInTheDocument();
+    expect(screen.queryByText('✓ 1 chunks')).not.toBeInTheDocument();
+    expect(screen.getByText('✓ 3 chunks')).toBeInTheDocument();
   });
 
   it("dérive l'icône du document de son extension réelle, pas de son statut de traitement", () => {
