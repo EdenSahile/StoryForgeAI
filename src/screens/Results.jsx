@@ -130,6 +130,12 @@ const LeftColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${theme.spacing.lg};
+  /* Piège CSS Grid : sans min-width: 0, cette colonne ne peut pas rétrécir
+     sous la largeur intrinsèque des StoryCard (texte long, tokens Gherkin
+     insécables) et toute la page déborde horizontalement sur mobile.
+     Library.jsx n'a pas ce bug car sa colonne équivalente est en flex, pas
+     en grid. Aligné sur LeftColumn de Forge.jsx qui a déjà min-width: 0. */
+  min-width: 0;
 `;
 
 const PageHeader = styled.div`
@@ -334,6 +340,9 @@ const RightColumn = styled.aside`
   display: flex;
   flex-direction: column;
   gap: ${theme.spacing.lg};
+  /* Même piège grid que LeftColumn : min-width: 0 pour que la colonne de
+     320px ne soit pas repoussée par un contenu large (noms de fichiers). */
+  min-width: 0;
 
   @media (max-width: ${theme.breakpoints.tablet}) {
     display: none;

@@ -103,6 +103,7 @@ const CriteriaSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${theme.spacing.sm};
+  min-width: 0; /* enfant de CardGrid : évite que la colonne s'élargisse */
 
   h4 {
     font-size: ${theme.fontSizes.xs};
@@ -137,6 +138,7 @@ const GherkinSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${theme.spacing.sm};
+  min-width: 0; /* enfant de CardGrid : GherkinBlock scrolle en interne (overflow-x) */
 
   h4 {
     font-size: ${theme.fontSizes.xs};

@@ -212,3 +212,15 @@ describe('Dashboard — noms accessibles des icônes', () => {
     expect(screen.queryByRole('button', { name: 'delete' })).not.toBeInTheDocument();
   });
 });
+
+describe('Dashboard — pas de débordement horizontal mobile (piège CSS Grid)', () => {
+  it('les enfants de grille (StatCard, RecentSection) ont min-width: 0 pour pouvoir rétrécir', () => {
+    saveGeneration({ brief: 'Une génération', stories: 's', storiesCount: 1 });
+    renderDashboard();
+
+    // Sans min-width: 0, un titre de génération long/insécable empêche la
+    // colonne de rétrécir et fait déborder la page sur mobile.
+    expect(getComputedStyle(getStatCard('Générations totales')).minWidth).toBe('0px');
+    expect(getComputedStyle(getRecentSection()).minWidth).toBe('0px');
+  });
+});

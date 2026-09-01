@@ -259,3 +259,17 @@ describe('Results — noms accessibles des icônes', () => {
     ).toBeGreaterThan(0);
   });
 });
+
+describe('Results — pas de débordement horizontal mobile (piège CSS Grid)', () => {
+  it('la colonne des StoryCard (LeftColumn) a min-width: 0 pour pouvoir rétrécir', () => {
+    render(<Results stories={STORIES} />);
+
+    // heading -> PageHeader (div) -> LeftColumn (div). Sans min-width: 0, la
+    // colonne 1fr ne peut pas passer sous la largeur du contenu et la page
+    // déborde sur mobile (bug remonté sur téléphone réel).
+    const leftColumn = screen
+      .getByRole('heading', { name: 'Backlog de Génération' })
+      .closest('div').parentElement;
+    expect(getComputedStyle(leftColumn).minWidth).toBe('0px');
+  });
+});
