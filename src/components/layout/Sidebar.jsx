@@ -34,7 +34,8 @@ const Logo = styled.div`
     font-size: ${theme.fontSizes.xs};
     color: ${theme.colors.primary};
     letter-spacing: 0.12em;
-    opacity: 0.7;
+    /* Pas d'opacity : diluait le texte sous le seuil WCAG AA
+       (2.99:1 en clair). primary plein = 5.30:1 clair / 7.70:1 sombre. */
     margin-top: 2px;
   }
 `;
@@ -71,9 +72,13 @@ const NavItem = styled.button`
 
   color: ${({ $active }) =>
     $active ? theme.colors.primary : theme.colors.onSurfaceVariant};
+  /* 8% et non 12% : à 12% le fond teinté (≈ #e4efea en clair) faisait
+     tomber le texte primary à 4.50:1, sous le seuil WCAG AA. À 8% le fond
+     est plus clair (≈ #edf4f1) → 4.76:1 clair / 6.76:1 sombre. L'état
+     actif reste porté par la barre latérale, le gras et la couleur. */
   background: ${({ $active }) =>
     $active
-      ? `color-mix(in srgb, ${theme.colors.primary} 12%, transparent)`
+      ? `color-mix(in srgb, ${theme.colors.primary} 8%, transparent)`
       : "transparent"};
   border-right-color: ${({ $active }) =>
     $active ? theme.colors.primary : "transparent"};

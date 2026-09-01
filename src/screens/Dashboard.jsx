@@ -196,8 +196,14 @@ const StatCard = styled.div`
 
   .sub {
     font-size: ${theme.fontSizes.xs};
-    color: ${({ $color }) => $color || theme.colors.primary};
-    opacity: 0.8;
+    /* Texte d'appoint : token de texte secondaire (thémé), pas la couleur
+       d'accent diluée. L'accent + opacity 0.8 tombait sous WCAG AA
+       (3.60 / 3.26 / 4.47 en clair ; secondary à 2.82 en sombre, et même
+       à pleine opacité #78716c ne peut pas passer 4.5:1 dans les deux
+       thèmes car sa valeur est identique en clair et en sombre).
+       onSurfaceVariant = 6.03:1 clair / 7.57:1 sombre. Le grand nombre
+       (.value) garde sa couleur d'accent (texte large, seuil 3:1). */
+    color: ${theme.colors.onSurfaceVariant};
   }
 
   .mobile-icon {
