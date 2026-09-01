@@ -46,7 +46,17 @@ const Nav = styled.nav`
   gap: ${theme.spacing.xs};
 `;
 
-const NavItem = styled.a`
+const NavItem = styled.button`
+  /* <button> (et non <a> sans href) : atteignable au clavier, activable
+     Entrée/Espace. Reset des styles UA du bouton pour retrouver exactement le
+     rendu de l'ancien <a> (qui héritait font/couleur, sans bordure ni fond). */
+  appearance: none;
+  border: none;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+
   display: flex;
   align-items: center;
   gap: ${theme.spacing.md};
@@ -172,6 +182,7 @@ export default function Sidebar({ activeItem = "dashboard", onNavigate }) {
         {NAV_ITEMS.map((item) => (
           <NavItem
             key={item.id}
+            type="button"
             $active={activeItem === item.id}
             onClick={() => onNavigate?.(item.id)}
           >

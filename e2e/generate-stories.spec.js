@@ -87,11 +87,11 @@ test.describe('Parcours critique — génération de user stories', () => {
 
     // La Sidebar affiche un libellé texte à largeur nulle tant qu'elle n'est pas survolée
     // (constaté en debug : le <span> "Brief" a un getBoundingClientRect() de 0x0 hors hover,
-    // Playwright le juge donc non cliquable). On cible le lien <a> parent, dont la zone
+    // Playwright le juge donc non cliquable). On cible le <button> parent, dont la zone
     // cliquable réelle ne dépend pas de cet état. `aside nav` distingue explicitement la
     // Sidebar desktop du BottomNav mobile : les deux existent dans le DOM en permanence, et
     // "Brief" y apparaît deux fois — un sélecteur non scopé est ambigu (strict mode violation).
-    await page.locator('aside nav a', { hasText: 'Brief' }).click();
+    await page.locator('aside nav button', { hasText: 'Brief' }).click();
 
     const textarea = page.getByPlaceholder(/Décris ton besoin métier ici/);
     await textarea.fill(BRIEF);
@@ -107,7 +107,7 @@ test.describe('Parcours critique — génération de user stories', () => {
   test('la génération réussie est sauvegardée automatiquement et retrouvable dans l\'Historique', async ({ page }) => {
     await page.goto('/');
 
-    await page.locator('aside nav a', { hasText: 'Brief' }).click();
+    await page.locator('aside nav button', { hasText: 'Brief' }).click();
 
     const textarea = page.getByPlaceholder(/Décris ton besoin métier ici/);
     await textarea.fill(BRIEF);
@@ -120,9 +120,9 @@ test.describe('Parcours critique — génération de user stories', () => {
     await expect(page.getByRole('heading', { name: 'Backlog de Génération' })).toBeVisible();
     await expect(page.getByText(/suivre ma commande en temps réel/)).toBeVisible();
 
-    // Même piège de sélecteur que pour "Brief" : cibler aside nav a, jamais le texte seul
+    // Même piège de sélecteur que pour "Brief" : cibler aside nav button, jamais le texte seul
     // (le libellé "Historique" existe aussi dans le BottomNav mobile, présent dans le DOM).
-    await page.locator('aside nav a', { hasText: 'Historique' }).click();
+    await page.locator('aside nav button', { hasText: 'Historique' }).click();
 
     // Titre de l'entrée = début du brief tronqué à 60 caractères (src/utils/libraryStorage.js) :
     // le début de la constante BRIEF suffit à l'identifier sans deviner la troncature exacte.
@@ -152,7 +152,7 @@ test.describe('Parcours critique — génération de user stories', () => {
 
     await page.goto('/');
 
-    await page.locator('aside nav a', { hasText: 'Brief' }).click();
+    await page.locator('aside nav button', { hasText: 'Brief' }).click();
 
     const textarea = page.getByPlaceholder(/Décris ton besoin métier ici/);
     await textarea.fill(BRIEF);
@@ -182,16 +182,16 @@ test.describe('Parcours critique — génération de user stories', () => {
     // est neutre (pas de localStorage), donc l'app démarre ici, pas sur Dashboard.
     await expect(page.getByPlaceholder(/Décris ton besoin métier ici/)).toBeVisible();
 
-    await page.locator('aside nav a', { hasText: 'Historique' }).click();
+    await page.locator('aside nav button', { hasText: 'Historique' }).click();
     await expect(page.getByRole('heading', { name: 'Historique' })).toBeVisible();
 
     // Libellé Sidebar et titre d'écran sont désormais identiques ("Réglages") — scope quand
-    // même sur aside nav a : le libellé existe aussi dans le BottomNav mobile, présent dans
+    // même sur aside nav button : le libellé existe aussi dans le BottomNav mobile, présent dans
     // le DOM en permanence (même piège que pour "Brief"/"Historique").
-    await page.locator('aside nav a', { hasText: 'Réglages' }).click();
+    await page.locator('aside nav button', { hasText: 'Réglages' }).click();
     await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
 
-    await page.locator('aside nav a', { hasText: 'Tableau de bord' }).click();
+    await page.locator('aside nav button', { hasText: 'Tableau de bord' }).click();
     await expect(page.getByRole('heading', { name: /Bonjour/ })).toBeVisible();
   });
 });
