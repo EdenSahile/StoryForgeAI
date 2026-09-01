@@ -3,6 +3,12 @@ import { useState, useEffect } from "react";
 import { getGenerations } from "../utils/libraryStorage";
 import { parseStories } from "../logic/storyParser";
 import { storiesToJiraCSV } from "../logic/csvExport";
+import {
+  formatStoryAsPlainText,
+  formatStoryAsHtml,
+  formatAllStoriesAsPlainText,
+  formatAllStoriesAsHtml,
+} from "../logic/storyFormatter";
 import styled, { keyframes } from "styled-components";
 import { theme } from "../theme";
 import StoryCard from "../components/StoryCard";
@@ -604,6 +610,44 @@ function TrelloUnavailableMsg() {
   );
 }
 
+/**
+ * Écrit deux représentations dans le presse-papiers (texte brut + HTML riche)
+ * via l'API Clipboard moderne. Repli propre sur `writeText(plainText)` si
+ * `ClipboardItem` / `clipboard.write` n'est pas disponible (restrictions
+ * historiques de Firefox) ou échoue. Ne lève jamais.
+ * @param {string} plainText
+ * @param {string} html
+ * @returns {Promise<boolean>} true si l'écriture a réussi (riche ou repli)
+ */
+async function writeToClipboard(plainText, html) {
+  const canWriteRich =
+    typeof ClipboardItem !== "undefined" &&
+    typeof navigator !== "undefined" &&
+    navigator.clipboard &&
+    typeof navigator.clipboard.write === "function";
+
+  if (canWriteRich && html) {
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/plain": new Blob([plainText], { type: "text/plain" }),
+          "text/html": new Blob([html], { type: "text/html" }),
+        }),
+      ]);
+      return true;
+    } catch {
+      // repli texte brut ci-dessous
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(plainText);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ─── Component ────────────────────────────────────────────
 export default function Results({ brief = "", stories, ragChunks = [], ragError = false, onNewGeneration, onRegenerate, onNavigate, truncated = false, autoSaved = false, themeMode, onThemeChange }) {
   const [copied, setCopied] = useState(false);
@@ -643,22 +687,26 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
   }, [autoSaved]);
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(stories);
+    // Repli sur le texte brut si le parsing n'a rien donné (le rendu affiche
+    // alors `stories` tel quel) — sinon on formate depuis les champs fiables.
+    const plainText = parsedStories.length
+      ? formatAllStoriesAsPlainText(parsedStories)
+      : stories || "";
+    const html = parsedStories.length ? formatAllStoriesAsHtml(parsedStories) : "";
+
+    if (await writeToClipboard(plainText, html)) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // silent
     }
   };
 
   const handleCopyStory = async (story) => {
-    try {
-      await navigator.clipboard.writeText(story.rawBlock);
+    const plainText = formatStoryAsPlainText(story);
+    const html = formatStoryAsHtml(story);
+
+    if (await writeToClipboard(plainText, html)) {
       setCopiedStoryId(story.id);
       setTimeout(() => setCopiedStoryId(null), 2000);
-    } catch {
-      // silent
     }
   };
 
