@@ -1,6 +1,36 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import Results from '../screens/Results';
+
+// Polyfill minimal de ClipboardItem pour jsdom : conserve la map
+// { "text/plain": Blob, "text/html": Blob } pour l'inspecter dans les tests.
+class FakeClipboardItem {
+  constructor(items) {
+    this.items = items;
+  }
+}
+
+/**
+ * Installe un faux presse-papiers exposant `write` (API riche) + `writeText`
+ * (repli). Retourne les deux mocks.
+ */
+function mockClipboard() {
+  const write = vi.fn().mockResolvedValue(undefined);
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  global.ClipboardItem = FakeClipboardItem;
+  Object.assign(navigator, { clipboard: { write, writeText } });
+  return { write, writeText };
+}
+
+/** Lit le contenu d'un type MIME depuis le premier ClipboardItem écrit. */
+async function readWritten(write, type) {
+  const item = write.mock.calls[0][0][0];
+  return item.items[type].text();
+}
+
+afterEach(() => {
+  delete global.ClipboardItem;
+});
 
 const STORIES = `**User Story 1** En tant qu'utilisateur, je veux me connecter afin d'accéder à mon compte.
 
@@ -116,30 +146,59 @@ describe('Results — boutons Copier', () => {
     expect(screen.getAllByRole('button', { name: 'Copier cette user story' })).toHaveLength(2);
   });
 
-  it('copie uniquement le contenu de la story cliquée', async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, { clipboard: { writeText } });
+  it('copie uniquement le contenu de la story cliquée, en texte propre + HTML', async () => {
+    const { write } = mockClipboard();
 
     render(<Results stories={STORIES} />);
     const storyButtons = screen.getAllByRole('button', { name: 'Copier cette user story' });
-    fireEvent.click(storyButtons[1]);
+    fireEvent.click(storyButtons[1]); // 2e story : administrateur
 
-    await waitFor(() => {
-      expect(writeText).toHaveBeenCalledWith(expect.stringContaining('User Story 2'));
-    });
-    expect(writeText).not.toHaveBeenCalledWith(STORIES);
+    await waitFor(() => expect(write).toHaveBeenCalledTimes(1));
+
+    const plain = await readWritten(write, 'text/plain');
+    const html = await readWritten(write, 'text/html');
+
+    expect(plain).toContain('US-02');
+    expect(plain).toContain('administrateur');
+    expect(plain).not.toContain('utilisateur, je veux me connecter');
+    // texte propre : aucun marqueur markdown résiduel
+    expect(plain).not.toMatch(/\*\*/);
+    // HTML riche : vraies balises
+    expect(html).toContain('<li>');
   });
 
-  it('le bouton global copie tout le texte brut des stories', async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, { clipboard: { writeText } });
+  it('le bouton global copie toutes les stories en texte propre + HTML', async () => {
+    const { write } = mockClipboard();
 
     render(<Results stories={STORIES} />);
     fireEvent.click(screen.getByText('Copier tout'));
 
-    await waitFor(() => {
-      expect(writeText).toHaveBeenCalledWith(STORIES);
-    });
+    await waitFor(() => expect(write).toHaveBeenCalledTimes(1));
+
+    const plain = await readWritten(write, 'text/plain');
+    const html = await readWritten(write, 'text/html');
+
+    expect(plain).toContain('US-01');
+    expect(plain).toContain('US-02');
+    expect(plain).not.toMatch(/\*\*User Story/);
+    expect(html).toContain('<h2>');
+    expect(html).toContain('<hr>');
+  });
+
+  it('repli sur writeText(texte brut) si l\'API riche ClipboardItem est absente', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const write = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { write, writeText } });
+    // pas de global.ClipboardItem -> pas d'écriture riche possible
+
+    render(<Results stories={STORIES} />);
+    fireEvent.click(screen.getByText('Copier tout'));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(write).not.toHaveBeenCalled();
+    const [text] = writeText.mock.calls[0];
+    expect(text).toContain('US-01');
+    expect(text).not.toMatch(/\*\*/);
   });
 });
 
