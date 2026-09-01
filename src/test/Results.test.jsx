@@ -200,12 +200,11 @@ describe('Results — boutons d\'export par story', () => {
 });
 
 describe('Results — noms accessibles des icônes', () => {
-  it('les boutons icône-seule de la TopBar ont un nom accessible explicite (pas le nom de l\'icône)', () => {
+  it('le bouton bascule de thème de la TopBar a un nom accessible explicite (pas le nom de l\'icône)', () => {
     render(<Results stories={STORIES} themeMode="light" onThemeChange={vi.fn()} />);
 
-    // name EXACT : échoue si "dark_mode" / "notifications" fuit dans le nom.
+    // name EXACT : échoue si "dark_mode" fuit dans le nom.
     expect(screen.getByRole('button', { name: 'Passer en thème sombre' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Notifications' })).toBeInTheDocument();
   });
 
   it('les boutons d\'action principaux ont pour nom leur libellé visible seul', () => {

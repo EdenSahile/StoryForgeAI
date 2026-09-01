@@ -656,7 +656,6 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
               {themeMode === "dark" ? "light_mode" : "dark_mode"}
             </span>
           </IconBtn>
-          <IconBtn aria-label="Notifications"><span className="icon" aria-hidden="true">notifications</span></IconBtn>
         </TopBarRight>
       </TopBar>
 
