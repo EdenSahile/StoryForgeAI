@@ -646,3 +646,21 @@ describe('Forge — lisibilité de la carte document (DocCard)', () => {
     expect(screen.queryByText(/Glissez un fichier ci-dessous/i)).not.toBeInTheDocument();
   });
 });
+
+describe("Forge — contraste de l'état vide des résultats (avant génération)", () => {
+  it("affiche le texte d'invite sans opacité diluante sur son conteneur (WCAG AA)", () => {
+    // status="idle" + stories="" au montage : l'EmptyState est rendu.
+    renderForge({ stories: '' });
+
+    const invite = screen.getByText(/Les user stories générées apparaîtront ici/i);
+    expect(invite).toBeInTheDocument();
+
+    // L'ancien bug : opacity: 0.5 sur le bloc EmptyState diluait une seconde
+    // fois onSurfaceVariant (déjà atténué), sous 4.5:1. On vérifie que le
+    // conteneur du texte n'a pas d'opacité < 1 — sans dépendre d'une valeur
+    // de palette (même esprit que le test RagBadge). jsdom applique bien
+    // opacity depuis la feuille styled-components (cf. Dashboard.test.jsx).
+    const container = invite.closest('div');
+    expect(getComputedStyle(container).opacity).toBe('1');
+  });
+});
