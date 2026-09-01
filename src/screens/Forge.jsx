@@ -1430,7 +1430,7 @@ export default function Forge({
           {error && (
             <ErrorMsg>
               <span>{error}</span>
-              <button onClick={() => setError(null)}>✕</button>
+              <button onClick={() => setError(null)} aria-label="Fermer le message d'erreur">✕</button>
             </ErrorMsg>
           )}
 
@@ -1442,7 +1442,12 @@ export default function Forge({
                   <span className="icon" aria-hidden="true">search</span>
                   Sources utilisées
                 </div>
-                <button className="toggle" onClick={() => setRagOpen(!ragOpen)}>
+                <button
+                  className="toggle"
+                  onClick={() => setRagOpen(!ragOpen)}
+                  aria-expanded={ragOpen}
+                  aria-label={ragOpen ? "Masquer les sources" : "Afficher les sources"}
+                >
                   expand_more
                 </button>
               </RAGHeader>
@@ -1613,7 +1618,7 @@ export default function Forge({
             {uploadError && (
               <ErrorMsg>
                 <span>{uploadError}</span>
-                <button onClick={() => setUploadError(null)}>✕</button>
+                <button onClick={() => setUploadError(null)} aria-label="Fermer le message d'erreur">✕</button>
               </ErrorMsg>
             )}
 

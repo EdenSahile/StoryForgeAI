@@ -610,7 +610,7 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
                     <h2 onDoubleClick={startEditTitle} title="Double-cliquez pour renommer">
                       {selected.title}
                     </h2>
-                    <EditTitleBtn onClick={startEditTitle} title="Renommer">edit</EditTitleBtn>
+                    <EditTitleBtn onClick={startEditTitle} title="Renommer" aria-label="Renommer">edit</EditTitleBtn>
                   </>
                 )}
               </TitleRow>
@@ -745,9 +745,10 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
                         </Pills>
                       )}
                     </div>
-                    <span className="chevron">chevron_right</span>
+                    <span className="chevron" aria-hidden="true">chevron_right</span>
                     <DeleteBtn
                       title="Supprimer cette génération"
+                      aria-label="Supprimer cette génération"
                       onClick={(e) => handleDelete(e, gen.id)}
                     >
                       delete

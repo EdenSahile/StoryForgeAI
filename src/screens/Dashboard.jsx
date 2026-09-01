@@ -596,11 +596,12 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
                     </div>
                     <DashDeleteBtn
                       title="Supprimer cette génération"
+                      aria-label="Supprimer cette génération"
                       onClick={(e) => handleDelete(e, item.id)}
                     >
                       delete
                     </DashDeleteBtn>
-                    <span className="chevron">chevron_right</span>
+                    <span className="chevron" aria-hidden="true">chevron_right</span>
                   </GenerationCard>
                 ))
               )}

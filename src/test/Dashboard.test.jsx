@@ -201,4 +201,14 @@ describe('Dashboard — noms accessibles des icônes', () => {
     render(<Dashboard onNavigate={vi.fn()} />);
     expect(screen.getByRole('button', { name: 'Générer' })).toBeInTheDocument();
   });
+
+  it('le bouton de suppression d\'une génération récente expose "Supprimer cette génération" (pas "delete")', () => {
+    saveGeneration({ brief: 'Génération récente', stories: 's', storiesCount: 1 });
+    renderDashboard();
+
+    expect(
+      within(getRecentSection()).getByRole('button', { name: 'Supprimer cette génération' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'delete' })).not.toBeInTheDocument();
+  });
 });
