@@ -883,10 +883,14 @@ const UploadZone = styled.div`
   border-color: ${({ $dragOver }) =>
     $dragOver ? theme.colors.primary : theme.colors.outlineVariant};
 
+  /* Pas d'opacity ici : elle diluait .upload-title (onSurface) et .upload-sub
+     (onSurfaceVariant) sous WCAG AA (2.90 / 1.97 en clair). Ces tokens sont
+     déjà corrects sans dilution (17.57 / 6.03 en clair). Le signal
+     « désactivé » reste porté par cursor + pointer-events, et l'état démo est
+     explicite dans le texte lui-même. */
   ${({ $disabled }) =>
     $disabled &&
     `
-    opacity: 0.45;
     cursor: not-allowed;
     pointer-events: none;
   `}
@@ -1715,7 +1719,7 @@ export default function Forge({
               <IndexBtn
                 disabled
                 title="Indexation désactivée en mode démo, pour préserver l'expérience des autres visiteurs."
-                style={{ opacity: 0.35, cursor: "not-allowed" }}
+                style={{ cursor: "not-allowed" }}
               >
                 Indexer les documents
               </IndexBtn>
