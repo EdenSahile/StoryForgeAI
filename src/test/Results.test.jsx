@@ -272,4 +272,24 @@ describe('Results — pas de débordement horizontal mobile (piège CSS Grid)', 
       .closest('div').parentElement;
     expect(getComputedStyle(leftColumn).minWidth).toBe('0px');
   });
+
+  it("la barre d'actions (ActionBtns) empile ses boutons en colonne sous le breakpoint xs", () => {
+    render(<Results stories={STORIES} />);
+
+    // ActionBtns = parent direct des 3 boutons Copier/Exporter. La règle vit
+    // dans un @media que jsdom n'évalue pas via getComputedStyle : on inspecte
+    // la feuille styled-components (même approche que le test :focus-visible de
+    // Dashboard.test.jsx). Sans ça, à 375px les 3 boutons flex débordaient et
+    // le 3e n'était plus tappable.
+    const actionBtns = screen.getByText('Copier tout').closest('button').parentElement;
+    const hash = [...actionBtns.classList].find((c) => !c.startsWith('sc-'));
+    const css = Array.from(document.querySelectorAll('style'), (s) => s.textContent).join('');
+
+    // conteneur passé en colonne dans le @media (max-width: 480px)
+    expect(css).toMatch(
+      new RegExp(`@media \\(max-width: 480px\\)\\{\\.${hash}\\{[^}]*flex-direction:\\s*column`),
+    );
+    // et chaque bouton prend toute la largeur (plus de flex: 1 qui débordait)
+    expect(css).toMatch(new RegExp(`\\.${hash} button\\{[^}]*width:\\s*100%`));
+  });
 });

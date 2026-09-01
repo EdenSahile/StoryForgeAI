@@ -231,9 +231,14 @@ const ActionBtns = styled.div`
 
   @media (max-width: ${theme.breakpoints.xs}) {
     width: 100%;
+    /* Empilés en colonne : à 375px, 3 boutons flex: 1 sur une ligne
+       débordaient d'environ 28px (le 3e partiellement hors écran, non
+       tappable). width: 100% au lieu de flex: 1 pour ne pas dépendre de
+       flex-shrink, que min-width: auto bloquait. */
+    flex-direction: column;
 
     button {
-      flex: 1;
+      width: 100%;
       justify-content: center;
     }
   }
