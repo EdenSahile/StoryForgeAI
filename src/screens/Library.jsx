@@ -556,13 +556,16 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
     }
   };
 
+  const themeToggleLabel =
+    themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre";
+
   return (
     <PageWrapper>
       <TopBar>
         <TopBarLeft>
           {selected ? (
             <BackBtn onClick={() => setSelected(null)}>
-              <span className="icon">arrow_back</span>
+              <span className="icon" aria-hidden="true">arrow_back</span>
               Retour
             </BackBtn>
           ) : (
@@ -575,10 +578,12 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
         </TopBarLeft>
         <IconBtn
           onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
-          title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+          title={themeToggleLabel}
+          aria-label={themeToggleLabel}
         >
           <span
             className="icon"
+            aria-hidden="true"
             style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
           >
             {themeMode === "dark" ? "light_mode" : "dark_mode"}
@@ -605,7 +610,7 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
                     <h2 onDoubleClick={startEditTitle} title="Double-cliquez pour renommer">
                       {selected.title}
                     </h2>
-                    <EditTitleBtn onClick={startEditTitle} title="Renommer">edit</EditTitleBtn>
+                    <EditTitleBtn onClick={startEditTitle} title="Renommer" aria-label="Renommer">edit</EditTitleBtn>
                   </>
                 )}
               </TitleRow>
@@ -650,14 +655,14 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
 
             <div style={{ display: "flex", gap: theme.spacing.sm, flexWrap: "wrap" }}>
               <CopyBtn $copied={copied} onClick={handleCopy}>
-                <span className="icon">{copied ? "done" : "content_copy"}</span>
+                <span className="icon" aria-hidden="true">{copied ? "done" : "content_copy"}</span>
                 {copied ? "Copié ✓" : "Copier le texte"}
               </CopyBtn>
               <DetailDeleteBtn
                 title="Supprimer cette génération"
                 onClick={(e) => handleDelete(e, selected.id)}
               >
-                <span className="icon">delete</span>
+                <span className="icon" aria-hidden="true">delete</span>
                 Supprimer
               </DetailDeleteBtn>
             </div>
@@ -697,20 +702,20 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
                     onClick={handleDeleteAll}
                     style={{ alignSelf: "auto" }}
                   >
-                    <span className="icon">delete_sweep</span>
+                    <span className="icon" aria-hidden="true">delete_sweep</span>
                     Supprimer tout
                   </DetailDeleteBtn>
                 )}
               </div>
               <LocalNotice>
-                <span className="icon">info</span>
+                <span className="icon" aria-hidden="true">info</span>
                 Historique local à ce navigateur — non synchronisé entre appareils.
               </LocalNotice>
             </PageHeader>
 
             {generations.length === 0 ? (
               <EmptyState>
-                <span className="icon">history</span>
+                <span className="icon" aria-hidden="true">history</span>
                 <p>Aucune génération sauvegardée pour l'instant.<br />
                   Utilisez "Sauvegarder en Historique" après une génération.</p>
               </EmptyState>
@@ -740,9 +745,10 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
                         </Pills>
                       )}
                     </div>
-                    <span className="chevron">chevron_right</span>
+                    <span className="chevron" aria-hidden="true">chevron_right</span>
                     <DeleteBtn
                       title="Supprimer cette génération"
+                      aria-label="Supprimer cette génération"
                       onClick={(e) => handleDelete(e, gen.id)}
                     >
                       delete

@@ -25,6 +25,17 @@ describe('Sidebar — navigation atteignable au clavier', () => {
     }
   });
 
+  it('le nom accessible de chaque item est le libellé seul, sans le nom de l\'icône Material Symbols', () => {
+    render(<Sidebar onNavigate={vi.fn()} />);
+    const nav = screen.getByRole('navigation');
+
+    // getByRole avec name EXACT : échoue si "dashboard", "auto_awesome"… fuite
+    // dans le nom accessible (icône non masquée par aria-hidden).
+    for (const label of ['Tableau de bord', 'Brief', 'Historique', 'Réglages']) {
+      expect(within(nav).getByRole('button', { name: label })).toBeInTheDocument();
+    }
+  });
+
   it('activer un item de nav appelle onNavigate avec l\'écran correspondant', () => {
     const onNavigate = vi.fn();
     render(<Sidebar activeItem="dashboard" onNavigate={onNavigate} />);

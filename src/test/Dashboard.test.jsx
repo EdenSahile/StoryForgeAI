@@ -185,3 +185,30 @@ describe('Dashboard — CTA "Nouvelle génération"', () => {
     expect(onNavigate).toHaveBeenCalledWith('forge');
   });
 });
+
+describe('Dashboard — noms accessibles des icônes', () => {
+  it('le bouton bascule de thème a un nom accessible explicite (pas "light_mode"/"dark_mode")', () => {
+    const onThemeChange = vi.fn();
+    render(<Dashboard onNavigate={vi.fn()} themeMode="light" onThemeChange={onThemeChange} />);
+
+    // name EXACT : échoue si l'icône "dark_mode" fuit dans le nom accessible.
+    const toggle = screen.getByRole('button', { name: 'Passer en thème sombre' });
+    fireEvent.click(toggle);
+    expect(onThemeChange).toHaveBeenCalledWith('dark');
+  });
+
+  it('le bouton "Générer" du CTA a pour nom accessible "Générer", pas "bolt Générer"', () => {
+    render(<Dashboard onNavigate={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Générer' })).toBeInTheDocument();
+  });
+
+  it('le bouton de suppression d\'une génération récente expose "Supprimer cette génération" (pas "delete")', () => {
+    saveGeneration({ brief: 'Génération récente', stories: 's', storiesCount: 1 });
+    renderDashboard();
+
+    expect(
+      within(getRecentSection()).getByRole('button', { name: 'Supprimer cette génération' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'delete' })).not.toBeInTheDocument();
+  });
+});

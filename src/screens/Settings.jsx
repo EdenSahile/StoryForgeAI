@@ -235,16 +235,21 @@ export default function Settings({ themeMode, onThemeChange }) {
     setGenCount(getGenerations().length);
   }, []);
 
+  const themeToggleLabel =
+    themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre";
+
   return (
     <PageWrapper>
       <TopBar>
         <TopBarTitle>Réglages</TopBarTitle>
         <IconBtn
           onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
-          title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+          title={themeToggleLabel}
+          aria-label={themeToggleLabel}
         >
           <span
             className="icon"
+            aria-hidden="true"
             style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
           >
             {themeMode === "dark" ? "light_mode" : "dark_mode"}
@@ -256,7 +261,7 @@ export default function Settings({ themeMode, onThemeChange }) {
         {/* ── Apparence ── */}
         <Section>
           <SectionHeader>
-            <span className="icon">palette</span>
+            <span className="icon" aria-hidden="true">palette</span>
             <h2>Apparence</h2>
           </SectionHeader>
           <Row>
@@ -288,7 +293,7 @@ export default function Settings({ themeMode, onThemeChange }) {
         {/* ── Données locales ── */}
         <Section>
           <SectionHeader>
-            <span className="icon">storage</span>
+            <span className="icon" aria-hidden="true">storage</span>
             <h2>Données locales</h2>
           </SectionHeader>
           <Row>
@@ -306,7 +311,7 @@ export default function Settings({ themeMode, onThemeChange }) {
         {/* ── À propos ── */}
         <Section>
           <SectionHeader>
-            <span className="icon">info</span>
+            <span className="icon" aria-hidden="true">info</span>
             <h2>À propos</h2>
           </SectionHeader>
           <AboutBlock>

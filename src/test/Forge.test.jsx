@@ -164,7 +164,7 @@ describe('Forge — raccourci clavier Ctrl+Entrée', () => {
 });
 
 describe('Forge — message d\'erreur', () => {
-  it('affiche le message renvoyé par onError, et le fait disparaître au clic sur "✕"', async () => {
+  it('affiche le message renvoyé par onError, et le fait disparaître au clic sur "Fermer le message d\'erreur"', async () => {
     generateStories.mockImplementation(async (brief, onChunk, onError) => {
       onError('Erreur simulée pour le test');
     });
@@ -176,7 +176,7 @@ describe('Forge — message d\'erreur', () => {
       expect(screen.getByText('Erreur simulée pour le test')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: '✕' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Fermer le message d\'erreur' }));
 
     expect(screen.queryByText('Erreur simulée pour le test')).not.toBeInTheDocument();
   });
@@ -204,6 +204,25 @@ describe('Forge — panneau RAG pendant le streaming', () => {
     // Bonus cohérent avec la consigne (stories déjà non vide pendant le loading) :
     // le contenu déjà streamé reste affiché dans la carte de streaming.
     expect(screen.getByText('Streaming Result')).toBeInTheDocument();
+  });
+
+  it('le bouton de repli du panneau RAG a un nom accessible et aria-expanded qui suit l\'état (pas "expand_more")', async () => {
+    generateStories.mockImplementation(() => new Promise(() => {}));
+    renderForge({
+      ragChunks: [{ filename: 'catalogue.pdf', score: 70 }],
+      stories: 'x',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Générer les user stories/i }));
+
+    const toggle = await screen.findByRole('button', { name: 'Masquer les sources' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.queryByRole('button', { name: 'expand_more' })).not.toBeInTheDocument();
+
+    fireEvent.click(toggle);
+
+    const collapsed = screen.getByRole('button', { name: 'Afficher les sources' });
+    expect(collapsed).toHaveAttribute('aria-expanded', 'false');
   });
 });
 

@@ -169,8 +169,8 @@ test.describe('Parcours critique — génération de user stories', () => {
     await expect(generateBtn).toBeEnabled();
     await expect(textarea).toBeEditable();
 
-    // Le "✕" à côté du message fait disparaître l'erreur (setError(null) dans Forge.jsx).
-    await page.getByRole('button', { name: '✕' }).click();
+    // Le bouton de fermeture à côté du message fait disparaître l'erreur (setError(null) dans Forge.jsx).
+    await page.getByRole('button', { name: 'Fermer le message d\'erreur' }).click();
     await expect(errorMessage).toBeHidden();
   });
 

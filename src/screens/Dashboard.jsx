@@ -497,6 +497,9 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
 
   const recent = generations.slice(0, 3);
 
+  const themeToggleLabel =
+    themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre";
+
   return (
     <PageWrapper>
       <TopBar>
@@ -506,14 +509,12 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
             onClick={() =>
               onThemeChange?.(themeMode === "dark" ? "light" : "dark")
             }
-            title={
-              themeMode === "dark"
-                ? "Passer en thème clair"
-                : "Passer en thème sombre"
-            }
+            title={themeToggleLabel}
+            aria-label={themeToggleLabel}
           >
             <span
               className="icon"
+              aria-hidden="true"
               style={{
                 fontVariationSettings:
                   '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24',
@@ -559,7 +560,7 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
                 {stat.sub && <span className="sub">{stat.sub}</span>}
               </div>
               <div className="mobile-icon">
-                <span className="icon">{stat.icon}</span>
+                <span className="icon" aria-hidden="true">{stat.icon}</span>
               </div>
             </StatCard>
           ))}
@@ -595,11 +596,12 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
                     </div>
                     <DashDeleteBtn
                       title="Supprimer cette génération"
+                      aria-label="Supprimer cette génération"
                       onClick={(e) => handleDelete(e, item.id)}
                     >
                       delete
                     </DashDeleteBtn>
-                    <span className="chevron">chevron_right</span>
+                    <span className="chevron" aria-hidden="true">chevron_right</span>
                   </GenerationCard>
                 ))
               )}
@@ -609,7 +611,7 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
           {/* CTA */}
           <CTACard onClick={() => onNavigate?.("forge")}>
             <div className="cta-icon">
-              <span className="icon">auto_awesome</span>
+              <span className="icon" aria-hidden="true">auto_awesome</span>
             </div>
             <div className="cta-text">
               <h5>Nouvelle génération</h5>
@@ -621,7 +623,7 @@ export default function Dashboard({ onNavigate, themeMode, onThemeChange }) {
                 onNavigate?.("forge");
               }}
             >
-              <span className="icon">bolt</span>
+              <span className="icon" aria-hidden="true">bolt</span>
               Générer
             </GenerateBtn>
           </CTACard>

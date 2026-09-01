@@ -403,3 +403,28 @@ describe('Library — toast de succès après suppression (disparition automatiq
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });
+
+describe('Library — noms accessibles des boutons icône', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('vue liste : le bouton de suppression par entrée expose "Supprimer cette génération" comme nom accessible (pas "delete")', () => {
+    saveGeneration({ brief: 'A', stories: 'SA', sourcesUsed: [], storiesCount: 1 });
+    render(<Library />);
+
+    expect(
+      screen.getByRole('button', { name: 'Supprimer cette génération' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'delete' })).not.toBeInTheDocument();
+  });
+
+  it('vue détail : le bouton "Renommer" expose ce nom accessible (pas "edit")', () => {
+    const entry = saveGeneration({ brief: 'B', stories: 'SB', sourcesUsed: [], storiesCount: 1 });
+    render(<Library />);
+    fireEvent.click(screen.getByText(entry.title));
+
+    expect(screen.getByRole('button', { name: 'Renommer' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'edit' })).not.toBeInTheDocument();
+  });
+});

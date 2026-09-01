@@ -63,7 +63,7 @@ export default function SuccessToast({ message, onDismiss, icon = "check_circle"
 
   return (
     <Wrapper role="status">
-      <span className="icon">{icon}</span>
+      <span className="icon" aria-hidden="true">{icon}</span>
       {message}
     </Wrapper>
   );
