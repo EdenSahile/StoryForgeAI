@@ -169,7 +169,7 @@ export default function StoryCard({ story }) {
   return (
     <StoryCardArticle $delay={(story.id - 1) * 0.1}>
       <CardHeader>
-        <h3>US-{String(story.id).padStart(2, "0")} — {story.title}</h3>
+        <h3>US-{String(story.id).padStart(2, "0")} : {story.title}</h3>
         <ComplexityBadge $level={story.complexity}>
           {story.complexity}
         </ComplexityBadge>

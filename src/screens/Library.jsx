@@ -712,7 +712,7 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
               </div>
               <LocalNotice>
                 <span className="icon" aria-hidden="true">info</span>
-                Historique local à ce navigateur — non synchronisé entre appareils.
+                Historique local à ce navigateur, non synchronisé entre appareils.
               </LocalNotice>
             </PageHeader>
 

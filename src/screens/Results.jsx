@@ -184,20 +184,37 @@ const StatusBadge = styled.div`
   }
 `;
 
+// $state : "active" (RAG actif, chunks trouvés) | "error" (ragError) | "neutral"
+// (RAG non utilisé, ni erreur ni chunks). L'état "error" réutilise les tokens
+// d'avertissement de RagFailureWarning (textWarning + glow ambré) pour être
+// distinguable du "neutral" gris — un échec réseau et un choix volontaire ne
+// doivent pas se ressembler.
+const ragBadgeColor = ($state) =>
+  $state === "active"
+    ? theme.colors.success
+    : $state === "error"
+    ? theme.colors.textWarning
+    : theme.colors.onSurfaceVariant;
+
 const RagBadge = styled.div`
   display: flex;
   align-items: center;
   gap: ${theme.spacing.sm};
   font-size: ${theme.fontSizes.sm};
   font-weight: 700;
-  color: ${({ $active }) => ($active ? theme.colors.success : theme.colors.onSurfaceVariant)};
+  color: ${({ $state }) => ragBadgeColor($state)};
 
   .dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: ${({ $active }) => ($active ? theme.colors.success : theme.colors.onSurfaceVariant)};
-    box-shadow: ${({ $active }) => ($active ? `0 0 8px ${theme.colors.successGlow}` : "none")};
+    background: ${({ $state }) => ragBadgeColor($state)};
+    box-shadow: ${({ $state }) =>
+      $state === "active"
+        ? `0 0 8px ${theme.colors.successGlow}`
+        : $state === "error"
+        ? `0 0 8px color-mix(in srgb, ${theme.colors.amber} 45%, transparent)`
+        : "none"};
   }
 `;
 
@@ -671,15 +688,17 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
             <RagFailureWarning>
               <span className="icon" aria-hidden="true">cloud_off</span>
               <span>
-                Le contexte documentaire n'a pas pu être récupéré — ces user stories ont été
-                générées sans vos documents. Relancez la génération pour réessayer.
+                La base de connaissances n'a pas pu être consultée pour cette génération :
+                les user stories ont été produites sans documents. C'est souvent temporaire
+                côté service : vous pouvez relancer la génération, mais si l'erreur persiste
+                au second essai, mieux vaut réessayer plus tard.
               </span>
             </RagFailureWarning>
           )}
 
           {truncated && (
             <TruncationWarning>
-              <span>⚠️ Génération possiblement incomplète — la dernière user story est à vérifier.</span>
+              <span>⚠️ Génération possiblement incomplète, la dernière user story est à vérifier.</span>
               {onRegenerate && (
                 <RegenerateBtn onClick={onRegenerate}>🔄 Régénérer</RegenerateBtn>
               )}
@@ -693,13 +712,17 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
                 <span className="dot" />
                 ✦ Génération par IA terminée
               </StatusBadge>
-              <RagBadge $active={ragChunks.length > 0}>
+              <RagBadge
+                $state={
+                  ragChunks.length > 0 ? "active" : ragError ? "error" : "neutral"
+                }
+              >
                 <span className="dot" />
                 {ragChunks.length > 0
                   ? "RAG actif"
                   : ragError
                   ? "RAG indisponible"
-                  : "RAG non utilisé — US Générique"}
+                  : "RAG non utilisé (US Générique)"}
               </RagBadge>
             </div>
             <ActionBtns>

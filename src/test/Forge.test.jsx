@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { useState } from 'react';
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import Forge from '../screens/Forge';
 import { retrieveContext, getConfig, uploadDocument, deleteDocument } from '../components/services/ragService';
@@ -30,6 +31,34 @@ function renderForge(overrides = {}) {
     ...overrides,
   };
   return { props, ...render(<Forge {...props} />) };
+}
+
+// Variante « connectée » : ragError <-> setRagError câblés comme dans App.jsx,
+// pour les tests dont l'assertion porte sur un affichage piloté par ragError
+// (la notice pendant le chargement). Avec renderForge(), setRagError est un
+// vi.fn() qui ne repropage rien.
+function renderForgeConnected(overrides = {}) {
+  function Harness() {
+    const [ragError, setRagError] = useState(false);
+    return (
+      <Forge
+        brief="Je veux gérer les retours produits pour mes clients"
+        setBrief={vi.fn()}
+        stories=""
+        setStories={vi.fn()}
+        ragChunks={[]}
+        setRagChunks={vi.fn()}
+        documents={[]}
+        setDocuments={vi.fn()}
+        setTruncated={vi.fn()}
+        onNavigate={vi.fn()}
+        ragError={ragError}
+        setRagError={setRagError}
+        {...overrides}
+      />
+    );
+  }
+  return render(<Harness />);
 }
 
 // Rétabli avant chaque test, y compris pour les describes ci-dessous qui
@@ -97,6 +126,36 @@ describe('Forge — échec de la récupération RAG', () => {
     await waitFor(() => expect(generateStories).toHaveBeenCalled());
     expect(setRagError).toHaveBeenCalledWith(false);
     expect(setRagError).not.toHaveBeenCalledWith(true);
+  });
+
+  it('affiche une notice « Base de connaissances indisponible » pendant la génération quand retrieveContext échoue', async () => {
+    retrieveContext.mockRejectedValue(new Error('Pinecone 500'));
+    generateStories.mockImplementation(() => new Promise(() => {})); // reste en "loading"
+    renderForgeConnected();
+
+    fireEvent.click(screen.getByRole('button', { name: /Générer les user stories/i }));
+
+    expect(
+      await screen.findByText(/Base de connaissances indisponible/i)
+    ).toBeInTheDocument();
+  });
+
+  it("n'affiche pas la notice quand l'utilisateur a lui-même désactivé le RAG via le toggle", async () => {
+    // ragDisabled → retrieveContext jamais appelé → ragError jamais mis à true,
+    // donc aucun conflit avec la notice même pendant le chargement.
+    generateStories.mockImplementation(() => new Promise(() => {}));
+    renderForgeConnected();
+
+    fireEvent.click(screen.getByLabelText(/Générer sans RAG/i));
+    fireEvent.click(screen.getByRole('button', { name: /Générer les user stories/i }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Génération en cours/i })).toBeDisabled()
+    );
+    expect(retrieveContext).not.toHaveBeenCalled();
+    expect(
+      screen.queryByText(/Base de connaissances indisponible/i)
+    ).not.toBeInTheDocument();
   });
 });
 

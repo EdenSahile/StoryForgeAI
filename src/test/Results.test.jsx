@@ -19,14 +19,28 @@ const STORIES = `**User Story 1** En tant qu'utilisateur, je veux me connecter a
 
 **Complexité :** M`;
 
-describe('Results — badge RAG', () => {
-  it('affiche "RAG non utilisé" quand aucun chunk n\'a été récupéré', () => {
+// Récupère la couleur déclarée pour l'élément trouvé (par son texte) dans la
+// feuille styled-components — même approche que Dashboard.test.jsx : jsdom
+// n'applique pas les custom properties, on lit donc la règle générée. Sert
+// uniquement à prouver que deux états ne partagent PAS la même couleur.
+function declaredColor(el) {
+  const hash = [...el.classList].find((c) => !c.startsWith('sc-'));
+  const css = Array.from(document.querySelectorAll('style'), (s) => s.textContent).join('');
+  const rule = css.match(new RegExp(`\\.${hash}\\{([^}]*)\\}`));
+  return (rule?.[1].match(/color:([^;]+)/) || [])[1];
+}
+
+describe('Results — badge RAG (3 états)', () => {
+  it('état "neutral" : "RAG non utilisé" quand aucun chunk, sans bandeau d\'erreur', () => {
     render(<Results stories={STORIES} ragChunks={[]} />);
-    expect(screen.getByText('RAG non utilisé — US Générique')).toBeInTheDocument();
+    expect(screen.getByText('RAG non utilisé (US Générique)')).toBeInTheDocument();
     expect(screen.queryByText('Sources utilisées')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/La base de connaissances n'a pas pu être consultée/i)
+    ).not.toBeInTheDocument();
   });
 
-  it('affiche "RAG actif" et les sources avec leur score quand des chunks sont fournis', () => {
+  it('état "active" : "RAG actif" + sources avec score quand des chunks sont fournis', () => {
     render(
       <Results
         stories={STORIES}
@@ -45,25 +59,52 @@ describe('Results — badge RAG', () => {
     expect(screen.getByText('04_archive_commandes.pdf')).toBeInTheDocument();
     expect(screen.getByText('45%')).toBeInTheDocument();
   });
-});
 
-describe('Results — échec de la récupération RAG', () => {
-  it('affiche un bandeau explicite et le badge "RAG indisponible" quand ragError est vrai', () => {
+  it('état "error" : "RAG indisponible" + bandeau explicite, et PAS le libellé "non utilisé"', () => {
     render(<Results stories={STORIES} ragChunks={[]} ragError />);
 
     expect(
-      screen.getByText(/Le contexte documentaire n'a pas pu être récupéré/i)
+      screen.getByText(/La base de connaissances n'a pas pu être consultée/i)
     ).toBeInTheDocument();
     expect(screen.getByText('RAG indisponible')).toBeInTheDocument();
-    expect(screen.queryByText('RAG non utilisé — US Générique')).not.toBeInTheDocument();
+    expect(screen.queryByText('RAG non utilisé (US Générique)')).not.toBeInTheDocument();
   });
 
-  it('n\'affiche pas le bandeau quand ragError est faux', () => {
+  it('l\'état "error" est visuellement distinct de l\'état "neutral" (couleur d\'avertissement, pas le gris neutre)', () => {
+    const { unmount } = render(<Results stories={STORIES} ragChunks={[]} ragError />);
+    const errorColor = declaredColor(screen.getByText('RAG indisponible'));
+    unmount();
+
+    render(<Results stories={STORIES} ragChunks={[]} />);
+    const neutralColor = declaredColor(screen.getByText('RAG non utilisé (US Générique)'));
+
+    expect(errorColor).toBeTruthy();
+    expect(neutralColor).toBeTruthy();
+    expect(errorColor).not.toBe(neutralColor);
+    // réutilise le token d'avertissement (cohérent avec RagFailureWarning),
+    // pas une couleur inventée
+    expect(errorColor).toContain('--color-textWarning');
+  });
+
+  it('n\'affiche pas le bandeau d\'erreur quand ragError est faux', () => {
     render(<Results stories={STORIES} ragChunks={[]} />);
 
     expect(
-      screen.queryByText(/Le contexte documentaire n'a pas pu être récupéré/i)
+      screen.queryByText(/La base de connaissances n'a pas pu être consultée/i)
     ).not.toBeInTheDocument();
+  });
+
+  it('le bandeau d\'erreur ne promet pas un succès immédiat au retry (cause parfois externe)', () => {
+    render(<Results stories={STORIES} ragChunks={[]} ragError />);
+
+    const banner = screen
+      .getByText(/La base de connaissances n'a pas pu être consultée/i)
+      .closest('div');
+    // ancienne formulation retirée : « Relancez la génération pour réessayer »
+    expect(banner).not.toHaveTextContent(/Relancez la génération pour réessayer/i);
+    // nouvelle : temporaire côté service + ne pas insister si ça persiste
+    expect(banner).toHaveTextContent(/temporaire/i);
+    expect(banner).toHaveTextContent(/persiste/i);
   });
 });
 

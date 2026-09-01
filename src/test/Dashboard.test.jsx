@@ -27,10 +27,10 @@ beforeEach(() => {
 });
 
 describe('Dashboard — état vide', () => {
-  it('affiche "—" comme valeur sur les 3 cartes stats', () => {
+  it('affiche le marqueur "valeur absente" (·) sur les 3 cartes stats', () => {
     renderDashboard();
 
-    expect(screen.getAllByText('—')).toHaveLength(3);
+    expect(screen.getAllByText('·')).toHaveLength(3);
     expect(screen.getByText('via 0 génération(s)')).toBeInTheDocument();
     expect(screen.getByText('Sauvegardées en local')).toBeInTheDocument();
     // La 3e carte ("Dernière génération") n'a pas de sub : lastGen est
