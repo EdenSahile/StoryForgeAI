@@ -267,7 +267,11 @@ function App() {
     <ErrorBoundary>
       <GlobalStyle />
       <Sidebar activeItem={currentScreen} onNavigate={handleNavigate} />
-      {renderScreen()}
+      {/* Landmark <main> unique : chaque écran gère sa propre mise en page
+         (PageWrapper avec margin-left), <main> n'est qu'un conteneur block
+         transparent — aucun impact visuel, mais un point d'entrée pour les
+         lecteurs d'écran et le "skip to content". */}
+      <main>{renderScreen()}</main>
       <BottomNav activeItem={currentScreen} onNavigate={handleNavigate} />
     </ErrorBoundary>
   );

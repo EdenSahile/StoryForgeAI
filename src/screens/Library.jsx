@@ -361,7 +361,10 @@ const EmptyState = styled.div`
   align-items: center;
   gap: ${theme.spacing.md};
   text-align: center;
-  opacity: 0.6;
+  /* Pas d'opacity : le texte utilise déjà onSurfaceVariant (token de texte
+     secondaire) pour la mise en retrait. L'opacity 0.6 en plus le faisait
+     tomber à 2.49:1 en clair / 3.63:1 en sombre, sous WCAG AA.
+     Sans opacity : 5.55:1 clair / 8.10:1 sombre. */
 
   .icon {
     font-family: "Material Symbols Outlined";

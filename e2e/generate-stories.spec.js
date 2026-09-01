@@ -182,6 +182,11 @@ test.describe('Parcours critique — génération de user stories', () => {
     // est neutre (pas de localStorage), donc l'app démarre ici, pas sur Dashboard.
     await expect(page.getByPlaceholder(/Décris ton besoin métier ici/)).toBeVisible();
 
+    // L'écran courant est rendu dans un landmark <main> unique (App.jsx).
+    const main = page.getByRole('main');
+    await expect(main).toBeVisible();
+    await expect(main.getByPlaceholder(/Décris ton besoin métier ici/)).toBeVisible();
+
     await page.locator('aside nav button', { hasText: 'Historique' }).click();
     await expect(page.getByRole('heading', { name: 'Historique' })).toBeVisible();
 
