@@ -30,10 +30,21 @@ describe('BottomNav — navigation atteignable au clavier', () => {
     render(<BottomNav activeItem="dashboard" onNavigate={onNavigate} />);
     const nav = screen.getByRole('navigation', { hidden: true });
 
-    fireEvent.click(within(nav).getByRole('button', { name: /Hist\./, hidden: true }));
+    fireEvent.click(within(nav).getByRole('button', { name: 'Hist.', hidden: true }));
     expect(onNavigate).toHaveBeenCalledWith('library');
 
-    fireEvent.click(within(nav).getByRole('button', { name: /Brief/, hidden: true }));
+    fireEvent.click(within(nav).getByRole('button', { name: 'Brief', hidden: true }));
     expect(onNavigate).toHaveBeenCalledWith('forge');
+  });
+
+  it('le nom accessible de chaque item est le libellé seul, sans le nom de l\'icône', () => {
+    render(<BottomNav onNavigate={vi.fn()} />);
+    const nav = screen.getByRole('navigation', { hidden: true });
+
+    for (const label of ['Tableau', 'Brief', 'Hist.', 'Réglages']) {
+      expect(
+        within(nav).getByRole('button', { name: label, hidden: true }),
+      ).toBeInTheDocument();
+    }
   });
 });

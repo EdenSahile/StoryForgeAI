@@ -106,19 +106,23 @@ describe('Results — boutons d\'export par story', () => {
   it('affiche un bouton "Exporter vers Trello" et un bouton "Exporter en CSV (Jira)" par user story', () => {
     render(<Results stories={STORIES} />);
 
-    expect(screen.getAllByRole('button', { name: 'Exporter vers Trello' })).toHaveLength(2);
-    expect(screen.getAllByRole('button', { name: 'Exporter en CSV (Jira)' })).toHaveLength(2);
+    // Nom accessible désambiguïsé « ... cette user story ... » (les boutons
+    // globaux, eux, s'appellent juste "Exporter vers Trello" / "Exporter CSV (Jira)").
+    expect(
+      screen.getAllByRole('button', { name: 'Exporter cette user story vers Trello' }),
+    ).toHaveLength(2);
+    expect(
+      screen.getAllByRole('button', { name: 'Exporter cette user story en CSV (Jira)' }),
+    ).toHaveLength(2);
   });
 
   it('le clic sur le bouton Trello global affiche le message en haut de page, pas dans une story', () => {
     render(<Results stories={STORIES} />);
 
-    // Les boutons globaux (ActionBar/QuickActionBtn/MobileStickyBar) n'ont pas
-    // d'aria-label : leur nom accessible inclut le texte de l'icône
-    // ("view_kanban Exporter vers Trello"), donc getByRole({name: 'Exporter
-    // vers Trello'}) exact ne matche que les boutons par story (aria-label).
-    // On cible le bouton global par son texte visible, même patron que
-    // "Copier tout" plus haut dans ce fichier.
+    // Les boutons globaux (ActionBar/QuickActionBtn) s'appellent exactement
+    // "Exporter vers Trello" (l'icône est aria-hidden) — il y en a plusieurs,
+    // on prend le premier par son texte visible, même patron que "Copier tout".
+    // Les boutons par story portent un nom distinct ("... cette user story ...").
     fireEvent.click(screen.getAllByText('Exporter vers Trello')[0]);
 
     expect(screen.getByText(/Indisponible pour la démo/)).toBeInTheDocument();
@@ -133,7 +137,9 @@ describe('Results — boutons d\'export par story', () => {
 
   it('le clic sur le bouton Trello d\'une story affiche le message sous cette story précise, pas ailleurs', () => {
     render(<Results stories={STORIES} />);
-    const trelloButtons = screen.getAllByRole('button', { name: 'Exporter vers Trello' });
+    const trelloButtons = screen.getAllByRole('button', {
+      name: 'Exporter cette user story vers Trello',
+    });
     const slots = screen.getAllByRole('article').map((article) => article.parentElement);
 
     fireEvent.click(trelloButtons[1]); // 2e story
@@ -152,7 +158,7 @@ describe('Results — boutons d\'export par story', () => {
     Object.assign(URL, { createObjectURL, revokeObjectURL });
 
     render(<Results stories={STORIES} />);
-    const csvButtons = screen.getAllByRole('button', { name: 'Exporter en CSV (Jira)' });
+    const csvButtons = screen.getAllByRole('button', { name: 'Exporter cette user story en CSV (Jira)' });
 
     fireEvent.click(csvButtons[1]); // 2e story : "gérer les accès" (administrateur)
 
@@ -183,12 +189,33 @@ describe('Results — boutons d\'export par story', () => {
     Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:mock-url'), revokeObjectURL: vi.fn() });
 
     render(<Results stories={STORIES} />);
-    const csvButtons = screen.getAllByRole('button', { name: 'Exporter en CSV (Jira)' });
+    const csvButtons = screen.getAllByRole('button', { name: 'Exporter cette user story en CSV (Jira)' });
     fireEvent.click(csvButtons[1]);
 
     expect(clicks).toHaveLength(1);
     expect(clicks[0]).toMatch(/^storypilot-export-jira-us-2-\d{4}-\d{2}-\d{2}\.csv$/);
 
     document.createElement.mockRestore();
+  });
+});
+
+describe('Results — noms accessibles des icônes', () => {
+  it('les boutons icône-seule de la TopBar ont un nom accessible explicite (pas le nom de l\'icône)', () => {
+    render(<Results stories={STORIES} themeMode="light" onThemeChange={vi.fn()} />);
+
+    // name EXACT : échoue si "dark_mode" / "notifications" fuit dans le nom.
+    expect(screen.getByRole('button', { name: 'Passer en thème sombre' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notifications' })).toBeInTheDocument();
+  });
+
+  it('les boutons d\'action principaux ont pour nom leur libellé visible seul', () => {
+    render(<Results stories={STORIES} />);
+
+    // name EXACT (RTL fait une correspondance stricte) : ces requêtes n'aboutissent
+    // que si le nom de l'icône ("restart_alt", "view_kanban"…) ne fuit pas.
+    expect(screen.getByRole('button', { name: 'Nouvelle génération' })).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('button', { name: 'Exporter vers Trello' }).length,
+    ).toBeGreaterThan(0);
   });
 });

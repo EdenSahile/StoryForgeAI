@@ -84,7 +84,7 @@ export default function BottomNav({ activeItem = "dashboard", onNavigate }) {
           $active={activeItem === item.id}
           onClick={() => onNavigate?.(item.id)}
         >
-          <span className="icon">{item.icon}</span>
+          <span className="icon" aria-hidden="true">{item.icon}</span>
           <span className="label">{item.label}</span>
         </NavItem>
       ))}

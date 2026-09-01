@@ -186,7 +186,7 @@ export default function Sidebar({ activeItem = "dashboard", onNavigate }) {
             $active={activeItem === item.id}
             onClick={() => onNavigate?.(item.id)}
           >
-            <span className="icon">{item.icon}</span>
+            <span className="icon" aria-hidden="true">{item.icon}</span>
             {item.label}
           </NavItem>
         ))}
@@ -195,7 +195,7 @@ export default function Sidebar({ activeItem = "dashboard", onNavigate }) {
       <SidebarBottom>
         {activeItem !== "forge" && (
           <NewStoryBtn onClick={() => onNavigate?.("forge")}>
-            <span className="icon">add</span>
+            <span className="icon" aria-hidden="true">add</span>
             Nouveau brief
           </NewStoryBtn>
         )}

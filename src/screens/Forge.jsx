@@ -1301,6 +1301,9 @@ export default function Forge({
     handleFileUpload(files);
   };
 
+  const themeToggleLabel =
+    themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre";
+
   return (
     <PageWrapper>
       <TopBar>
@@ -1318,17 +1321,19 @@ export default function Forge({
           )}
           <IconBtn
             onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
-            title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+            title={themeToggleLabel}
+            aria-label={themeToggleLabel}
           >
             <span
               className="icon"
+              aria-hidden="true"
               style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
             >
               {themeMode === "dark" ? "light_mode" : "dark_mode"}
             </span>
           </IconBtn>
-          <IconBtn>
-            <span className="icon">notifications</span>
+          <IconBtn aria-label="Notifications">
+            <span className="icon" aria-hidden="true">notifications</span>
           </IconBtn>
         </TopBarRight>
       </TopBar>
@@ -1401,7 +1406,7 @@ export default function Forge({
                 !brief.trim() || status === "loading" || charCount > MAX
               }
             >
-              <span className="icon">
+              <span className="icon" aria-hidden="true">
                 {status === "loading" ? "sync" : "auto_awesome"}
               </span>
               {status === "loading"
@@ -1411,7 +1416,7 @@ export default function Forge({
 
             {demoMode && (
               <InfoBanner>
-                <span className="icon">info</span>
+                <span className="icon" aria-hidden="true">info</span>
                 <span>
                   <strong>Budget limité :</strong> cette démo publique tourne
                   sur un budget limité ; la génération peut être indisponible en
@@ -1434,7 +1439,7 @@ export default function Forge({
             <RAGPanel>
               <RAGHeader $open={ragOpen}>
                 <div className="left">
-                  <span className="icon">search</span>
+                  <span className="icon" aria-hidden="true">search</span>
                   Sources utilisées
                 </div>
                 <button className="toggle" onClick={() => setRagOpen(!ragOpen)}>
@@ -1483,7 +1488,7 @@ export default function Forge({
           {/* Empty state */}
           {status !== "loading" && !stories && (
             <EmptyState>
-              <span className="icon">description</span>
+              <span className="icon" aria-hidden="true">description</span>
               <p>
                 Les user stories générées apparaîtront ici.
                 <br />
@@ -1502,7 +1507,7 @@ export default function Forge({
               </div>
               {documents.filter((d) => d.status === "indexed").length > 0 && (
                 <span className="indexed-badge">
-                  <span className="icon">check_circle</span>
+                  <span className="icon" aria-hidden="true">check_circle</span>
                   {documents.filter((d) => d.status === "indexed").length}{" "}
                   indexé
                   {documents.filter((d) => d.status === "indexed").length > 1
@@ -1519,7 +1524,7 @@ export default function Forge({
 
             {documents.length === 0 ? (
               <KBEmptyState>
-                <span className="icon">folder_open</span>
+                <span className="icon" aria-hidden="true">folder_open</span>
                 <p>Aucun document indexé pour l'instant.</p>
                 {!demoMode && <p className="hint">Glissez un fichier ci-dessous pour commencer.</p>}
               </KBEmptyState>

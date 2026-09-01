@@ -567,7 +567,7 @@ const SourceItem = styled.div`
 function TrelloUnavailableMsg() {
   return (
     <TrelloMsgBanner>
-      <span className="icon">info</span>
+      <span className="icon" aria-hidden="true">info</span>
       Indisponible pour la démo. En situation réelle : intégration via l'API Trello (OAuth).
     </TrelloMsgBanner>
   );
@@ -631,6 +631,9 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
     }
   };
 
+  const themeToggleLabel =
+    themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre";
+
   return (
     <PageWrapper>
       <TopBar>
@@ -642,16 +645,18 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
         <TopBarRight>
           <IconBtn
             onClick={() => onThemeChange?.(themeMode === "dark" ? "light" : "dark")}
-            title={themeMode === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}
+            title={themeToggleLabel}
+            aria-label={themeToggleLabel}
           >
             <span
               className="icon"
+              aria-hidden="true"
               style={{ fontVariationSettings: '"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24' }}
             >
               {themeMode === "dark" ? "light_mode" : "dark_mode"}
             </span>
           </IconBtn>
-          <IconBtn><span className="icon">notifications</span></IconBtn>
+          <IconBtn aria-label="Notifications"><span className="icon" aria-hidden="true">notifications</span></IconBtn>
         </TopBarRight>
       </TopBar>
 
@@ -665,7 +670,7 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
 
           {ragError && (
             <RagFailureWarning>
-              <span className="icon">cloud_off</span>
+              <span className="icon" aria-hidden="true">cloud_off</span>
               <span>
                 Le contexte documentaire n'a pas pu être récupéré — ces user stories ont été
                 générées sans vos documents. Relancez la génération pour réessayer.
@@ -700,15 +705,15 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
             </div>
             <ActionBtns>
               <OutlineBtn onClick={handleCopy} $copied={copied}>
-                <span className="icon">{copied ? "done" : "content_copy"}</span>
+                <span className="icon" aria-hidden="true">{copied ? "done" : "content_copy"}</span>
                 {copied ? "Copié !" : "Copier tout"}
               </OutlineBtn>
               <ExportBtn onClick={() => handleTrelloExport("global")}>
-                <span className="icon">view_kanban</span>
+                <span className="icon" aria-hidden="true">view_kanban</span>
                 Exporter vers Trello
               </ExportBtn>
               <ExportBtn onClick={handleCsvExport}>
-                <span className="icon">download</span>
+                <span className="icon" aria-hidden="true">download</span>
                 Exporter CSV (Jira)
               </ExportBtn>
             </ActionBtns>
@@ -733,21 +738,21 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
                       title={copiedStoryId === story.id ? "Copié !" : "Copier cette user story"}
                       aria-label={copiedStoryId === story.id ? "Copié" : "Copier cette user story"}
                     >
-                      <span className="icon">{copiedStoryId === story.id ? "done" : "content_copy"}</span>
+                      <span className="icon" aria-hidden="true">{copiedStoryId === story.id ? "done" : "content_copy"}</span>
                     </StoryCopyBtn>
                     <StoryCopyBtn
                       onClick={() => handleTrelloExport(story.id)}
-                      title="Exporter vers Trello"
-                      aria-label="Exporter vers Trello"
+                      title="Exporter cette user story vers Trello"
+                      aria-label="Exporter cette user story vers Trello"
                     >
-                      <span className="icon">view_kanban</span>
+                      <span className="icon" aria-hidden="true">view_kanban</span>
                     </StoryCopyBtn>
                     <StoryCopyBtn
                       onClick={() => handleCsvExportStory(story)}
-                      title="Exporter en CSV (Jira)"
-                      aria-label="Exporter en CSV (Jira)"
+                      title="Exporter cette user story en CSV (Jira)"
+                      aria-label="Exporter cette user story en CSV (Jira)"
                     >
-                      <span className="icon">download</span>
+                      <span className="icon" aria-hidden="true">download</span>
                     </StoryCopyBtn>
                   </StoryActionsOverlay>
 
@@ -787,19 +792,19 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
           <Panel>
             <PanelLabel>Actions Rapides</PanelLabel>
             <QuickActionBtn onClick={onNewGeneration}>
-              <span className="icon">restart_alt</span>
+              <span className="icon" aria-hidden="true">restart_alt</span>
               Nouvelle génération
             </QuickActionBtn>
             <QuickActionBtn $variant="primary" onClick={() => handleTrelloExport("global")}>
-              <span className="icon">view_kanban</span>
+              <span className="icon" aria-hidden="true">view_kanban</span>
               Exporter vers Trello
             </QuickActionBtn>
             <QuickActionBtn onClick={handleCsvExport}>
-              <span className="icon">download</span>
+              <span className="icon" aria-hidden="true">download</span>
               Exporter CSV (Jira)
             </QuickActionBtn>
             <QuickActionBtn disabled style={{ opacity: autoSaved ? 1 : 0.5, cursor: "default" }}>
-              <span className="icon">{autoSaved ? "check_circle" : "bookmark"}</span>
+              <span className="icon" aria-hidden="true">{autoSaved ? "check_circle" : "bookmark"}</span>
               {autoSaved ? "✓ Sauvegardé automatiquement" : "Sauvegarde en cours..."}
             </QuickActionBtn>
           </Panel>
@@ -855,15 +860,15 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
       {/* Mobile sticky bar */}
       <MobileStickyBar>
         <OutlineBtn onClick={handleCopy} $copied={copied} style={{ flex: 1 }}>
-          <span className="icon">{copied ? "done" : "content_copy"}</span>
+          <span className="icon" aria-hidden="true">{copied ? "done" : "content_copy"}</span>
           {copied ? "Copié !" : "Copier"}
         </OutlineBtn>
         <ExportBtn style={{ flex: 2 }} onClick={() => handleTrelloExport("global")}>
-          <span className="icon">view_kanban</span>
+          <span className="icon" aria-hidden="true">view_kanban</span>
           Exporter vers Trello
         </ExportBtn>
         <ExportBtn style={{ flex: 1 }} onClick={handleCsvExport}>
-          <span className="icon">download</span>
+          <span className="icon" aria-hidden="true">download</span>
           CSV
         </ExportBtn>
       </MobileStickyBar>
