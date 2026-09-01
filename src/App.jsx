@@ -237,7 +237,7 @@ function App() {
       case "dashboard":
         return <Dashboard onNavigate={handleNavigate} themeMode={themeMode} onThemeChange={setThemeMode} />;
       case "forge":
-        return <Forge onNavigate={setCurrentScreen} brief={brief} setBrief={setBrief} stories={stories} setStories={setStories} ragChunks={ragChunks} setRagChunks={setRagChunks} setRagError={setRagError} documents={documents} setDocuments={setDocuments} setTruncated={setTruncated} keepBrief={keepBrief} onClearKeepBrief={() => setKeepBrief(false)} themeMode={themeMode} onThemeChange={setThemeMode} />;
+        return <Forge onNavigate={setCurrentScreen} brief={brief} setBrief={setBrief} stories={stories} setStories={setStories} ragChunks={ragChunks} setRagChunks={setRagChunks} ragError={ragError} setRagError={setRagError} documents={documents} setDocuments={setDocuments} setTruncated={setTruncated} keepBrief={keepBrief} onClearKeepBrief={() => setKeepBrief(false)} themeMode={themeMode} onThemeChange={setThemeMode} />;
       case "results":
         return (
           <Results

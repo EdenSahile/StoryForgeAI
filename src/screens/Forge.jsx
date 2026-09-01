@@ -429,6 +429,31 @@ const InfoBanner = styled.div`
   }
 `;
 
+// Notice affichée pendant la génération quand la récupération documentaire a
+// échoué (ragError) et qu'aucun chunk n'a donc pu être trouvé — même famille
+// visuelle que le bandeau RagFailureWarning de Results.jsx (bgWarning /
+// textWarning / icône cloud_off), pour que l'échec soit signalé dès le
+// streaming et pas seulement à l'arrivée sur l'écran de résultats.
+const RagUnavailableNotice = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  background: ${theme.colors.bgWarning};
+  border: 1px solid color-mix(in srgb, ${theme.colors.amber} 30%, transparent);
+  border-radius: ${theme.radii.sm};
+  color: ${theme.colors.textWarning};
+  font-size: ${theme.fontSizes.sm};
+  font-weight: 500;
+  line-height: 1.6;
+
+  .icon {
+    font-family: "Material Symbols Outlined";
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+`;
+
 // ─── RAG Context Panel ────────────────────────────────────
 const RAGPanel = styled.div`
   border-left: 3px solid ${theme.colors.primary};
@@ -1128,6 +1153,7 @@ export default function Forge({
   setStories,
   ragChunks,
   setRagChunks,
+  ragError = false,
   setRagError,
   documents,
   setDocuments,
@@ -1435,6 +1461,18 @@ export default function Forge({
               <span>{error}</span>
               <button onClick={() => setError(null)} aria-label="Fermer le message d'erreur">✕</button>
             </ErrorMsg>
+          )}
+
+          {/* Échec de la récupération documentaire, connu avant la fin du
+              streaming (catch de retrieveContext, bien avant generateStories) :
+              on le signale dès maintenant plutôt que d'attendre Results. */}
+          {status === "loading" && ragError && (
+            <RagUnavailableNotice>
+              <span className="icon" aria-hidden="true">cloud_off</span>
+              <span>
+                Recherche documentaire indisponible — génération sans contexte en cours.
+              </span>
+            </RagUnavailableNotice>
           )}
 
           {/* RAG Sources Panel — visible pendant génération */}
