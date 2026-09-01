@@ -537,6 +537,12 @@ const StreamingBadge = styled.span`
     font-family: "Material Symbols Outlined";
     font-size: 14px;
     animation: ${spin} 1.5s linear infinite;
+    /* Le badge parent est en text-transform: uppercase + letter-spacing ;
+       la police d'icônes sous-ensemblée n'a que la ligature minuscule
+       (sync_saved_locally), donc on neutralise la casse ici sinon le glyphe
+       s'affiche en toutes lettres. */
+    text-transform: none;
+    letter-spacing: normal;
   }
 `;
 

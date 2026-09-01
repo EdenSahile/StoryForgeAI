@@ -650,7 +650,7 @@ export default function Library({ onNavigate, themeMode, onThemeChange }) {
                 alignItems: "center",
                 gap: "6px",
               }}>
-                <span style={{ fontFamily: "Material Symbols Outlined", fontSize: "14px" }}>edit_note</span>
+                <span className="icon" aria-hidden="true" style={{ fontSize: "14px" }}>edit_note</span>
                 Besoin métier
               </p>
               <BriefBlock>{selected.brief}</BriefBlock>
