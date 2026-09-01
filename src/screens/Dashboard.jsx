@@ -154,6 +154,9 @@ const StatCard = styled.div`
   flex-direction: column;
   gap: ${theme.spacing.sm};
   transition: border-color 0.2s;
+  /* Piège CSS Grid : sans min-width: 0, un .sub long (titre de génération)
+     empêche la colonne de rétrécir et la page déborde sur mobile. */
+  min-width: 0;
 
   @media (max-width: ${theme.breakpoints.mobile}) {
     flex-direction: row;
@@ -243,6 +246,10 @@ const RecentSection = styled.section`
   display: flex;
   flex-direction: column;
   gap: ${theme.spacing.lg};
+  /* Piège CSS Grid : sans min-width: 0, un titre de génération long/insécable
+     empêche la colonne 2fr (1fr sur mobile) de rétrécir et fait déborder la
+     page. GenerationCard clippe déjà l'excédent (overflow: hidden). */
+  min-width: 0;
 
   h4 {
     font-size: ${theme.fontSizes.xl};
@@ -366,6 +373,7 @@ const DashDeleteBtn = styled.button`
 const CTACard = styled.div`
   height: 100%;
   min-height: 280px;
+  min-width: 0; /* enfant de grille : cohérent avec RecentSection */
   background: ${theme.colors.surfaceContainer};
   border: 2px dashed ${theme.colors.outlineVariant};
   border-radius: 24px;
