@@ -36,7 +36,7 @@ describe('Results — badge RAG (3 états)', () => {
     expect(screen.getByText('RAG non utilisé — US Générique')).toBeInTheDocument();
     expect(screen.queryByText('Sources utilisées')).not.toBeInTheDocument();
     expect(
-      screen.queryByText(/Le contexte documentaire n'a pas pu être récupéré/i)
+      screen.queryByText(/La base de connaissances n'a pas pu être consultée/i)
     ).not.toBeInTheDocument();
   });
 
@@ -64,7 +64,7 @@ describe('Results — badge RAG (3 états)', () => {
     render(<Results stories={STORIES} ragChunks={[]} ragError />);
 
     expect(
-      screen.getByText(/Le contexte documentaire n'a pas pu être récupéré/i)
+      screen.getByText(/La base de connaissances n'a pas pu être consultée/i)
     ).toBeInTheDocument();
     expect(screen.getByText('RAG indisponible')).toBeInTheDocument();
     expect(screen.queryByText('RAG non utilisé — US Générique')).not.toBeInTheDocument();
@@ -90,7 +90,7 @@ describe('Results — badge RAG (3 états)', () => {
     render(<Results stories={STORIES} ragChunks={[]} />);
 
     expect(
-      screen.queryByText(/Le contexte documentaire n'a pas pu être récupéré/i)
+      screen.queryByText(/La base de connaissances n'a pas pu être consultée/i)
     ).not.toBeInTheDocument();
   });
 
@@ -98,7 +98,7 @@ describe('Results — badge RAG (3 états)', () => {
     render(<Results stories={STORIES} ragChunks={[]} ragError />);
 
     const banner = screen
-      .getByText(/Le contexte documentaire n'a pas pu être récupéré/i)
+      .getByText(/La base de connaissances n'a pas pu être consultée/i)
       .closest('div');
     // ancienne formulation retirée : « Relancez la génération pour réessayer »
     expect(banner).not.toHaveTextContent(/Relancez la génération pour réessayer/i);

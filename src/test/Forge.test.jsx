@@ -128,7 +128,7 @@ describe('Forge — échec de la récupération RAG', () => {
     expect(setRagError).not.toHaveBeenCalledWith(true);
   });
 
-  it('affiche une notice « Recherche documentaire indisponible » pendant la génération quand retrieveContext échoue', async () => {
+  it('affiche une notice « Base de connaissances indisponible » pendant la génération quand retrieveContext échoue', async () => {
     retrieveContext.mockRejectedValue(new Error('Pinecone 500'));
     generateStories.mockImplementation(() => new Promise(() => {})); // reste en "loading"
     renderForgeConnected();
@@ -136,7 +136,7 @@ describe('Forge — échec de la récupération RAG', () => {
     fireEvent.click(screen.getByRole('button', { name: /Générer les user stories/i }));
 
     expect(
-      await screen.findByText(/Recherche documentaire indisponible/i)
+      await screen.findByText(/Base de connaissances indisponible/i)
     ).toBeInTheDocument();
   });
 
@@ -154,7 +154,7 @@ describe('Forge — échec de la récupération RAG', () => {
     );
     expect(retrieveContext).not.toHaveBeenCalled();
     expect(
-      screen.queryByText(/Recherche documentaire indisponible/i)
+      screen.queryByText(/Base de connaissances indisponible/i)
     ).not.toBeInTheDocument();
   });
 });

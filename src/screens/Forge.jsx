@@ -1470,7 +1470,7 @@ export default function Forge({
             <RagUnavailableNotice>
               <span className="icon" aria-hidden="true">cloud_off</span>
               <span>
-                Recherche documentaire indisponible — génération sans contexte en cours.
+                Base de connaissances indisponible — les documents ne seront pas utilisés pour cette génération.
               </span>
             </RagUnavailableNotice>
           )}

@@ -688,10 +688,10 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
             <RagFailureWarning>
               <span className="icon" aria-hidden="true">cloud_off</span>
               <span>
-                Le contexte documentaire n'a pas pu être récupéré — ces user stories ont été
-                générées sans vos documents. C'est souvent temporaire côté service : vous
-                pouvez relancer la génération, mais si l'erreur persiste au second essai,
-                mieux vaut réessayer plus tard.
+                La base de connaissances n'a pas pu être consultée pour cette génération :
+                les user stories ont été produites sans documents. C'est souvent temporaire
+                côté service : vous pouvez relancer la génération, mais si l'erreur persiste
+                au second essai, mieux vaut réessayer plus tard.
               </span>
             </RagFailureWarning>
           )}
