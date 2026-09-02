@@ -235,7 +235,7 @@ describe('Results — boutons d\'export par story', () => {
     });
   });
 
-  it('le clic sur le bouton Trello d\'une story affiche le message sous cette story précise, pas ailleurs', () => {
+  it('le clic sur le bouton Trello d\'une story affiche le message dans la bande d\'actions du haut, à gauche des icônes (pas sous la carte)', () => {
     render(<Results stories={STORIES} />);
     const trelloButtons = screen.getAllByRole('button', {
       name: 'Exporter cette user story vers Trello',
@@ -244,12 +244,42 @@ describe('Results — boutons d\'export par story', () => {
 
     fireEvent.click(trelloButtons[1]); // 2e story
 
-    // Présent sous la 2e story...
-    expect(within(slots[1]).getByText(/Indisponible pour la démo/)).toBeInTheDocument();
+    // Le message est rendu DANS la bande d'actions (StoryActionsOverlay), le
+    // parent direct des boutons d'action de la story — pas dans un bloc en
+    // dessous de <StoryCard> (invisible sans scroller, cf. bug corrigé).
+    const overlay = trelloButtons[1].parentElement;
+    const msg = within(overlay).getByText(/Indisponible pour la démo/);
+    expect(msg).toBeInTheDocument();
+
+    // Il précède les icônes dans l'ordre du DOM (affiché à leur gauche).
+    expect(msg.compareDocumentPosition(trelloButtons[1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    // La bande est bien la couche positionnée en absolu au-dessus de la carte.
+    const hash = [...overlay.classList].find((c) => !c.startsWith('sc-'));
+    const css = Array.from(document.querySelectorAll('style'), (s) => s.textContent).join('');
+    expect(css).toMatch(new RegExp(`\\.${hash}\\{[^}]*position:\\s*absolute`));
+
     // ...absent de la 1ère story...
     expect(within(slots[0]).queryByText(/Indisponible pour la démo/)).not.toBeInTheDocument();
     // ...et un seul message affiché au total (pas de doublon en haut de page).
     expect(screen.getAllByText(/Indisponible pour la démo/)).toHaveLength(1);
+  });
+
+  it('le message compact d\'une story ne peut pas déborder : min-width nul + ellipsis, icônes non compressées', () => {
+    render(<Results stories={STORIES} />);
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Exporter cette user story vers Trello' })[0],
+    );
+
+    const pill = screen.getByText(/Indisponible pour la démo/).closest('[role="status"]');
+    const css = Array.from(document.querySelectorAll('style'), (s) => s.textContent).join('');
+
+    const pillHash = [...pill.classList].find((c) => !c.startsWith('sc-'));
+    expect(css).toMatch(new RegExp(`\\.${pillHash}\\{[^}]*min-width:\\s*0`));
+    expect(css).toMatch(new RegExp(`\\.${pillHash}\\{[^}]*overflow:\\s*hidden`));
+
+    // La phrase complète reste accessible en infobulle.
+    expect(pill.getAttribute('title')).toMatch(/API Trello \(OAuth\)/);
   });
 
   it('le clic sur le bouton CSV d\'une story télécharge uniquement le CSV de cette story, pas de tout le tableau', async () => {

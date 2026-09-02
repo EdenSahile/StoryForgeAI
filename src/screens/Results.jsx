@@ -318,16 +318,23 @@ const StorySlot = styled.div`
   padding-top: 40px;
 `;
 
+// left: 0 (en plus de right: 0) pour que la bande occupe toute la largeur du
+// slot : le message "Indisponible…" peut alors s'étendre à gauche des icônes
+// sans jamais déborder de la carte (il rétrécit avec ellipsis), les icônes
+// restant collées à droite via justify-content: flex-end.
 const StoryActionsOverlay = styled.div`
   position: absolute;
   top: 0;
+  left: 0;
   right: 0;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 4px;
 `;
 
 const StoryCopyBtn = styled(IconBtn)`
+  flex-shrink: 0;
   color: ${({ $copied }) => ($copied ? theme.colors.primary : theme.colors.onSurfaceVariant)};
   background: ${({ $copied }) => ($copied ? `color-mix(in srgb, ${theme.colors.primary} 13%, transparent)` : "transparent")};
 
@@ -337,6 +344,7 @@ const StoryCopyBtn = styled(IconBtn)`
 `;
 
 const IncompleteTag = styled.span`
+  flex-shrink: 0;
   font-size: ${theme.fontSizes.xs};
   font-weight: 700;
   padding: 4px 10px;
@@ -344,6 +352,40 @@ const IncompleteTag = styled.span`
   background: ${theme.colors.bgWarning};
   color: ${theme.colors.textWarning};
   border: 1px solid color-mix(in srgb, ${theme.colors.amber} 35%, transparent);
+  white-space: nowrap;
+`;
+
+// Version compacte de TrelloUnavailableMsg pour la bande d'actions d'une story :
+// le message complet ne tient pas sur une ligne dans cette bande étroite (et
+// déborderait sur mobile). Texte court sur une seule ligne (rétréci en ellipsis
+// si la carte est très étroite), phrase complète disponible en infobulle.
+const StoryTrelloMsgPill = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 3px 8px;
+  background: ${theme.colors.bgWarning};
+  border: 1px solid color-mix(in srgb, ${theme.colors.amber} 30%, transparent);
+  border-radius: ${theme.radii.sm};
+  color: ${theme.colors.textWarning};
+  font-size: ${theme.fontSizes.xs};
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+
+  .icon {
+    font-family: "Material Symbols Outlined";
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
 
 // ─── Right Column ─────────────────────────────────────────
@@ -601,12 +643,24 @@ const SourceItem = styled.div`
   }
 `;
 
+const TRELLO_UNAVAILABLE_FULL =
+  "Indisponible pour la démo. En situation réelle : intégration via l'API Trello (OAuth).";
+
 function TrelloUnavailableMsg() {
   return (
     <TrelloMsgBanner>
       <span className="icon" aria-hidden="true">info</span>
-      Indisponible pour la démo. En situation réelle : intégration via l'API Trello (OAuth).
+      {TRELLO_UNAVAILABLE_FULL}
     </TrelloMsgBanner>
+  );
+}
+
+function StoryTrelloUnavailableMsg() {
+  return (
+    <StoryTrelloMsgPill role="status" title={TRELLO_UNAVAILABLE_FULL}>
+      <span className="icon" aria-hidden="true">info</span>
+      <span className="label">Indisponible pour la démo</span>
+    </StoryTrelloMsgPill>
   );
 }
 
@@ -813,6 +867,7 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
                   <StoryCard story={story} />
 
                   <StoryActionsOverlay>
+                    {trelloMsgFor === story.id && <StoryTrelloUnavailableMsg />}
                     {story.incomplete && (
                       <IncompleteTag>Story incomplète</IncompleteTag>
                     )}
@@ -839,12 +894,6 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
                       <span className="icon" aria-hidden="true">download</span>
                     </StoryCopyBtn>
                   </StoryActionsOverlay>
-
-                  {trelloMsgFor === story.id && (
-                    <div style={{ marginTop: theme.spacing.sm }}>
-                      <TrelloUnavailableMsg />
-                    </div>
-                  )}
                 </StorySlot>
               ))
             ) : (
