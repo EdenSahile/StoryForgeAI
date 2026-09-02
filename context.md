@@ -548,7 +548,7 @@ Clé localStorage : `storyforge_library`
 |---|---|
 | Recharger page pendant génération | ✅ Validé — rencontré en conditions réelles le 2026-09-01 (c'est l'un des cas qui a révélé l'incident Pinecone, cf. ligne 8) |
 | Clic rapide multiple sur "Générer" | ✅ Validé — rencontré en conditions réelles le 2026-09-01 (double-clic sur "Générer", l'un des cas qui a révélé l'incident Pinecone, cf. ligne 8) |
-| Génération successive (2x) | ⬜ À tester |
+| Génération successive (2x) | ✅ Validé 2026-09-02 — testé manuellement, aucun état ne persiste entre deux générations complètes successives (chunks RAG, bandeau d'erreur, compteurs repartent à zéro) |
 | Flux RAG / `retrieve-context` (bandeau sources, scores) | ✅ Validé 2026-09-02 — retesté en conditions réelles après résolution de l'incident Pinecone : génération avec bandeau sources et scores Pinecone réels affichés (cf. session INCIDENT-PINECONE) |
 
 ### UX / Interface
@@ -560,7 +560,7 @@ Clé localStorage : `storyforge_library`
 ### Accessibilité
 | Test | Statut |
 |---|---|
-| Navigation clavier uniquement (Tab/Enter) | ⬜ À tester |
+| Navigation clavier uniquement (Tab/Enter) | ✅ Validé avec réserve 2026-09-02 — tous les éléments interactifs atteignables au clavier (ordre de tabulation cohérent, focus visible, pas de piège clavier). Réserve non traitée par choix : après activation d'un item de la sidebar, le focus ne se déplace pas vers le contenu de la nouvelle page — l'utilisateur doit retraverser le reste du menu avant d'atteindre le contenu (tabulation par ordre du DOM, pas un blocage) |
 | Zoom 200% navigateur | ✅ Validé 2026-09-02 — desktop : aucun débordement après le fix ActionBtns / MobileStickyBar ; mobile réel (iPhone/Safari, zoom de site 200 %) : bug du bouton hors-écran de MobileStickyBar corrigé (PR #115, commit 84584fe) |
 
 ---
