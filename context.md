@@ -1,5 +1,5 @@
 # StoryPilot AI — Contexte actif
-*Mis à jour le 2026-09-01*
+*Mis à jour le 2026-09-02*
 
 ---
 
@@ -14,6 +14,8 @@
 **Comportement de l'app pendant l'incident — validé correct :** le fallback prévu (bandeau "RAG indisponible", génération qui continue sans contexte documentaire) a fonctionné comme attendu. Aucun bug de code, aucune correction nécessaire.
 
 **Action de suivi :** retester le flux RAG une fois l'incident Pinecone résolu, avant de cocher définitivement la partie RAG de la checklist "Tests recruteur — À valider" (ligne ~528 de ce fichier).
+
+**Retest (2026-09-02) :** flux RAG retesté en conditions réelles une fois l'incident Pinecone résolu — génération produite avec le bandeau "sources utilisées" et des scores Pinecone réels affichés. Le flux fonctionne, la partie RAG de la checklist est cochée.
 
 ---
 
@@ -544,22 +546,22 @@ Clé localStorage : `storyforge_library`
 ### Comportement réseau
 | Test | Statut |
 |---|---|
-| Recharger page pendant génération | ⬜ À tester |
-| Clic rapide multiple sur "Générer" | ⬜ À tester |
+| Recharger page pendant génération | ✅ Validé — rencontré en conditions réelles le 2026-09-01 (c'est l'un des cas qui a révélé l'incident Pinecone, cf. ligne 8) |
+| Clic rapide multiple sur "Générer" | ✅ Validé — rencontré en conditions réelles le 2026-09-01 (double-clic sur "Générer", l'un des cas qui a révélé l'incident Pinecone, cf. ligne 8) |
 | Génération successive (2x) | ⬜ À tester |
-| Flux RAG / `retrieve-context` (bandeau sources, scores) | ⬜ Bloqué — incident Pinecone 2026-09-01 (cf. session INCIDENT-PINECONE), retester une fois résolu |
+| Flux RAG / `retrieve-context` (bandeau sources, scores) | ✅ Validé 2026-09-02 — retesté en conditions réelles après résolution de l'incident Pinecone : génération avec bandeau sources et scores Pinecone réels affichés (cf. session INCIDENT-PINECONE) |
 
 ### UX / Interface
 | Test | Statut |
 |---|---|
-| Bouton "Copier" → coller dans éditeur | ⬜ À tester |
-| Test sur vrai mobile | ⬜ À tester |
+| Bouton "Copier" → coller dans éditeur | ✅ Validé 2026-09-02 — testé manuellement, collage propre dans un vrai éditeur |
+| Test sur vrai mobile | ✅ Validé — testé à deux reprises sur un vrai iPhone : débordement horizontal CSS Grid (PR #111) et bouton hors-écran de MobileStickyBar à zoom de site 200 % (2026-09-02, PR #115, commit 84584fe) |
 
 ### Accessibilité
 | Test | Statut |
 |---|---|
 | Navigation clavier uniquement (Tab/Enter) | ⬜ À tester |
-| Zoom 200% navigateur | ⬜ À tester |
+| Zoom 200% navigateur | ✅ Validé 2026-09-02 — desktop : aucun débordement après le fix ActionBtns / MobileStickyBar ; mobile réel (iPhone/Safari, zoom de site 200 %) : bug du bouton hors-écran de MobileStickyBar corrigé (PR #115, commit 84584fe) |
 
 ---
 
