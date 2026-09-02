@@ -233,7 +233,20 @@ const RagBadge = styled.div`
 const ActionBtns = styled.div`
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: ${theme.spacing.sm};
+
+  /* Entre xs (480px) et mobile (768px) : les 3 boutons ne tiennent pas
+     côte à côte à leur largeur naturelle (~515px de contenu). Sans wrap
+     ils se comprimaient et leur texte passait sur 2-3 lignes. flex-wrap +
+     flex: 1 1 auto = ils passent à la ligne proprement, chacun occupant
+     toute la largeur de sa ligne. Au-dessus de 768px, ActionBtns reste
+     shrink-wrappé dans ActionBar : pas d'espace en trop, largeur naturelle
+     inchangée. */
+  button {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 
   @media (max-width: ${theme.breakpoints.xs}) {
     width: 100%;
@@ -530,6 +543,40 @@ const MobileStickyBar = styled.div`
 
   @media (max-width: ${theme.breakpoints.mobile}) {
     display: flex;
+    /* Filet de sécurité : à très faible largeur effective (petit écran, ou
+       zoom de site élevé sur mobile — bug confirmé sur iPhone/Safari à
+       200%), un bouton qui ne tient plus passe à la ligne au lieu d'être
+       poussé hors de l'écran (barre en position: fixed, aucun scroll ne le
+       rattrapait). */
+    flex-wrap: wrap;
+  }
+
+  button {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  /* Le bouton Trello (2e) porte le libellé le plus long : un peu plus de
+     place que les deux autres tant qu'ils sont sur la même ligne. */
+  button:nth-child(2) {
+    flex-grow: 1.7;
+  }
+
+  /* Sous xs (480px) : empilement pleine largeur, même parti pris que
+     ActionBtns — cibles tap au pouce plutôt que 3 boutons comprimés au
+     texte sur 2-3 lignes, et surtout jamais un bouton hors écran. Le
+     sélecteur reprend :nth-child(2) pour l'emporter en spécificité sur la
+     règle flex-grow ci-dessus (sinon le bouton Trello garderait son
+     flex-grow en mode colonne). */
+  @media (max-width: ${theme.breakpoints.xs}) {
+    flex-direction: column;
+    align-items: stretch;
+
+    button,
+    button:nth-child(2) {
+      width: 100%;
+      flex: none;
+      justify-content: center;
+    }
   }
 `;
 
@@ -992,15 +1039,15 @@ export default function Results({ brief = "", stories, ragChunks = [], ragError 
 
       {/* Mobile sticky bar */}
       <MobileStickyBar>
-        <OutlineBtn onClick={handleCopy} $copied={copied} style={{ flex: 1 }}>
+        <OutlineBtn onClick={handleCopy} $copied={copied}>
           <span className="icon" aria-hidden="true">{copied ? "done" : "content_copy"}</span>
           {copied ? "Copié !" : "Copier"}
         </OutlineBtn>
-        <ExportBtn style={{ flex: 2 }} onClick={() => handleTrelloExport("global")}>
+        <ExportBtn onClick={() => handleTrelloExport("global")}>
           <span className="icon" aria-hidden="true">view_kanban</span>
           Exporter vers Trello
         </ExportBtn>
-        <ExportBtn style={{ flex: 1 }} onClick={handleCsvExport}>
+        <ExportBtn onClick={handleCsvExport}>
           <span className="icon" aria-hidden="true">download</span>
           CSV
         </ExportBtn>

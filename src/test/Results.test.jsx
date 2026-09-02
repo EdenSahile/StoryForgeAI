@@ -381,4 +381,48 @@ describe('Results — pas de débordement horizontal mobile (piège CSS Grid)', 
     // et chaque bouton prend toute la largeur (plus de flex: 1 qui débordait)
     expect(css).toMatch(new RegExp(`\\.${hash} button\\{[^}]*width:\\s*100%`));
   });
+
+  it("ActionBtns : flex-wrap entre xs et mobile (les 3 boutons passent à la ligne au lieu de se comprimer)", () => {
+    render(<Results stories={STORIES} />);
+
+    const actionBtns = screen.getByText('Copier tout').closest('button').parentElement;
+    const hash = [...actionBtns.classList].find((c) => !c.startsWith('sc-'));
+    const css = Array.from(document.querySelectorAll('style'), (s) => s.textContent).join('');
+
+    // wrap permanent : entre 480 et 768px la largeur de colonne (~440-500px)
+    // ne suffit pas aux 3 boutons côte à côte ; sans wrap ils se comprimaient
+    // et leur texte passait sur 2-3 lignes.
+    expect(css).toMatch(new RegExp(`\\.${hash}\\{[^}]*flex-wrap:\\s*wrap`));
+  });
+
+  it("MobileStickyBar : jamais un bouton hors écran à faible largeur (flex-wrap + colonne sous xs)", () => {
+    const { container } = render(<Results stories={STORIES} />);
+
+    // Barre collante mobile : display: none hors @media (jsdom n'évalue pas le
+    // media), donc invisible pour getByRole — on la retrouve par le bouton
+    // dont le libellé se termine par "CSV" (le bouton court, pas "…(Jira)").
+    const stickyCsvBtn = [...container.querySelectorAll('button')].find((b) =>
+      b.textContent.trim().endsWith('CSV'),
+    );
+    const stickyBar = stickyCsvBtn.parentElement;
+    const hash = [...stickyBar.classList].find((c) => !c.startsWith('sc-'));
+    const css = Array.from(document.querySelectorAll('style'), (s) => s.textContent).join('');
+
+    // filet de sécurité permanent : un bouton qui ne tient plus passe à la
+    // ligne au lieu d'être poussé hors de l'écran (barre position: fixed,
+    // aucun scroll ne le rattrapait — bug confirmé iPhone/Safari zoom 200%).
+    expect(css).toMatch(new RegExp(`\\.${hash}\\{[^}]*flex-wrap:\\s*wrap`));
+
+    // sous xs (480px) : empilement colonne pleine largeur, comme ActionBtns.
+    expect(css).toMatch(
+      new RegExp(`@media \\(max-width: 480px\\)\\{\\.${hash}\\{[^}]*flex-direction:\\s*column`),
+    );
+    expect(css).toMatch(new RegExp(`\\.${hash} button[^{]*\\{[^}]*width:\\s*100%`));
+
+    // les 3 boutons ne portent plus de style flex inline (qui, avec
+    // min-width: auto, empêchait le passage colonne de prendre effet).
+    const btns = [...stickyBar.querySelectorAll('button')];
+    expect(btns).toHaveLength(3);
+    btns.forEach((b) => expect(b.style.flex).toBe(''));
+  });
 });
