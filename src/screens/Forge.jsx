@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { theme } from "../theme";
 import { getDocIcon } from "../logic/docIcon";
+import { submitModifierKey } from "../logic/platformShortcut";
 import ConfirmModal from "../components/ConfirmModal";
 import SuccessToast from "../components/SuccessToast";
 import { generateStories } from "../components/services/claudeService";
@@ -16,6 +17,10 @@ import {
 // Accord singulier/pluriel simple : 0 et 1 restent au singulier (comme le
 // badge "N indexé(s)" du panneau KB), s à partir de 2.
 const plural = (n, word) => `${word}${n > 1 ? "s" : ""}`;
+
+// Touche affichée pour le raccourci de soumission (⌘ sur Mac, Ctrl ailleurs).
+// L'OS ne change pas pendant la session : calcul une seule fois au chargement.
+const SUBMIT_KEY = submitModifierKey();
 
 // ─── Animations ───────────────────────────────────────────
 const fadeInUp = keyframes`
@@ -1418,7 +1423,7 @@ export default function Forge({
 
             <TextareaWrapper>
               <StyledTextarea
-                placeholder="Décris ton besoin métier ici... (Ctrl+Entrée pour soumettre)"
+                placeholder={`Décris ton besoin métier ici... (${SUBMIT_KEY}+Entrée pour soumettre)`}
                 value={brief}
                 onChange={(e) => setBrief(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -1426,7 +1431,7 @@ export default function Forge({
                 disabled={status === "loading"}
               />
               <TextareaFooter>
-                <KbdHint>⌘ + Enter</KbdHint>
+                <KbdHint>{SUBMIT_KEY} + Enter pour générer</KbdHint>
                 <CharCount $over={charCount > MAX}>
                   {charCount} / {MAX}
                 </CharCount>
